@@ -1,0 +1,95 @@
+<div class="documents">
+  <h1 class="page-header">
+    📄 Document Vault
+    <div class="page-header__actions">
+      <button class="btn btn--accent" (click)="openDocumentDialog()">
+        + Upload Document
+      </button>
+    </div>
+  </h1>
+
+  <section class="documents__content">
+      @if (documents().length > 0) {
+        <div class="document-grid">
+          @for (doc of documents(); track doc.id) {
+            <div class="document-card">
+              <div class="document-card__icon">📄</div>
+              <h3>{{ doc.title }}</h3>
+              <span class="document-card__category badge badge--info">{{ doc.category }}</span>
+              <div class="document-card__details">
+                <div class="detail-row">
+                  <span>Type:</span>
+                  <span>{{ doc.fileType }}</span>
+                </div>
+                <div class="detail-row">
+                  <span>Size:</span>
+                  <span>{{ formatFileSize(doc.fileSize) }}</span>
+                </div>
+                <div class="detail-row">
+                  <span>Uploaded:</span>
+                  <span>{{ formatDate(doc.uploadDate) }}</span>
+                </div>
+                @if (doc.expiryDate) {
+                  <div class="detail-row expiry">
+                    <span>Expires:</span>
+                    <span>{{ formatDate(doc.expiryDate) }}</span>
+                  </div>
+                }
+                @if (doc.isImportant) {
+                  <span class="badge badge--warning">Important</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">
+          <span class="empty-state__icon">📄</span>
+          <h3>No Documents Yet</h3>
+          <p>Upload your important documents for safe keeping</p>
+        </div>
+      }
+    </section>
+
+    <!-- Add Document Dialog -->
+    <ejs-dialog
+      #documentDialog
+      header="Upload Document"
+      [width]="dialogWidth"
+      [isModal]="true"
+      [visible]="false"
+      [animationSettings]="animationSettings"
+      [buttons]="documentDialogButtons">
+      <ng-template #content>
+        <form [formGroup]="documentForm" class="form">
+          <div class="form-group">
+            <label>Document Title *</label>
+            <ejs-textbox formControlName="title" placeholder="Enter document title"></ejs-textbox>
+          </div>
+
+          <div class="form-group">
+            <label>Category *</label>
+            <ejs-dropdownlist
+              formControlName="category"
+              [dataSource]="categories"
+              placeholder="Select category">
+            </ejs-dropdownlist>
+          </div>
+
+          <div class="form-group">
+            <label>Tags (comma separated)</label>
+            <ejs-textbox formControlName="tags" placeholder="e.g., important, tax, 2025"></ejs-textbox>
+          </div>
+
+          <div class="form-group">
+            <label>Expiry Date (if applicable)</label>
+            <ejs-datepicker formControlName="expiryDate" placeholder="Select expiry date"></ejs-datepicker>
+          </div>
+
+          <div class="form-group">
+            <ejs-checkbox formControlName="isImportant" label="Mark as Important"></ejs-checkbox>
+          </div>
+        </form>
+      </ng-template>
+    </ejs-dialog>
+</div>

@@ -1,0 +1,115 @@
+<div class="bills">
+  <h1 class="page-header">
+    📮 Bill Scheduler
+    <div class="page-header__actions">
+      <button class="btn btn--accent" (click)="openBillDialog()">
+        + Add Bill
+      </button>
+    </div>
+  </h1>
+
+  <section class="bills__list">
+      <div class="card">
+        <div class="card-header">
+          <h3>All Bills</h3>
+        </div>
+        <div class="card-content">
+          @if (bills().length > 0) {
+            <ejs-grid 
+              [dataSource]="bills()" 
+              [allowPaging]="true"
+              [allowSorting]="true"
+              [allowFiltering]="true"
+              [pageSettings]="pageSettings"
+              [filterSettings]="filterSettings"
+              (queryCellInfo)="queryCellInfo($event)">
+              <e-columns>
+                <e-column field="name" headerText="Bill Name" width="150"></e-column>
+                <e-column field="category" headerText="Category" width="120"></e-column>
+                <e-column field="amount" headerText="Amount" width="120" textAlign="Right" [format]="formatCurrency"></e-column>
+                <e-column field="dueDate" headerText="Due Date" width="140" [format]="formatDate"></e-column>
+                <e-column field="status" headerText="Status" width="120"></e-column>
+                <e-column field="frequency" headerText="Frequency" width="120"></e-column>
+                <e-column field="autoPayEnabled" headerText="Payment" width="120"></e-column>
+              </e-columns>
+            </ejs-grid>
+          } @else {
+            <div class="empty-state">
+              <p>No bills to display</p>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+  <!-- Add Bill Dialog -->
+    <ejs-dialog
+      #billDialog
+      header="Add New Bill"
+      [width]="dialogWidth"
+      [isModal]="true"
+      [visible]="false"
+      [animationSettings]="animationSettings"
+      [buttons]="billDialogButtons">
+      <ng-template #content>
+        <form [formGroup]="billForm" class="form">
+          <div class="form-group">
+            <label>Bill Name *</label>
+            <ejs-textbox formControlName="name" placeholder="Enter bill name"></ejs-textbox>
+          </div>
+
+          <div class="form-group">
+            <label>Amount *</label>
+            <ejs-numerictextbox
+              formControlName="amount"
+              [min]="0"
+              [step]="0.01"
+              format="c2"
+              placeholder="0.00">
+            </ejs-numerictextbox>
+          </div>
+
+          <div class="form-group">
+            <label>Category *</label>
+            <ejs-dropdownlist
+              formControlName="category"
+              [dataSource]="categories"
+              placeholder="Select category">
+            </ejs-dropdownlist>
+          </div>
+
+          <div class="form-group">
+            <label>Due Date *</label>
+            <ejs-datepicker formControlName="dueDate"></ejs-datepicker>
+          </div>
+
+          <div class="form-group">
+            <ejs-checkbox formControlName="isRecurring" label="Recurring Bill"></ejs-checkbox>
+          </div>
+
+          <div class="form-group">
+            <label>Frequency</label>
+            <ejs-dropdownlist
+              formControlName="frequency"
+              [dataSource]="frequencies"
+              placeholder="Select frequency">
+            </ejs-dropdownlist>
+          </div>
+
+          <div class="form-group">
+            <ejs-checkbox formControlName="autoPayEnabled" label="Enable Auto-Pay"></ejs-checkbox>
+          </div>
+
+          <div class="form-group">
+            <label>Reminder (days before due)</label>
+            <ejs-numerictextbox
+              formControlName="reminderDays"
+              [min]="0"
+              [step]="1"
+              placeholder="3">
+            </ejs-numerictextbox>
+          </div>
+        </form>
+      </ng-template>
+    </ejs-dialog>
+</div>

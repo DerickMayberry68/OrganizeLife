@@ -1,0 +1,59 @@
+---
+alwaysApply: true
+---
+
+# Code Quality Standards
+
+## General Principles
+- Write clean, readable, and maintainable code
+- Follow SOLID principles
+- Keep functions small and focused
+- Use meaningful variable and function names
+- Document complex logic with comments
+
+## Code Organization
+- One component/service per file
+- Group related functionality
+- Keep files under 300 lines when possible
+- Extract complex logic into services
+
+## Error Handling
+- Always handle errors gracefully
+- Provide meaningful error messages
+- Use TypeScript's strict null checking
+- Validate user input
+
+## Performance
+- Use OnPush change detection strategy when beneficial (though this app is zoneless)
+- Lazy load routes for better initial load performance
+- Optimize bundle size (see [angular.json](mdc:angular.json) budgets)
+- Use trackBy with `@for` loops
+
+## Accessibility
+- Use semantic HTML
+- Add proper ARIA labels when needed
+- Ensure keyboard navigation works
+- Test with screen readers
+
+## Security
+- Sanitize user input
+- Use Angular's built-in XSS protection
+- Follow Angular security best practices
+- Keep dependencies up to date
+
+## Documentation
+- Add JSDoc comments for public APIs
+- Document complex algorithms
+- Keep README.md up to date
+- Comment "why", not "what"
+
+## Code Review Checklist
+- [ ] Follows TypeScript strict mode requirements
+- [ ] Uses signals for reactive state
+- [ ] Properly typed with no implicit any
+- [ ] Has unit tests
+- [ ] Component styles under 8kB
+- [ ] Follows naming conventions
+- [ ] No console.log statements in production code
+- [ ] Error handling implemented
+- [ ] Accessible markup

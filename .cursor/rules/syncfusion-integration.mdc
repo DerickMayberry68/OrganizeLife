@@ -1,0 +1,163 @@
+---
+alwaysApply: true
+---
+
+# Syncfusion Integration Rules
+
+## License Configuration
+
+The Syncfusion license is registered in [main.ts](mdc:src/main.ts):
+```typescript
+import { registerLicense } from '@syncfusion/ej2-base';
+registerLicense('YOUR_LICENSE_KEY');
+```
+
+## CSS Imports
+
+Syncfusion styles are configured in [angular.json](mdc:angular.json) in the `styles` array:
+- Material theme CSS files from `node_modules/@syncfusion/`
+- Always load before custom `styles.scss`
+
+## Component Usage
+
+### Dialog Components
+- Import `DialogModule` from `@syncfusion/ej2-angular-popups`
+- Use `@ViewChild` decorator for dialog reference
+- Always include `CUSTOM_ELEMENTS_SCHEMA` in component schemas
+- Set `[isModal]="true"` for overlay behavior
+- Use `[animationSettings]="{ effect: 'Zoom' }"` for smooth animations
+
+### Grid Components
+- Import `GridModule` and services: `PageService, SortService, FilterService`
+- Add services to component `providers` array
+- Use custom formatters for currency and dates
+- Enable features: `[allowPaging]="true"`, `[allowSorting]="true"`, `[allowFiltering]="true"`
+
+### Chart Components
+- Import `ChartModule` from `@syncfusion/ej2-angular-charts`
+- Use computed signals for reactive chart data
+- Set consistent colors: Gold (#d4af37) for primary, Charcoal (#1a1a2e) for secondary
+
+### Form Components
+- Import from `@syncfusion/ej2-angular-inputs`, `@syncfusion/ej2-angular-calendars`, `@syncfusion/ej2-angular-dropdowns`, `@syncfusion/ej2-angular-buttons`
+- Always use with `ReactiveFormsModule`
+- Bind with `formControlName` directive
+- Set `width: 100%` on all form controls in `.form` containers
+
+### Toast Notifications
+- Import `ToastModule` from `@syncfusion/ej2-angular-notifications`
+- Use centralized `ToastService` from [toast.service.ts](mdc:src/app/services/toast.service.ts)
+- Toast container in [app.html](mdc:src/app/app.html)
+- Show toasts after successful operations
+
+**Usage**:
+```typescript
+private readonly toastService = inject(ToastService);
+
+// Success notification
+this.toastService.success('Title', 'Message');
+
+// Error notification
+this.toastService.error('Error', 'Something went wrong');
+
+// Warning notification
+this.toastService.warning('Warning', 'Check this out');
+
+// Info notification (gold-themed)
+this.toastService.info('Info', 'FYI');
+```
+
+## Styling Patterns
+
+### Professional Dialog Forms
+All dialogs now match the Syncfusion example styling:
+
+```scss
+.e-dialog {
+  border-radius: 8px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+  max-width: 500px !important;
+  width: 90% !important;
+
+  .e-dlg-header-content {
+    background: #f8f9fa !important;
+    padding: 20px 24px !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+  }
+
+  .e-dlg-content {
+    padding: 24px !important;
+    min-height: 200px !important;
+
+    .form {
+      .form-group {
+        margin-bottom: 20px !important;
+
+        label {
+          font-size: 14px !important;
+          font-weight: 500 !important;
+          color: #495057 !important;
+          margin-bottom: 6px !important;
+        }
+
+        .e-input-group,
+        .e-numerictextbox,
+        .e-textbox,
+        .e-dropdownlist,
+        .e-datepicker {
+          height: 40px !important;
+          border: 1px solid #ced4da !important;
+          border-radius: 6px !important;
+          padding: 8px 12px !important;
+          font-size: 14px !important;
+
+          &:focus {
+            border-color: var(--color-accent) !important;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1) !important;
+          }
+        }
+      }
+    }
+  }
+
+  .e-footer-content {
+    background: #f8f9fa !important;
+    padding: 16px 24px !important;
+    gap: 12px !important;
+
+    .e-btn.e-primary {
+      background: #6f42c1 !important;
+      color: white !important;
+    }
+
+    .e-btn:not(.e-primary) {
+      background: white !important;
+      border: 1px solid #ced4da !important;
+      color: #495057 !important;
+    }
+  }
+}
+```
+
+### Primary Buttons in Dialogs
+```scss
+.e-dialog .e-footer-content .e-btn.e-primary {
+  background: var(--color-accent) !important; // Gold
+  color: var(--color-primary) !important;     // Charcoal text
+}
+```
+
+### Input Focus States
+```scss
+.e-input-group.e-input-focus {
+  border-color: var(--color-accent) !important; // Gold border
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1) !important;
+}
+```
+
+## Bundle Size Considerations
+
+Syncfusion adds ~2.6MB to the bundle. Budget limits in [angular.json](mdc:angular.json):
+- Initial: 2MB warning, 5MB error
+- Component styles: 10kB warning, 20kB error

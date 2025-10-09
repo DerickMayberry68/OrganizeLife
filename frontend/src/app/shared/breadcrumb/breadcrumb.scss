@@ -1,0 +1,39 @@
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0;
+  margin: 0 0 20px 0;
+  list-style: none;
+  background: transparent;
+  font-size: 12px;
+  float: right;
+
+  &-item {
+    & + .breadcrumb-item::before {
+      content: '/';
+      padding: 0 8px;
+      color: rgba(0, 0, 0, 0.3);
+    }
+
+    a {
+      color: rgba(0, 0, 0, 0.5);
+      text-decoration: none;
+      transition: color 0.15s;
+
+      &:hover {
+        color: var(--color-accent);
+      }
+    }
+
+    &.active {
+      color: rgba(0, 0, 0, 0.7);
+      font-weight: 500;
+    }
+  }
+
+  @media (max-width: 768px) {
+    float: none;
+    margin-bottom: 15px;
+  }
+}
+

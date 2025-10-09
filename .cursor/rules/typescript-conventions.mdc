@@ -1,0 +1,52 @@
+---
+globs: *.ts
+---
+
+# TypeScript Conventions
+
+## Strict Mode
+This project uses TypeScript strict mode. All code must:
+- Have explicit return types on public methods
+- Have no implicit `any` types
+- Have proper null checking
+- Have no implicit returns
+
+## Type Safety
+```typescript
+// Good - Explicit types
+function calculateTotal(items: Item[]): number {
+  return items.reduce((sum, item) => sum + item.price, 0);
+}
+
+// Bad - Implicit any
+function calculateTotal(items) {
+  return items.reduce((sum, item) => sum + item.price, 0);
+}
+```
+
+## Access Modifiers
+- Use `protected` for class members that should be accessible in templates
+- Use `private` for internal implementation details
+- Use `public` (or omit) for public APIs
+- Mark immutable properties as `readonly`
+
+## Interface Naming
+- Don't prefix interfaces with "I" (e.g., use `User`, not `IUser`)
+- Use descriptive names that reflect the domain
+
+## File Naming
+- Use kebab-case for file names: `my-component.ts`
+- Use descriptive names that match the class/component name
+
+## Imports
+- Group imports: Angular core, Angular modules, third-party, local
+- Use path aliases if configured in [tsconfig.json](mdc:tsconfig.json)
+
+## Compiler Options
+Reference [tsconfig.json](mdc:tsconfig.json) for the full compiler configuration:
+- Target: ES2022
+- Strict mode enabled
+- No implicit returns
+- No fallthrough cases in switch
+- Isolated modules
+- Experimental decorators enabled

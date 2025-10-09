@@ -1,0 +1,39 @@
+<div class="welcome-dashboard">
+  <div class="row">
+    <div class="col-md-8">
+      <div class="welcome-content">
+        <h2 class="welcome-title">Welcome back, {{ userName }}!</h2>
+        <p class="welcome-subtitle">{{ currentDate }}</p>
+        <p class="welcome-time">{{ currentTime }}</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="welcome-actions">
+        <button class="btn btn-primary btn-sm mb-2">
+          <i class="fa fa-plus"></i> Add New Field
+        </button>
+        <button class="btn btn-outline-primary btn-sm mb-2">
+          <i class="fa fa-chart-line"></i> View Reports
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row mt-4">
+    <div class="col-12">
+      <h5 class="mb-3">Quick Overview</h5>
+      <div class="row">
+        <div class="col-md-3 col-sm-6 mb-3" *ngFor="let stat of quickStats">
+          <div class="card stat-card">
+            <div class="card-body text-center">
+              <i class="fa {{ stat.icon }} fa-2x {{ stat.color }} mb-2"></i>
+              <h4 class="stat-value">{{ stat.value }}</h4>
+              <p class="stat-label">{{ stat.label }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,217 @@
+---
+alwaysApply: true
+---
+
+# Butler Theme Specifications
+
+## Color Palette
+
+TheButler maintains a sophisticated butler aesthetic with these exact colors:
+
+### Primary Colors
+- **Charcoal**: #1a1a2e (Primary dark color)
+- **Charcoal Light**: #2c2c44 (Hover states)
+- **Gold**: #d4af37 (Accent color)
+- **Gold Light**: #dfc159 (Hover states)
+- **Cream**: #f5f5f0 (Light backgrounds)
+- **White**: #ffffff (Surface)
+
+### Color Admin Integration
+- **Sidebar BG**: #2d353c (Color Admin gray-800)
+- **Sidebar Dark**: #242a30 (Color Admin darker)
+- **Content BG**: #f2f3f4 (Color Admin light)
+- **Text Dark**: #242a30 (Color Admin text)
+
+### Status Colors
+- **Success**: #2d7a4f (Green) or #32a932 (Color Admin green)
+- **Warning**: #f4a261 (Orange) or #f59c1a (Color Admin orange)
+- **Error**: #e63946 (Red)
+- **Info**: #457b9d (Blue) or #348fe2 (Color Admin blue)
+
+## Where to Use Each Color
+
+### Gold (#d4af37)
+- Active menu items (sidebar)
+- Accent buttons
+- Primary action buttons
+- Badge backgrounds
+- Links and hover states
+- Input focus borders
+- Chart primary series
+
+### Charcoal (#1a1a2e, #2d353c)
+- Sidebar background
+- Top brand section
+- Dark card variants
+- Primary buttons (alternative)
+- Text on gold backgrounds
+
+### Gray Scales
+- **#242a30**: Main text, headers
+- **#666**: Secondary text, icons
+- **#f2f3f4**: Content background
+- **rgba(0, 0, 0, 0.05)**: Subtle borders
+
+## Typography
+
+### Font Families
+```scss
+--font-family-primary: 'Crimson Text', 'Georgia', serif;  // Headers, brand
+--font-family-secondary: 'Inter', sans-serif;              // Body, UI
+```
+
+### Font Weights
+- **Light (300)**: Page headers
+- **Normal (400)**: Body text
+- **Medium (500)**: Links, buttons
+- **Semi-bold (600)**: Card headers, menu items
+- **Bold (700)**: Important numbers, badges
+
+### Font Sizes (Color Admin Standard)
+- **Page Headers**: 28px
+- **Card Headers**: 16px
+- **Body Text**: 13-14px
+- **Menu Items**: 13.5px
+- **Breadcrumbs**: 12px
+- **Small Text**: 11px
+- **Badges**: 10px
+
+## Spacing (Color Admin Standard)
+
+- **Grid gaps**: 15px
+- **Card padding**: 20px
+- **Card margins**: 15px bottom
+- **Section spacing**: 20-25px
+- **Form field gaps**: 20px vertical
+- **Button gaps**: 10px
+
+## Shadows
+
+Match Color Admin's subtle approach:
+- **Cards**: `0 2px 4px rgba(0, 0, 0, 0.08)`
+- **Card Hover**: `0 4px 12px rgba(0, 0, 0, 0.12)`
+- **Topbar**: `0 0 20px rgba(0, 0, 0, 0.05)`
+- **Dialogs**: `0 10px 40px rgba(0, 0, 0, 0.2)`
+- **Dropdowns**: `0 10px 30px rgba(0, 0, 0, 0.15)`
+
+## Border Radius
+
+- **Cards**: 6px
+- **Buttons**: 6px
+- **Inputs**: 6px
+- **Dialogs**: 6px
+- **Badges**: 12px (pill shape)
+- **Avatars**: 50% (circles)
+
+## Button Styles
+
+### Primary (Accent - Gold)
+```scss
+.btn--accent {
+  background: #d4af37;
+  color: #1a1a2e;
+  
+  &:hover {
+    background: #dfc159;
+  }
+}
+```
+
+### Secondary (Charcoal)
+```scss
+.btn--primary {
+  background: #1a1a2e;
+  color: #f5f5f0;
+  
+  &:hover {
+    background: #2c2c44;
+  }
+}
+```
+
+### Outline
+```scss
+.btn--outline {
+  background: transparent;
+  border: 2px solid #1a1a2e;
+  color: #1a1a2e;
+  
+  &:hover {
+    background: #1a1a2e;
+    color: #f5f5f0;
+  }
+}
+```
+
+## Badge Styles
+
+```scss
+.badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  
+  &--success { background: rgba(45, 122, 79, 0.1); color: #2d7a4f; }
+  &--warning { background: rgba(244, 162, 97, 0.1); color: #f4a261; }
+  &--error { background: rgba(230, 57, 70, 0.1); color: #e63946; }
+  &--info { background: rgba(69, 123, 157, 0.1); color: #457b9d; }
+}
+```
+
+## Active States
+
+### Menu Items (Sidebar)
+```scss
+.menu-item--active {
+  .menu-link {
+    background: rgba(212, 175, 55, 0.15);
+    color: #d4af37;
+    font-weight: 600;
+    border-left: 3px solid #d4af37;
+  }
+}
+```
+
+### Links
+```scss
+a:hover {
+  color: #d4af37; // Gold hover
+}
+```
+
+## Transitions
+
+Standard transition timings:
+- **Fast**: 150ms (hover effects)
+- **Base**: 250ms (state changes)
+- **Slow**: 350ms (complex animations)
+- **Easing**: ease-in-out
+
+## CSS Custom Properties
+
+Reference: [styles.scss](mdc:src/styles.scss)
+
+All butler colors are available as CSS variables:
+- `var(--color-primary)`: #1a1a2e
+- `var(--color-accent)`: #d4af37
+- `var(--color-background)`: #f5f5f0
+- `var(--color-surface)`: #ffffff
+
+Use these for consistency across components.
+
+## Icons
+
+TheButler uses emoji icons for simplicity and charm:
+- Dashboard: 📊
+- Financial: 💰
+- Bills: 📮
+- Maintenance: 🔧
+- Inventory: 📦
+- Documents: 📄
+- Accounts: 🏦
+- Insurance: 🛡️
+- Butler: 🎩
+
+Keep icon usage consistent across sidebar, page titles, and widgets.

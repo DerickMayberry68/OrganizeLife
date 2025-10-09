@@ -1,0 +1,130 @@
+.header {
+  background: var(--color-primary);
+  color: var(--color-text-on-dark);
+  box-shadow: var(--shadow-lg);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  &__container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--spacing-md) var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-lg);
+  }
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  &__icon {
+    font-size: var(--font-size-2xl);
+  }
+
+  &__title {
+    font-size: var(--font-size-2xl);
+    font-family: var(--font-family-primary);
+    color: var(--color-accent);
+    margin: 0;
+  }
+
+  &__tagline {
+    font-size: var(--font-size-sm);
+    font-style: italic;
+    opacity: 0.8;
+    display: none;
+
+    @media (min-width: 768px) {
+      display: inline;
+    }
+  }
+
+  &__menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--color-text-on-dark);
+    font-size: var(--font-size-2xl);
+    cursor: pointer;
+    padding: var(--spacing-xs);
+
+    @media (max-width: 768px) {
+      display: block;
+    }
+  }
+
+  &__menu-icon {
+    display: block;
+  }
+
+  &__nav {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+
+    @media (max-width: 768px) {
+      position: fixed;
+      top: 80px;
+      left: 0;
+      right: 0;
+      background: var(--color-primary);
+      flex-direction: column;
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-xl);
+      transform: translateY(-120%);
+      transition: transform var(--transition-base);
+
+      &--open {
+        transform: translateY(0);
+      }
+    }
+  }
+
+  &__nav-link {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: var(--color-text-on-dark);
+    font-weight: 500;
+    transition: all var(--transition-fast);
+
+    &:hover {
+      background: rgba(212, 175, 55, 0.1);
+      transform: translateY(-2px);
+    }
+
+    &--active {
+      background: var(--color-accent);
+      color: var(--color-primary);
+    }
+
+    @media (max-width: 768px) {
+      width: 100%;
+      justify-content: flex-start;
+      padding: var(--spacing-md);
+    }
+  }
+
+  &__nav-icon {
+    font-size: var(--font-size-lg);
+  }
+
+  &__nav-label {
+    @media (max-width: 1024px) {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      display: inline;
+    }
+  }
+}
+

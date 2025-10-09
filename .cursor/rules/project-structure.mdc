@@ -1,0 +1,38 @@
+---
+alwaysApply: true
+---
+
+# TheButler Project Structure
+
+## Overview
+TheButler is an Angular 20.1 application using modern standalone components and zoneless change detection.
+
+## Project Architecture
+- **Entry Point**: [main.ts](mdc:src/main.ts) bootstraps the application
+- **App Component**: [app.ts](mdc:src/app/app.ts) is the root component
+- **App Configuration**: [app.config.ts](mdc:src/app/app.config.ts) provides application-wide configuration
+- **Routing**: [app.routes.ts](mdc:src/app/app.routes.ts) defines application routes
+- **Global Styles**: [styles.scss](mdc:src/styles.scss) contains global styles
+- **Angular Config**: [angular.json](mdc:angular.json) defines build and serve configurations
+
+## Key Features
+- **Zoneless Change Detection**: Uses `provideZonelessChangeDetection()` instead of Zone.js
+- **Standalone Components**: No NgModules, all components are standalone
+- **Signals**: Uses Angular signals for reactive state management
+- **SCSS**: SCSS is the default styling approach
+
+## Directory Structure
+```
+src/
+  app/
+    *.ts         - Component/service/directive TypeScript files
+    *.html       - Component templates (separate template files)
+    *.scss       - Component styles
+    *.spec.ts    - Unit tests
+  index.html     - HTML entry point
+  main.ts        - Application bootstrap
+  styles.scss    - Global styles
+```
+
+## Component Prefix
+All component selectors should use the `app` prefix (e.g., `app-root`, `app-header`).

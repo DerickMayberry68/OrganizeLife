@@ -1,0 +1,28 @@
+<div class="alert" [class]="'alert--' + type()">
+  <div class="alert__content">
+    <span class="alert__icon">
+      @switch (type()) {
+        @case ('success') { ✓ }
+        @case ('error') { ✕ }
+        @case ('warning') { ⚠ }
+        @default { ℹ }
+      }
+    </span>
+    <p class="alert__message">{{ message() }}</p>
+  </div>
+
+  <div class="alert__actions">
+    @if (actionLabel() && actionRoute()) {
+      <a [routerLink]="actionRoute()" class="alert__action-link">
+        {{ actionLabel() }}
+      </a>
+    }
+    
+    @if (dismissible()) {
+      <button class="alert__dismiss" (click)="onDismiss()" aria-label="Dismiss alert">
+        ✕
+      </button>
+    }
+  </div>
+</div>
+

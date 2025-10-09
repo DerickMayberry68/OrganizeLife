@@ -1,0 +1,53 @@
+---
+globs: *.ts
+---
+
+# Angular Conventions for TheButler
+
+## Component Structure
+- **Always use standalone components** - Set `standalone: true` (or omit in Angular 20+)
+- **Import dependencies** - Use the `imports` array for all dependencies (pipes, directives, components)
+- **Separate templates** - Use `templateUrl` for HTML templates, not inline templates
+- **Separate styles** - Use `styleUrl` (singular) for component styles
+- **Component class naming** - Use descriptive names without "Component" suffix (e.g., `App`, not `AppComponent`)
+
+## Example Component Structure
+```typescript
+import { Component, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-my-component',
+  imports: [CommonModule],
+  templateUrl: './my-component.html',
+  styleUrl: './my-component.scss'
+})
+export class MyComponent {
+  // Use signals for reactive state
+  protected readonly myState = signal('initial value');
+}
+```
+
+## Signals (Reactive State)
+- **Prefer signals** over traditional observables for component state
+- **Use `signal()`** for writable state
+- **Use `computed()`** for derived state
+- **Mark as `protected readonly`** when appropriate for encapsulation
+
+## Change Detection
+- This app uses **zoneless change detection**
+- Signal updates automatically trigger change detection
+- For async operations, ensure you're using signals or explicitly marking for check
+
+## Dependency Injection
+- Use constructor injection or `inject()` function
+- Prefer `inject()` for better tree-shaking and cleaner code
+
+## Template Syntax
+- Use Angular's modern control flow: `@if`, `@for`, `@switch` instead of structural directives
+- Use signal interpolation: `{{ mySignal() }}` (note the function call)
+
+## Router
+- Use functional router guards instead of class-based guards
+- Define routes in [app.routes.ts](mdc:src/app/app.routes.ts)
+- Use lazy loading for feature modules when applicable

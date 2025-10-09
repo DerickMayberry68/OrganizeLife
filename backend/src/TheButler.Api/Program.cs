@@ -1,0 +1,154 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using TheButler.Infrastructure.Data;
+using TheButler.Infrastructure.Services;
+
+namespace TheButler.Api
+{
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var builder = WebApplication.CreateBuilder(args);
+
+            // Add services to the container.
+
+            // Configure PostgreSQL with Supabase
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            builder.Services.AddDbContext<TheButlerDbContext>(options =>
+                options.UseNpgsql(connectionString, npgsqlOptions =>
+                {
+                    npgsqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 3,
+                        maxRetryDelay: TimeSpan.FromSeconds(5),
+                        errorCodesToAdd: null);
+                }));
+
+            // Configure Supabase Authentication
+            var supabaseJwtSecret = builder.Configuration["Supabase:JwtSecret"];
+            var supabaseUrl = builder.Configuration["Supabase:Url"];
+            
+            // Only configure authentication if Supabase credentials are provided
+            if (!string.IsNullOrEmpty(supabaseJwtSecret) && 
+                !string.IsNullOrEmpty(supabaseUrl) &&
+                !supabaseJwtSecret.Contains("YOUR_") && 
+                !supabaseUrl.Contains("YOUR_"))
+            {
+                // Clear default claim type mappings to preserve original JWT claims
+                Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.DefaultInboundClaimTypeMap.Clear();
+                System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+                
+                builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                    .AddJwtBearer(options =>
+                    {
+                        options.MapInboundClaims = false; // Preserve original claim names
+                        // Try UTF-8 encoding first (most common for Supabase)
+                        byte[] key;
+                        try
+                        {
+                            key = Encoding.UTF8.GetBytes(supabaseJwtSecret);
+                        }
+                        catch
+                        {
+                            // Fallback to base64 if UTF-8 fails
+                            key = Convert.FromBase64String(supabaseJwtSecret);
+                        }
+                        
+                        options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuerSigningKey = true,
+                            IssuerSigningKey = new SymmetricSecurityKey(key),
+                            ValidateIssuer = true,
+                            ValidIssuer = $"{supabaseUrl}/auth/v1", // Supabase includes /auth/v1 in the issuer
+                            ValidateAudience = true,
+                            ValidAudience = "authenticated",
+                            ValidateLifetime = true,
+                            ClockSkew = TimeSpan.Zero
+                        };
+                    });
+
+                builder.Services.AddAuthorization();
+                
+                // Register Supabase Auth Service
+                builder.Services.AddScoped<ISupabaseAuthService, SupabaseAuthService>();
+            }
+            else
+            {
+                // Development mode - no authentication configured
+                Console.WriteLine("⚠️  Supabase credentials not configured. Authentication is disabled.");
+                Console.WriteLine("   To enable authentication, update Supabase:JwtSecret and Supabase:Url in appsettings.json");
+                Console.WriteLine("   See SUPABASE-AUTH-SETUP.md for details.");
+                
+                // Add minimal authorization for development
+                builder.Services.AddAuthorization();
+            }
+
+            // Register HttpClient for API calls (e.g., to Supabase)
+            builder.Services.AddHttpClient();
+
+            // Configure CORS for Angular app
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAngularApp", policy =>
+                {
+                    policy.WithOrigins("http://localhost:4200", "https://localhost:4200")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                });
+            });
+
+            builder.Services.AddControllers();
+            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token from Supabase.",
+                    Name = "Authorization",
+                    In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                    Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer"
+                });
+
+                c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+                {
+                    {
+                        new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                        {
+                            Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                            {
+                                Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
+                });
+            });
+
+            var app = builder.Build();
+
+            // Configure the HTTP request pipeline.
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+
+            app.UseHttpsRedirection();
+
+            app.UseCors("AllowAngularApp");
+            
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+            app.MapControllers();
+
+            app.Run();
+        }
+    }
+}

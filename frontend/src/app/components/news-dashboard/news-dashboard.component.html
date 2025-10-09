@@ -1,0 +1,50 @@
+<div class="news-dashboard">
+  <div class="news-header">
+    <h5 class="news-title">Latest News</h5>
+    <div class="news-filters">
+      <div class="btn-group btn-group-sm" role="group">
+        <button 
+          type="button" 
+          class="btn btn-outline-primary"
+          [class.active]="selectedCategory === category"
+          *ngFor="let category of categories"
+          (click)="onCategoryChange(category)">
+          {{ category }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="news-content">
+    <div class="news-list">
+      <div class="news-item" *ngFor="let item of getFilteredNews()">
+        <div class="news-item-content">
+          <div class="news-item-header">
+            <h6 class="news-item-title">{{ item.title }}</h6>
+            <span class="badge {{ getCategoryClass(item.category) }}">{{ item.category }}</span>
+          </div>
+          <p class="news-item-summary">{{ item.summary }}</p>
+          <div class="news-item-meta">
+            <span class="news-source">{{ item.source }}</span>
+            <span class="news-time">{{ item.publishedAt }}</span>
+          </div>
+        </div>
+        <div class="news-item-actions">
+          <button class="btn btn-sm btn-outline-primary">
+            <i class="fa fa-external-link-alt"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="news-footer">
+    <button class="btn btn-primary btn-sm">
+      <i class="fa fa-refresh"></i> Refresh News
+    </button>
+    <button class="btn btn-outline-primary btn-sm">
+      <i class="fa fa-rss"></i> Subscribe to Feed
+    </button>
+  </div>
+</div>
+

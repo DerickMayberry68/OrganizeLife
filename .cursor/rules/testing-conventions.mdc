@@ -1,0 +1,61 @@
+---
+globs: *.spec.ts
+---
+
+# Testing Conventions
+
+## Test Framework
+- **Test Runner**: Karma
+- **Testing Framework**: Jasmine 5.8
+- **Configuration**: [tsconfig.spec.json](mdc:tsconfig.spec.json)
+
+## Test File Structure
+- Place test files next to the file being tested
+- Use `.spec.ts` suffix
+- Example: `app.ts` → `app.spec.ts`
+
+## Writing Tests
+```typescript
+import { TestBed } from '@angular/core/testing';
+import { MyComponent } from './my-component';
+
+describe('MyComponent', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [MyComponent] // Standalone components go in imports
+    }).compileComponents();
+  });
+
+  it('should create', () => {
+    const fixture = TestBed.createComponent(MyComponent);
+    const component = fixture.componentInstance;
+    expect(component).toBeTruthy();
+  });
+});
+```
+
+## Testing Standalone Components
+- Import standalone components in `TestBed.configureTestingModule({ imports: [...] })`
+- No need to declare them
+
+## Testing with Signals
+```typescript
+it('should update signal', () => {
+  const fixture = TestBed.createComponent(MyComponent);
+  const component = fixture.componentInstance;
+  
+  component.mySignal.set('new value');
+  expect(component.mySignal()).toBe('new value');
+});
+```
+
+## Running Tests
+- Run tests: `npm test`
+- Configuration in [angular.json](mdc:angular.json) under "test" architect
+
+## Best Practices
+- Test user behavior, not implementation details
+- Use descriptive test names
+- Follow AAA pattern: Arrange, Act, Assert
+- Mock external dependencies
+- Test edge cases and error states

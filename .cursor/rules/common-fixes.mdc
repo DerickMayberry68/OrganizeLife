@@ -1,0 +1,294 @@
+---
+alwaysApply: true
+---
+
+# Common Fixes and Patterns
+
+## SCSS Issues
+
+### Deprecated lighten() Function
+
+**DON'T USE**:
+```scss
+background: lighten(#1a1a2e, 10%);
+```
+
+**USE INSTEAD**:
+```scss
+background: #2c2c44; // Pre-calculated lightened value
+```
+
+**Common Conversions**:
+- `lighten(#1a1a2e, 10%)` → `#2c2c44`
+- `lighten(#d4af37, 10%)` → `#dfc159`
+
+## Syncfusion Import Issues
+
+### CardModule Does Not Exist
+
+**DON'T IMPORT**:
+```typescript
+import { CardModule } from '@syncfusion/ej2-angular-layouts'; // WRONG
+```
+
+**USE INSTEAD**:
+```html
+<div class="card">
+  <div class="card-header">
+    <h3>Title</h3>
+  </div>
+  <div class="card-content">
+    <!-- Content -->
+  </div>
+</div>
+```
+
+Style cards with CSS from [styles.scss](mdc:src/styles.scss).
+
+### Missing CSS Files
+
+Some Syncfusion packages don't have separate CSS. In [angular.json](mdc:angular.json), only include CSS that exists:
+- ✅ `@syncfusion/ej2-grids/styles/material.css`
+- ✅ `@syncfusion/ej2-calendars/styles/material.css`
+- ❌ `@syncfusion/ej2-charts/styles/material.css` (doesn't exist)
+
+## Bundle Size Issues
+
+### When Bundle Exceeds Limit
+
+Update budgets in [angular.json](mdc:angular.json):
+
+```json
+{
+  "type": "initial",
+  "maximumWarning": "2MB",
+  "maximumError": "5MB"
+},
+{
+  "type": "anyComponentStyle",
+  "maximumWarning": "10kB",
+  "maximumError": "20kB"
+}
+```
+
+Syncfusion adds ~2.6MB to bundle - this is expected for the feature set.
+
+## Dialog Readability Issues
+
+### Problem: Dark headers with poor contrast
+
+**DON'T**:
+```scss
+.e-dlg-header-content {
+  background: var(--color-primary); // Dark charcoal
+  color: var(--color-text-on-dark);  // Light cream - hard to read!
+  font-size: var(--font-size-xl);    // Too large!
+}
+```
+
+**DO**:
+```scss
+.e-dlg-header-content {
+  background: white !important;
+  color: #242a30 !important;
+  font-size: 16px !important;
+  padding: 15px 20px !important;
+}
+```
+
+## Layout Container Issues
+
+### Problem: Double padding with .container
+
+When using admin layout, **DO NOT** wrap content in `.container` class:
+
+**DON'T**:
+```html
+<div class="feature-page">
+  <div class="container">  <!-- Unnecessary! -->
+    <h1>Title</h1>
+  </div>
+</div>
+```
+
+**DO**:
+```html
+<div class="feature-page">
+  <app-breadcrumb [items]="breadcrumbs" />
+  <h1 class="page-header">Title</h1>
+  <!-- Content directly here -->
+</div>
+```
+
+The `.main-content` class already provides appropriate padding.
+
+## Responsive Issues
+
+### Page Headers
+
+**DON'T**:
+```html
+<header class="page-header">
+  <h1>Title</h1>
+  <button>Add</button>
+</header>
+```
+
+**DO**:
+```html
+<header class="page-header">
+  <div>
+    <h1>Title</h1>
+  </div>
+  <div class="page-header__actions">
+    <button class="btn btn--accent">+ Add</button>
+  </div>
+</header>
+```
+
+The wrapper divs ensure proper responsive stacking on mobile.
+
+## Form Control Width Issues
+
+All form controls should be 100% width inside forms:
+
+```scss
+.form {
+  .e-input-group,
+  .e-numerictextbox,
+  .e-textbox,
+  .e-dropdownlist,
+  .e-datepicker {
+    width: 100%;
+  }
+}
+```
+
+This is already in [styles.scss](mdc:src/styles.scss) - don't override it.
+
+## Click-Away Behavior for Dropdowns
+
+Always implement proper event handling:
+
+**Component**:
+```typescript
+protected toggleDropdown(event?: Event): void {
+  event?.stopPropagation(); // Prevent immediate close
+  this.isOpen.update(v => !v);
+}
+
+protected closeDropdowns(): void {
+  this.isOpen.set(false);
+}
+```
+
+**Template**:
+```html
+<div (click)="closeDropdowns()">
+  <button (click)="toggleDropdown($event)">Toggle</button>
+  
+  @if (isOpen()) {
+    <div class="dropdown" (click)="$event.stopPropagation()">
+      <!-- Dropdown content -->
+    </div>
+  }
+</div>
+```
+
+## Grid Formatting Issues
+
+### Currency Formatting in Grids
+
+**DON'T**:
+```html
+<e-column field="amount" [format]="formatCurrency"></e-column>
+```
+
+**DO**:
+```typescript
+protected formatCurrency(args: any): string {
+  if (!args.value) return '';
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(args.value);
+}
+```
+
+The formatter receives an object with `value` property, not direct value.
+
+### Date Formatting in Grids
+
+```typescript
+protected formatDate(args: any): string {
+  if (!args.value) return '';
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  }).format(new Date(args.value));
+}
+```
+
+## Component Padding Issues
+
+Remove excessive padding from feature components:
+
+**DON'T**:
+```scss
+.feature-page {
+  padding: var(--spacing-xl) 0; // Extra padding not needed
+}
+```
+
+**DO**:
+```scss
+.feature-page {
+  // No padding - main-content handles it
+}
+```
+
+## Common TypeScript Issues
+
+### Math in Templates
+
+**DON'T**:
+```html
+{{ Math.abs(value) }}
+```
+
+**DO**:
+```typescript
+protected abs(value: number): number {
+  return Math.abs(value);
+}
+```
+```html
+{{ abs(value) }}
+```
+
+### Signal Variants in StatCard
+
+Ensure variant values match the component input type:
+```typescript
+// StatCard accepts: 'default' | 'accent' | 'success' | 'warning' | 'error'
+// NOT 'info' - use 'default' instead
+```
+
+## Import Organization
+
+Group imports properly:
+```typescript
+// 1. Angular core
+import { Component, inject, ViewChild, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
+
+// 2. Syncfusion
+import { DialogModule } from '@syncfusion/ej2-angular-popups';
+import { GridModule } from '@syncfusion/ej2-angular-grids';
+
+// 3. Local imports
+import { DataService } from '../../services/data.service';
+import { MyComponent } from '../../shared/my-component';
+```

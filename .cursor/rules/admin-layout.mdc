@@ -1,0 +1,164 @@
+---
+alwaysApply: true
+---
+
+# Admin Layout Structure
+
+## Overview
+
+TheButler uses a professional admin dashboard layout cloned from Color Admin v5.4.3, located at:
+`C:\Users\deric\source\repos\Angular Templates\WB0N89JMK\color_admin_v5.4.3`
+
+## Layout Components
+
+### App Structure
+Reference: [app.html](mdc:src/app/app.html), [app.scss](mdc:src/app/app.scss)
+
+```html
+<div class="app-layout">
+  <app-sidebar />
+  <div class="app-content">
+    <app-topbar />
+    <main class="main-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>
+```
+
+### Measurements
+- **Sidebar Width**: 250px (collapsed: 60px)
+- **Topbar Height**: 60px
+- **Content Offset**: Left 250px, Top 60px
+- **Content Padding**: 20px 25px (15px mobile)
+- **Content Background**: #f2f3f4
+
+## Sidebar Component
+
+**File**: [sidebar/](mdc:src/app/shared/sidebar/)
+
+### Structure
+1. **Profile Section** (top, after 60px padding for topbar)
+   - Cover background with overlay
+   - 60px circular avatar
+   - User name and role
+   - Background: #242a30
+
+2. **Menu Navigation**
+   - Header: "Navigation" (uppercase, 11px, gray)
+   - Menu items with icons (35px width)
+   - Active state: 3px gold left border + gold text
+   - Badges: Gold background, charcoal text
+
+3. **Minify Button** (bottom)
+   - Toggle collapse/expand
+   - Border-top separator
+   - Arrow icon (← or →)
+
+### Colors
+- **Background**: #2d353c
+- **Text**: `rgba(255, 255, 255, 0.7)`
+- **Hover**: `rgba(255, 255, 255, 0.05)` background
+- **Active**: Gold (#d4af37)
+- **Icon**: `rgba(255, 255, 255, 0.5)`
+
+## Topbar Component
+
+**File**: [topbar/](mdc:src/app/shared/topbar/)
+
+### Structure
+1. **Brand Section** (left, 250px width)
+   - Butler icon + "TheButler" text
+   - Dark background (#2d353c) matching sidebar
+
+2. **Search Bar** (center, flex 1, max 300px)
+   - Rounded input (6px)
+   - Expands to 120% on focus
+   - Search icon button
+   - Light gray background
+
+3. **Actions** (right)
+   - Notifications: Bell icon + badge
+   - User profile: Avatar + name + caret
+
+### Dropdowns
+- **Position**: Absolute, top: calc(100% + 8px)
+- **Animation**: slideDown from top
+- **Click behavior**: Stop propagation on dropdown, close on outside click
+
+## Page Structure
+
+Every feature page must follow this pattern:
+
+```html
+<div class="feature-name">
+  <!-- Breadcrumb -->
+  <app-breadcrumb [items]="breadcrumbs" />
+  
+  <!-- Page Header with Actions -->
+  <h1 class="page-header">
+    Page Title
+    <div class="page-header__actions">
+      <button class="btn btn--accent" (click)="openDialog()">
+        + Add Item
+      </button>
+    </div>
+  </h1>
+  
+  <!-- Content -->
+  <div class="content-sections">
+    <!-- Cards, grids, etc. -->
+  </div>
+</div>
+```
+
+### Breadcrumbs
+**Component**: [breadcrumb/](mdc:src/app/shared/breadcrumb/)
+
+```typescript
+protected readonly breadcrumbs: BreadcrumbItem[] = [
+  { label: 'Home', path: '/' },
+  { label: 'Current Page' }
+];
+```
+
+### Page Header Styling
+- **Font size**: 28px (24px mobile)
+- **Font weight**: 300 (light)
+- **Margin-bottom**: 25px (20px mobile)
+- **Display**: Flex with space-between
+- **Color**: #242a30
+
+## Grid System
+
+Use 15px gaps (Color Admin standard):
+```scss
+.grid-container {
+  display: grid;
+  gap: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+```
+
+## Responsive Rules
+
+### Mobile (< 768px)
+- Sidebar: `translateX(-100%)` to hide
+- Topbar brand: Auto width
+- Search bar: Hidden
+- User name: Hidden
+- Content margin-left: 0
+- Page header: Stack vertically
+- Action buttons: Full width
+
+## Z-Index Layers
+- **Topbar**: 1010
+- **Sidebar**: 1020
+- **Sidebar Mobile Backdrop**: 1021
+- **Dialogs**: Default Syncfusion (higher)
+
+## Container Usage
+
+**DO NOT** use `.container` class in feature pages when using admin layout. The main-content already provides appropriate padding and max-width handling.
+
+**Remove** container divs from pages - layout padding is handled by `.main-content`.

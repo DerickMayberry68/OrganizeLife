@@ -1,0 +1,107 @@
+<div class="inventory">
+  <h1 class="page-header">
+    📦 Inventory
+    <div class="page-header__actions">
+      <button class="btn btn--accent" (click)="openItemDialog()">
+        + Add Item
+      </button>
+    </div>
+  </h1>
+
+  <section class="inventory__content">
+      @if (items().length > 0) {
+        <div class="item-grid">
+          @for (item of items(); track item.id) {
+            <div class="item-card">
+              <h3>{{ item.name }}</h3>
+              <span class="item-card__category">{{ item.category }}</span>
+              <div class="item-card__details">
+                <div class="detail-row">
+                  <span>Purchase Date:</span>
+                  <span>{{ formatDate(item.purchaseDate) }}</span>
+                </div>
+                <div class="detail-row">
+                  <span>Purchase Price:</span>
+                  <span>{{ formatCurrency(item.purchasePrice) }}</span>
+                </div>
+                <div class="detail-row">
+                  <span>Location:</span>
+                  <span>{{ item.location }}</span>
+                </div>
+                @if (item.warranty) {
+                  <div class="detail-row warranty">
+                    <span>Warranty:</span>
+                    <span>Until {{ formatDate(item.warranty.endDate) }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">
+          <span class="empty-state__icon">📦</span>
+          <h3>No Items Yet</h3>
+          <p>Start tracking your household items and their warranties</p>
+        </div>
+      }
+    </section>
+
+    <!-- Add Inventory Item Dialog -->
+    <ejs-dialog
+      #itemDialog
+      header="Add Inventory Item"
+      [width]="dialogWidth"
+      [isModal]="true"
+      [visible]="false"
+      [animationSettings]="animationSettings"
+      [buttons]="itemDialogButtons">
+      <ng-template #content>
+        <form [formGroup]="itemForm" class="form">
+          <div class="form-group">
+            <label>Item Name *</label>
+            <ejs-textbox formControlName="name" placeholder="Enter item name"></ejs-textbox>
+          </div>
+
+          <div class="form-group">
+            <label>Category *</label>
+            <ejs-dropdownlist
+              formControlName="category"
+              [dataSource]="categories"
+              placeholder="Select category">
+            </ejs-dropdownlist>
+          </div>
+
+          <div class="form-group">
+            <label>Purchase Date *</label>
+            <ejs-datepicker formControlName="purchaseDate"></ejs-datepicker>
+          </div>
+
+          <div class="form-group">
+            <label>Purchase Price *</label>
+            <ejs-numerictextbox
+              formControlName="purchasePrice"
+              [min]="0"
+              [step]="10"
+              format="c2"
+              placeholder="0.00">
+            </ejs-numerictextbox>
+          </div>
+
+          <div class="form-group">
+            <label>Location *</label>
+            <ejs-dropdownlist
+              formControlName="location"
+              [dataSource]="locations"
+              placeholder="Select location">
+            </ejs-dropdownlist>
+          </div>
+
+          <div class="form-group">
+            <label>Notes</label>
+            <ejs-textbox formControlName="notes" multiline="true" placeholder="Additional notes"></ejs-textbox>
+          </div>
+        </form>
+      </ng-template>
+    </ejs-dialog>
+</div>

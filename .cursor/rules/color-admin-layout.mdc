@@ -1,0 +1,189 @@
+---
+alwaysApply: true
+---
+
+# Color Admin Layout Rules
+
+## Layout Structure
+
+TheButler uses a **Color Admin-inspired** admin dashboard layout:
+
+```html
+<div class="app-layout">
+  <app-sidebar />      <!-- Fixed left, 250px wide -->
+  <div class="app-content">
+    <app-topbar />     <!-- Fixed top, 60px height -->
+    <main class="main-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>
+```
+
+Reference: [app.html](mdc:src/app/app.html), [app.scss](mdc:src/app/app.scss)
+
+## Sidebar Specifications
+
+**File**: [sidebar component](mdc:src/app/shared/sidebar/)
+
+- **Width**: 250px (collapsed: 60px)
+- **Background**: #2d353c (gray-800 from Color Admin)
+- **Position**: Fixed, top: 0, bottom: 0, left: 0
+- **Z-index**: 1020
+- **Padding-top**: 60px (for topbar clearance)
+
+### Profile Section
+- Avatar: 60px circle
+- Background: #242a30 with pattern overlay
+- User name + role display
+- Positioned at top after topbar
+
+### Menu Items
+- **Active state**: Gold left border (3px) + gold text + light gold background
+- **Hover**: `rgba(255, 255, 255, 0.05)` background
+- **Icon width**: 35px, centered
+- **Font size**: 13.5px
+- **Padding**: 12px 20px
+- **Badge**: Gold background, charcoal text
+
+### Menu Header
+- **Text**: "Navigation" (uppercase)
+- **Font size**: 11px
+- **Color**: `rgba(255, 255, 255, 0.3)`
+- **Padding**: 12px 20px 8px
+
+### Minify Button
+- Positioned at bottom
+- Border-top: 1px solid `rgba(255, 255, 255, 0.1)`
+- Toggles sidebar width
+
+## Topbar Specifications
+
+**File**: [topbar component](mdc:src/app/shared/topbar/)
+
+- **Height**: 60px
+- **Background**: White
+- **Shadow**: `0 0 20px rgba(0, 0, 0, 0.05)`
+- **Position**: Fixed, top: 0, left: 0, right: 0
+- **Z-index**: 1010
+
+### Brand Section (Left)
+- **Width**: 250px (matches sidebar)
+- **Background**: #2d353c (matches sidebar)
+- **Logo**: Butler icon + "TheButler" text
+- **Font**: Light weight for name
+
+### Search Bar (Center)
+- **Width**: Max 300px, flexible
+- **Padding**: 8px 40px 8px 15px
+- **Border-radius**: 6px
+- **Background**: `rgba(0, 0, 0, 0.02)`
+- **Focus**: Expands to 120%, gold border
+
+### Right Actions
+- **Notification Icon**: Bell with count badge
+- **User Avatar**: 36px circle
+- **Dropdowns**: Click-away behavior with `stopPropagation`
+
+### Dropdown Styling
+- **Width**: Notifications: 360px, Profile: 240px
+- **Shadow**: `0 10px 30px rgba(0, 0, 0, 0.15)`
+- **Animation**: Slide down (0.2s)
+- **Border-radius**: 6px
+
+## Main Content Specifications
+
+**File**: [app.scss](mdc:src/app/app.scss)
+
+- **Margin-left**: 250px (for sidebar)
+- **Margin-top**: 60px (for topbar)
+- **Padding**: 20px 25px
+- **Background**: #f2f3f4 (Color Admin light gray)
+- **Min-height**: `calc(100vh - 60px)`
+
+## Page Structure Pattern
+
+Every page should follow this structure:
+
+```html
+<div class="page-name">
+  <app-breadcrumb [items]="breadcrumbs" />
+  <h1 class="page-header">Page Title</h1>
+  
+  <!-- Page content -->
+</div>
+```
+
+### Breadcrumbs
+- **Component**: [breadcrumb](mdc:src/app/shared/breadcrumb/)
+- **Position**: Float right
+- **Font size**: 12px
+- **Color**: Gray with gold hover
+- **Separator**: `/`
+
+### Page Header
+- **Font size**: 28px
+- **Font weight**: 300 (light)
+- **Line height**: 40px
+- **Color**: #242a30
+- **Margin-bottom**: 25px
+- **Display**: Flex with space-between for action buttons
+
+## Card Components
+
+- **Background**: White
+- **Border**: None
+- **Border-radius**: 6px
+- **Shadow**: `0 2px 4px rgba(0, 0, 0, 0.08)`
+- **Hover shadow**: `0 4px 12px rgba(0, 0, 0, 0.12)`
+- **Margin-bottom**: 15px
+
+### Card Header
+- **Padding**: 20px
+- **Border-bottom**: 1px solid `rgba(0, 0, 0, 0.05)`
+- **Font size**: 16px
+- **Font weight**: 600
+
+### Card Content
+- **Padding**: 20px
+
+### Card Variants
+- `card--dark`: Background #2d353c
+- `card--accent`: Butler gradient for special cards
+
+## Spacing System
+
+Match Color Admin's spacing:
+- **Grid gaps**: 15px
+- **Card margins**: 15px bottom
+- **Section margins**: 20px
+- **Content padding**: 20-25px
+- **Form spacing**: 20px between fields
+
+## Responsive Breakpoints
+
+### Mobile (< 768px)
+- Sidebar: Transform off-screen
+- Topbar brand: Auto width
+- Search: Hidden
+- User name: Hidden
+- Content: Padding 15px
+- Buttons: Full width stacked
+
+## Color Variables from Color Admin
+
+- **Sidebar BG**: #2d353c
+- **Sidebar Darker**: #242a30
+- **Content BG**: #f2f3f4
+- **Card BG**: #ffffff
+- **Text Dark**: #242a30
+- **Text Gray**: #666
+- **Border**: `rgba(0, 0, 0, 0.05-0.1)`
+
+## Butler Theme Overrides
+
+While matching Color Admin structure, maintain butler identity:
+- **Accent**: #d4af37 (gold) instead of #348fe2 (blue)
+- **Primary**: #1a1a2e (charcoal) for dark elements
+- **Active states**: Gold highlighting
+- **Badges**: Gold background

@@ -1,0 +1,62 @@
+---
+globs: *.scss,*.html
+---
+
+# Styling Conventions
+
+## SCSS
+- **Default style language**: SCSS (configured in [angular.json](mdc:angular.json))
+- **Global styles**: [styles.scss](mdc:src/styles.scss)
+- **Component styles**: Use `styleUrl: './component.scss'` (singular)
+
+## Component Styles
+- Keep component styles scoped to the component
+- Use `:host` selector for component-level styling
+- Avoid global styles in component files
+
+## Style Organization
+```scss
+// Component SCSS structure
+:host {
+  // Host element styles
+  display: block;
+}
+
+.component-wrapper {
+  // Container styles
+}
+
+.component-element {
+  // Element styles
+  
+  &--modifier {
+    // BEM modifier
+  }
+  
+  &:hover {
+    // Pseudo-states
+  }
+}
+
+// Media queries at the end
+@media (max-width: 768px) {
+  // Responsive styles
+}
+```
+
+## HTML Templates
+- Use Prettier for HTML formatting (configured in [package.json](mdc:package.json))
+- Parser is set to "angular" for proper Angular template formatting
+
+## Best Practices
+- Use CSS custom properties (variables) for theming
+- Follow mobile-first responsive design
+- Keep specificity low
+- Use semantic class names
+- Avoid inline styles in templates
+
+## Bundle Size Limits
+Per [angular.json](mdc:angular.json):
+- Component styles warning: 4kB
+- Component styles error: 8kB
+Keep component styles lean and focused.

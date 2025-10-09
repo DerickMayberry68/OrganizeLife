@@ -1,0 +1,38 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--color-background);
+}
+
+.app-content {
+  flex: 1;
+  margin-left: 250px;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left var(--transition-base);
+}
+
+.main-content {
+  flex: 1;
+  margin-top: 60px;
+  padding: 20px 25px;
+  overflow-x: hidden;
+  background: #f2f3f4;
+  min-height: calc(100vh - 60px);
+
+  @media (max-width: 768px) {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-content {
+    margin-left: 0;
+  }
+}
+

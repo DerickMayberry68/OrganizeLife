@@ -1,0 +1,118 @@
+<div class="weather-dashboard">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="weather-loading">
+    <i class="fa fa-spinner fa-spin"></i>
+    <span>Loading weather data...</span>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !isLoading" class="weather-error">
+    <i class="fa fa-exclamation-triangle"></i>
+    <span>{{ error }}</span>
+    <button class="btn btn-sm btn-primary" (click)="loadWeatherData()">Retry</button>
+  </div>
+
+  <!-- Weather Content -->
+  <div *ngIf="weatherData && !isLoading">
+    <!-- Main Central Gauge -->
+    <div class="weather-central-gauge">
+      <div class="central-gauge-container">
+        <div class="central-gauge">
+          <div class="gauge-outer-ring">
+            <div class="gauge-inner-ring">
+              <div class="gauge-center">
+                <div class="gauge-value">{{ weatherData.temperature }}°</div>
+                <div class="gauge-label">Temperature</div>
+              </div>
+            </div>
+          </div>
+          <div class="gauge-pointer" [style.transform]="'rotate(' + getGaugeRotation() + 'deg)'"></div>
+        </div>
+      </div>
+    </div>
+
+  <!-- Top Right Data Panels -->
+  <div class="weather-data-panels">
+    <!-- Humidity Gauge -->
+    <div class="data-panel humidity-panel">
+      <div class="panel-gauge">
+        <div class="mini-gauge">
+          <div class="mini-gauge-value">{{ weatherData.humidity }}</div>
+          <div class="mini-gauge-label">Humidity</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wind Speed Panel -->
+    <div class="data-panel wind-panel">
+      <div class="panel-header">
+        <span class="panel-title">Wind</span>
+        <span class="panel-value">{{ weatherData.windSpeed }}</span>
+      </div>
+      <div class="panel-bar">
+        <div class="bar-fill" [style.width.%]="(weatherData.windSpeed / 20) * 100"></div>
+      </div>
+    </div>
+
+    <!-- Pressure Panel -->
+    <div class="data-panel pressure-panel">
+      <div class="panel-icon">
+        <i class="fa fa-tachometer-alt"></i>
+      </div>
+      <div class="panel-content">
+        <div class="panel-value">{{ weatherData.pressure }}</div>
+        <div class="panel-label">Pressure</div>
+      </div>
+    </div>
+
+    <!-- UV Index Panel -->
+    <div class="data-panel uv-panel">
+      <div class="panel-icon">
+        <i class="fa fa-sun"></i>
+      </div>
+      <div class="panel-content">
+        <div class="panel-value">{{ weatherData.uvIndex }}</div>
+        <div class="panel-label">UV Index</div>
+      </div>
+    </div>
+
+    <!-- Visibility Panel -->
+    <div class="data-panel visibility-panel">
+      <div class="panel-icon">
+        <i class="fa fa-eye"></i>
+      </div>
+      <div class="panel-content">
+        <div class="panel-value">{{ weatherData.visibility }}</div>
+        <div class="panel-label">Visibility</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weather Icons -->
+  <div class="weather-icons">
+    <div class="weather-icon-item" *ngFor="let icon of weatherIcons">
+      <i class="fa {{ icon.icon }}"></i>
+    </div>
+  </div>
+
+  <!-- Location and Status -->
+  <div class="weather-location-info">
+    <div class="location-panel">
+      <div class="location-text">{{ weatherData.location }}</div>
+      <div class="status-text">{{ weatherData.condition }}</div>
+    </div>
+    <div class="status-gauge">
+      <div class="status-value">86%</div>
+      <div class="status-label">System</div>
+    </div>
+  </div>
+
+    <!-- Alerts (if any) -->
+    <div class="weather-alerts" *ngIf="alerts.length > 0">
+      <div class="alert-item" *ngFor="let alert of alerts">
+        <i class="fa {{ alert.icon }}"></i>
+        <span>{{ alert.message }}</span>
+      </div>
+    </div>
+  </div>
+</div>

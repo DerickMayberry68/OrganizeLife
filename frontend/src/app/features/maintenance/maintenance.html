@@ -1,0 +1,156 @@
+<div class="maintenance">
+  <h1 class="page-header">
+    Home Maintenance
+    <div class="page-header__actions">
+      <button class="btn btn--accent" (click)="openTaskDialog()">
+        + Add Task
+      </button>
+    </div>
+  </h1>
+
+  @if (tasks().length > 0) {
+    <div class="task-grid">
+      @for (task of tasks(); track task.id) {
+        <div class="card task-card" [class.priority-urgent]="task.priority === 'urgent'" 
+             [class.priority-high]="task.priority === 'high'"
+             [class.priority-medium]="task.priority === 'medium'"
+             [class.priority-low]="task.priority === 'low'">
+          <div class="card-header">
+            <h4 class="card-title">{{ task.title }}</h4>
+            <span class="badge" [ngClass]="{
+              'badge-danger': task.priority === 'urgent',
+              'badge-warning': task.priority === 'high',
+              'badge-info': task.priority === 'medium',
+              'badge-success': task.priority === 'low'
+            }">{{ task.priority }}</span>
+          </div>
+          <div class="card-body">
+            <div class="task-meta">
+              <div class="task-category">
+                <i class="fa fa-tag"></i>
+                <span>{{ task.category }}</span>
+              </div>
+              <div class="task-status">
+                <i class="fa fa-circle" [ngClass]="{
+                  'text-success': task.status === 'completed',
+                  'text-warning': task.status === 'scheduled',
+                  'text-muted': task.status === 'pending'
+                }"></i>
+                <span>{{ task.status }}</span>
+              </div>
+            </div>
+
+            <div class="task-details">
+              <div class="detail-item">
+                <i class="fa fa-calendar"></i>
+                <span>{{ formatDate(task.dueDate) }}</span>
+              </div>
+
+              @if (task.estimatedCost) {
+                <div class="detail-item">
+                  <i class="fa fa-dollar-sign"></i>
+                  <span>{{ formatCurrency(task.estimatedCost) }}</span>
+                </div>
+              }
+
+              @if (task.isRecurring) {
+                <div class="detail-item">
+                  <i class="fa fa-sync"></i>
+                  <span>{{ task.frequency }}</span>
+                </div>
+              }
+            </div>
+
+            @if (task.serviceProvider) {
+              <div class="task-provider">
+                <i class="fa fa-user-circle"></i>
+                <div>
+                  <strong>{{ task.serviceProvider.name }}</strong>
+                  <small>{{ task.serviceProvider.phone }}</small>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="card">
+      <div class="card-body text-center">
+        <i class="fa fa-wrench fa-3x text-muted mb-3"></i>
+        <p class="text-muted">No maintenance tasks scheduled. Click "+ Add Task" to get started.</p>
+      </div>
+    </div>
+  }
+
+    <!-- Add Maintenance Task Dialog -->
+    <ejs-dialog
+      #taskDialog
+      header="Add Maintenance Task"
+      [width]="dialogWidth"
+      [isModal]="true"
+      [visible]="false"
+      [animationSettings]="animationSettings"
+      [buttons]="taskDialogButtons">
+      <ng-template #content>
+        <form [formGroup]="taskForm" class="form">
+          <div class="form-group">
+            <label>Task Title *</label>
+            <ejs-textbox formControlName="title" placeholder="Enter task title"></ejs-textbox>
+          </div>
+
+          <div class="form-group">
+            <label>Category *</label>
+            <ejs-dropdownlist
+              formControlName="category"
+              [dataSource]="categories"
+              placeholder="Select category">
+            </ejs-dropdownlist>
+          </div>
+
+          <div class="form-group">
+            <label>Priority *</label>
+            <ejs-dropdownlist
+              formControlName="priority"
+              [dataSource]="priorities"
+              placeholder="Select priority">
+            </ejs-dropdownlist>
+          </div>
+
+          <div class="form-group">
+            <label>Due Date *</label>
+            <ejs-datepicker formControlName="dueDate"></ejs-datepicker>
+          </div>
+
+          <div class="form-group">
+            <label>Estimated Cost</label>
+            <ejs-numerictextbox
+              formControlName="estimatedCost"
+              [min]="0"
+              [step]="10"
+              format="c2"
+              placeholder="0.00">
+            </ejs-numerictextbox>
+          </div>
+
+          <div class="form-group">
+            <label>Notes</label>
+            <ejs-textbox formControlName="notes" multiline="true" placeholder="Additional notes"></ejs-textbox>
+          </div>
+
+          <div class="form-group">
+            <ejs-checkbox formControlName="isRecurring" label="Recurring Task"></ejs-checkbox>
+          </div>
+
+          <div class="form-group">
+            <label>Frequency</label>
+            <ejs-dropdownlist
+              formControlName="frequency"
+              [dataSource]="frequencies"
+              placeholder="Select frequency">
+            </ejs-dropdownlist>
+          </div>
+        </form>
+      </ng-template>
+    </ejs-dialog>
+</div>

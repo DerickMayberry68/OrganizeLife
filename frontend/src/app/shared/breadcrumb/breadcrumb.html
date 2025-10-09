@@ -1,0 +1,12 @@
+<ol class="breadcrumb">
+  @for (item of items(); track $index; let isLast = $last) {
+    <li class="breadcrumb-item" [class.active]="isLast">
+      @if (item.path && !isLast) {
+        <a [routerLink]="item.path">{{ item.label }}</a>
+      } @else {
+        {{ item.label }}
+      }
+    </li>
+  }
+</ol>
+

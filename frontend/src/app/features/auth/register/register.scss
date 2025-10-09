@@ -1,0 +1,83 @@
+// Import shared login styles
+@import '../login/login.scss';
+
+// Override/extend styles specific to register
+.register-page {
+  @extend .login-page;
+}
+
+.register-container {
+  @extend .login-container;
+  max-width: 600px; // Wider for more fields
+}
+
+.register-card {
+  @extend .login-card;
+}
+
+.register-header {
+  @extend .login-header;
+
+  .logo i {
+    color: #48bb78; // Green for register
+    text-shadow: 0 2px 10px rgba(72, 187, 120, 0.3);
+  }
+}
+
+.register-form {
+  @extend .login-form;
+
+  .form-text {
+    font-size: 12px;
+    color: #718096;
+    margin-top: 4px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+
+    &:hover:not(:disabled) {
+      box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+    }
+  }
+
+  .login-link {
+    @extend .register-link;
+  }
+
+  .row {
+    margin-left: -10px;
+    margin-right: -10px;
+
+    [class*='col-'] {
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+  }
+}
+
+.register-footer {
+  @extend .login-footer;
+}
+
+// Mobile adjustments
+@media (max-width: 768px) {
+  .register-container {
+    max-width: 500px;
+  }
+
+  .register-card {
+    padding: 30px 20px;
+  }
+
+  .register-form {
+    .row {
+      [class*='col-md-'] {
+        padding-left: 15px;
+        padding-right: 15px;
+      }
+    }
+  }
+}
+

@@ -1,0 +1,47 @@
+<aside class="sidebar" [class.sidebar--collapsed]="isCollapsed()" data-bs-theme="dark">
+  <div class="sidebar__scrollable">
+    <!-- Profile Section -->
+    <div class="sidebar__profile">
+      <div class="sidebar__profile-cover"></div>
+      <div class="sidebar__profile-image">
+        <span class="profile-avatar">🎩</span>
+      </div>
+      <div class="sidebar__profile-info">
+        <div class="profile-name">Estate Manager</div>
+        <small class="profile-role">Administrator</small>
+      </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="sidebar__menu">
+      <div class="sidebar__menu-header">Navigation</div>
+      
+      @for (item of navItems; track item.path) {
+        <div class="menu-item">
+          <a 
+            [routerLink]="item.path"
+            routerLinkActive="menu-item--active"
+            class="menu-link">
+            <div class="menu-icon">
+              <span>{{ item.icon }}</span>
+            </div>
+            <div class="menu-text">
+              {{ item.label }}
+              @if (item.badge) {
+                <span class="menu-badge">{{ item.badge }}</span>
+              }
+            </div>
+          </a>
+        </div>
+      }
+
+      <!-- Minify Button -->
+      <div class="menu-item menu-control">
+        <a href="javascript:;" class="menu-link menu-link--minify" (click)="toggleSidebar()">
+          <i class="menu-control__icon">{{ isCollapsed() ? '→' : '←' }}</i>
+        </a>
+      </div>
+    </nav>
+  </div>
+  <div class="sidebar__bg"></div>
+</aside>

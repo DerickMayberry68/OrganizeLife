@@ -1,0 +1,98 @@
+<header class="topbar" (click)="closeDropdowns()">
+  <div class="topbar__brand">
+    <span class="topbar__logo">🎩</span>
+    <span class="topbar__name"><b>The</b>Butler</span>
+  </div>
+
+  <div class="topbar__nav">
+    <!-- Search Form -->
+    <div class="topbar__search">
+      <form class="search-form">
+        <input type="text" class="search-input" placeholder="Enter keyword..." />
+        <button type="submit" class="search-btn">
+          <i class="search-icon">🔍</i>
+        </button>
+      </form>
+    </div>
+
+    <!-- Right Side -->
+    <div class="topbar__actions">
+      <!-- Notifications -->
+      <div class="topbar__item" (click)="toggleNotifications($event)">
+        <a href="javascript:;" class="topbar__link">
+          <span class="topbar__icon">🔔</span>
+          @if (notificationCount() > 0) {
+            <span class="topbar__badge">{{ notificationCount() }}</span>
+          }
+        </a>
+
+        @if (isNotificationsOpen()) {
+          <div class="dropdown notifications-dropdown" (click)="$event.stopPropagation()">
+            <div class="dropdown__header">
+              <strong>NOTIFICATIONS ({{ notificationCount() }})</strong>
+            </div>
+            <div class="dropdown__body">
+              @for (notification of notifications(); track notification.id) {
+                <a href="javascript:;" class="notification-item">
+                  <div class="notification-item__icon" [class]="'notification-item__icon--' + notification.type">
+                    @if (notification.type === 'warning') { ⚠️ }
+                    @else if (notification.type === 'success') { ✓ }
+                    @else { ℹ }
+                  </div>
+                  <div class="notification-item__content">
+                    <h6 class="notification-item__title">{{ notification.title }}</h6>
+                    <p class="notification-item__message">{{ notification.message }}</p>
+                    <div class="notification-item__time">{{ notification.time }}</div>
+                  </div>
+                </a>
+              }
+            </div>
+            <div class="dropdown__footer">
+              <a href="javascript:;" class="dropdown__link">View more</a>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- User Profile -->
+      <div class="topbar__item topbar__user-dropdown" (click)="toggleProfile($event)">
+        <a href="javascript:;" class="topbar__link topbar__user-link">
+          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect fill='%23d4af37' width='40' height='40'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='20' fill='%231a1a2e'%3E🎩%3C/text%3E%3C/svg%3E" 
+               alt="User" 
+               class="topbar__avatar" />
+          <span class="topbar__user-text">
+            <span class="topbar__user-name">{{ user.name }}</span>
+            <b class="topbar__caret">▼</b>
+          </span>
+        </a>
+
+        @if (isProfileOpen()) {
+          <div class="dropdown profile-dropdown" (click)="$event.stopPropagation()">
+            <a [routerLink]="['/profile']" class="dropdown__item">
+              <span class="dropdown__icon">👤</span>
+              <span>Edit Profile</span>
+            </a>
+            <a href="javascript:;" class="dropdown__item">
+              <span class="dropdown__icon">📧</span>
+              <span>Inbox</span>
+              <span class="dropdown__badge badge badge--error">2</span>
+            </a>
+            <a href="javascript:;" class="dropdown__item">
+              <span class="dropdown__icon">📅</span>
+              <span>Calendar</span>
+            </a>
+            <a [routerLink]="['/settings']" class="dropdown__item">
+              <span class="dropdown__icon">⚙️</span>
+              <span>Settings</span>
+            </a>
+            <div class="dropdown__divider"></div>
+            <a href="javascript:;" class="dropdown__item" (click)="logout()">
+              <span class="dropdown__icon">🚪</span>
+              <span>Log Out</span>
+            </a>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</header>

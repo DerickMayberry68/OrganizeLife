@@ -1,0 +1,196 @@
+<div class="dashboard">
+  <app-breadcrumb [items]="breadcrumbs" />
+  
+  <h1 class="page-header">Dashboard</h1>
+
+  <!-- Alerts Section -->
+  @if (alerts().length > 0) {
+    <div class="dashboard__alerts">
+      @for (alert of alerts(); track alert.id) {
+        <app-alert
+          [type]="alert.type"
+          [message]="alert.message"
+          [dismissible]="true"
+          (dismiss)="dismissAlert(alert.id)"
+        />
+      }
+    </div>
+  }
+
+    <!-- Quick Stats -->
+    <section class="dashboard__stats">
+      <app-stat-card
+        title="Upcoming Bills"
+        [value]="stats().upcomingBills"
+        icon="📮"
+        variant="primary"
+        [showViewDetail]="true"
+      />
+      
+      <app-stat-card
+        title="Overdue Items"
+        [value]="stats().overdueItems"
+        icon="⚠️"
+        [variant]="stats().overdueItems > 0 ? 'error' : 'info'"
+        [showViewDetail]="true"
+      />
+      
+      <app-stat-card
+        title="Maintenance Tasks"
+        [value]="stats().maintenanceTasks"
+        icon="🔧"
+        variant="warning"
+        [showViewDetail]="true"
+      />
+      
+      <app-stat-card
+        title="Budget Usage"
+        [value]="stats().budgetStatus.percentageUsed.toFixed(0) + '%'"
+        icon="💰"
+        [variant]="stats().budgetStatus.status === 'critical' ? 'error' : 'success'"
+        [showViewDetail]="true"
+      />
+    </section>
+
+  <!-- Budget Chart -->
+  @if (budgetChartData().length > 0) {
+    <div class="dashboard__chart">
+      <div class="card">
+        <div class="card-header">
+          <h3>Budget Overview</h3>
+        </div>
+          <div class="card-content">
+            <ejs-chart
+              style="display:block"
+              [primaryXAxis]="primaryXAxis"
+              [primaryYAxis]="primaryYAxis"
+              [title]="chartTitle"
+              [tooltip]="tooltip"
+              [height]="'300'">
+              <e-series-collection>
+                <e-series 
+                  [dataSource]="budgetChartData()" 
+                  type='Column' 
+                  xName='x' 
+                  yName='y' 
+                  name='Spent'
+                  [marker]="marker"
+                  fill='#d4af37'>
+                </e-series>
+              </e-series-collection>
+            </ejs-chart>
+          </div>
+      </div>
+    </div>
+  }
+
+  <!-- Main Content Grid -->
+  <div class="dashboard__grid">
+      <!-- Upcoming Bills Widget -->
+      <div class="card dashboard__widget">
+        <div class="widget__header">
+          <h2 class="widget__title">
+            <span class="widget__icon">📮</span>
+            Upcoming Bills
+          </h2>
+          <a [routerLink]="['/bills']" class="widget__link">View All →</a>
+        </div>
+        
+        <div class="widget__content">
+          @if (recentBills().length > 0) {
+            <div class="bill-list">
+              @for (bill of recentBills(); track bill.id) {
+                <div class="bill-item">
+                  <div class="bill-item__info">
+                    <h3 class="bill-item__name">{{ bill.name }}</h3>
+                    <span class="bill-item__date">Due {{ formatDate(bill.dueDate) }}</span>
+                  </div>
+                  <div class="bill-item__amount">
+                    <span class="amount">{{ formatCurrency(bill.amount) }}</span>
+                    @if (getDaysUntil(bill.dueDate) <= 3) {
+                      <span class="badge badge--warning">{{ getDaysUntil(bill.dueDate) }}d</span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="widget__empty">
+              <p>No upcoming bills</p>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Maintenance Tasks Widget -->
+      <div class="card dashboard__widget">
+        <div class="widget__header">
+          <h2 class="widget__title">
+            <span class="widget__icon">🔧</span>
+            Maintenance Tasks
+          </h2>
+          <a [routerLink]="['/maintenance']" class="widget__link">View All →</a>
+        </div>
+        
+        <div class="widget__content">
+          @if (upcomingMaintenance().length > 0) {
+            <div class="task-list">
+              @for (task of upcomingMaintenance(); track task.id) {
+                <div class="task-item">
+                  <div class="task-item__info">
+                    <h3 class="task-item__title">{{ task.title }}</h3>
+                    <span class="task-item__category">{{ task.category }}</span>
+                  </div>
+                  <div class="task-item__meta">
+                    @if (task.priority === 'urgent') {
+                      <span class="badge badge--error">Urgent</span>
+                    } @else if (task.priority === 'high') {
+                      <span class="badge badge--warning">High</span>
+                    } @else {
+                      <span class="badge badge--info">{{ task.priority }}</span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="widget__empty">
+              <p>No pending tasks</p>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Quick Actions Widget -->
+      <div class="card card--accent">
+        <div class="widget__header">
+          <h2 class="widget__title">
+            <span class="widget__icon">⚡</span>
+            Quick Actions
+          </h2>
+        </div>
+        
+        <div class="widget__content">
+          <div class="quick-actions">
+            <a [routerLink]="['/bills']" class="action-button">
+              <span class="action-button__icon">💳</span>
+              <span class="action-button__label">Pay Bill</span>
+            </a>
+            <a [routerLink]="['/financial']" class="action-button">
+              <span class="action-button__icon">💰</span>
+              <span class="action-button__label">Add Transaction</span>
+            </a>
+            <a [routerLink]="['/maintenance']" class="action-button">
+              <span class="action-button__icon">🔨</span>
+              <span class="action-button__label">Schedule Task</span>
+            </a>
+            <a [routerLink]="['/documents']" class="action-button">
+              <span class="action-button__icon">📄</span>
+              <span class="action-button__label">Upload Document</span>
+            </a>
+          </div>
+        </div>
+      </div>
+  </div>
+</div>
+

@@ -1,0 +1,205 @@
+---
+globs: *.ts,*.html
+---
+
+# Dialog and Form Patterns
+
+## Dialog Structure
+
+Every module should have dialog capability for adding data. Reference: [financial.ts](mdc:src/app/features/financial/financial.ts)
+
+### Component Setup
+
+```typescript
+import { ViewChild, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { DialogComponent, DialogModule } from '@syncfusion/ej2-angular-popups';
+
+@Component({
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    DialogModule,
+    // ... other Syncfusion modules
+  ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA]
+})
+export class MyFeature {
+  @ViewChild('myDialog') myDialog!: DialogComponent;
+  
+  protected readonly dialogWidth = '500px';
+  protected readonly animationSettings = { effect: 'Zoom' };
+  protected readonly dialogButtons = [
+    { click: () => this.save(), buttonModel: { content: 'Save', isPrimary: true } },
+    { click: () => this.myDialog.hide(), buttonModel: { content: 'Cancel' } }
+  ];
+  
+  protected myForm: FormGroup;
+}
+```
+
+### HTML Template
+
+```html
+<ejs-dialog
+  #myDialog
+  header="Dialog Title"
+  [width]="dialogWidth"
+  [isModal]="true"
+  [visible]="false"
+  [animationSettings]="animationSettings"
+  [buttons]="dialogButtons">
+  <ng-template #content>
+    <form [formGroup]="myForm" class="form">
+      <!-- Form fields here -->
+    </form>
+  </ng-template>
+</ejs-dialog>
+```
+
+## Form Field Patterns
+
+### Text Input
+```html
+<div class="form-group">
+  <label>Field Name *</label>
+  <ejs-textbox formControlName="fieldName" placeholder="Enter value"></ejs-textbox>
+</div>
+```
+
+### Numeric Input (Currency)
+```html
+<div class="form-group">
+  <label>Amount *</label>
+  <ejs-numerictextbox
+    formControlName="amount"
+    [min]="0"
+    [step]="0.01"
+    format="c2"
+    placeholder="0.00">
+  </ejs-numerictextbox>
+</div>
+```
+
+### Dropdown
+```html
+<div class="form-group">
+  <label>Category *</label>
+  <ejs-dropdownlist
+    formControlName="category"
+    [dataSource]="categories"
+    placeholder="Select category">
+  </ejs-dropdownlist>
+</div>
+```
+
+### Date Picker
+```html
+<div class="form-group">
+  <label>Date *</label>
+  <ejs-datepicker formControlName="date"></ejs-datepicker>
+</div>
+```
+
+### Checkbox
+```html
+<div class="form-group">
+  <ejs-checkbox formControlName="isEnabled" label="Enable Feature"></ejs-checkbox>
+</div>
+```
+
+### Multi-line Text
+```html
+<div class="form-group">
+  <label>Notes</label>
+  <ejs-textbox formControlName="notes" multiline="true" placeholder="Enter notes"></ejs-textbox>
+</div>
+```
+
+## Form Validation
+
+Always use Validators:
+```typescript
+this.myForm = this.fb.group({
+  requiredField: ['', Validators.required],
+  numberField: [0, [Validators.required, Validators.min(0.01)]],
+  optionalField: ['']
+});
+```
+
+## Save Method Pattern
+
+```typescript
+protected save(): void {
+  if (this.myForm.valid) {
+    const formValue = this.myForm.value;
+    const entity = {
+      id: Date.now().toString(),
+      ...formValue
+    };
+    this.dataService.addEntity(entity);
+    this.myDialog.hide();
+    this.myForm.reset();
+  }
+}
+```
+
+## Open Dialog Pattern
+
+```typescript
+protected openDialog(): void {
+  this.myForm.reset({ /* default values */ });
+  this.myDialog.show();
+}
+```
+
+## Action Buttons in Page Headers
+
+Every page should have add buttons in the header:
+
+```html
+<header class="page-header">
+  <div>
+    <h1>Page Title</h1>
+    <p class="page-subtitle">Description</p>
+  </div>
+  <div class="page-header__actions">
+    <button class="btn btn--accent" (click)="openDialog()">
+      + Add Item
+    </button>
+  </div>
+</header>
+```
+
+## Form Styling
+
+All forms use consistent styling from [styles.scss](mdc:src/styles.scss):
+
+- `.form`: Flex column, 20px gap
+- `.form-group`: Flex column, smaller gap
+- Labels: 600 weight, small font, dark text
+- All inputs: 100% width when inside `.form`
+
+## Dialog Styling Rules
+
+**DO NOT** use dark backgrounds for dialog headers:
+- ✅ White background
+- ✅ Dark text (#242a30)
+- ✅ 16px font size
+- ✅ 15-20px padding
+
+**DO** use gold for primary buttons:
+- ✅ Background: #d4af37
+- ✅ Text: #1a1a2e (charcoal)
+- ✅ Hover: Lighter gold (#dfc159)
+
+## Required Imports for Forms
+
+```typescript
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { DialogComponent, DialogModule } from '@syncfusion/ej2-angular-popups';
+import { ButtonModule, CheckBoxModule } from '@syncfusion/ej2-angular-buttons';
+import { DatePickerModule } from '@syncfusion/ej2-angular-calendars';
+import { TextBoxModule, NumericTextBoxModule } from '@syncfusion/ej2-angular-inputs';
+import { DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
+```

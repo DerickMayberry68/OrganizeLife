@@ -1,0 +1,29 @@
+<div class="stat-card" [class]="'stat-card--' + variant()">
+  <div class="stat-card__main">
+    <div class="stat-card__info">
+      <h3 class="stat-card__title">{{ title() }}</h3>
+      <div class="stat-card__value">{{ value() }}</div>
+    </div>
+    <div class="stat-card__icon">{{ icon() }}</div>
+  </div>
+  
+  @if (showViewDetail()) {
+    <div class="stat-card__footer">
+      <a class="stat-card__link">
+        View Detail
+        <i class="arrow">➜</i>
+      </a>
+    </div>
+  }
+  
+  @if (trendValue() && !showViewDetail()) {
+    <div class="stat-card__trend" [class]="'stat-card__trend--' + trend()">
+      @if (trend() === 'up') {
+        <span>↑</span>
+      } @else if (trend() === 'down') {
+        <span>↓</span>
+      }
+      <span>{{ trendValue() }}</span>
+    </div>
+  }
+</div>
