@@ -5,7 +5,7 @@ import { DataService } from '../../services/data.service';
 import { StatCard } from '../../shared/stat-card/stat-card';
 import { AlertComponent } from '../../shared/alert/alert';
 import { Breadcrumb, type BreadcrumbItem } from '../../shared/breadcrumb/breadcrumb';
-import { ChartModule } from '@syncfusion/ej2-angular-charts';
+import { ChartModule, CategoryService, ColumnSeriesService, LegendService, TooltipService } from '@syncfusion/ej2-angular-charts';
 
 @Component({
   selector: 'app-dashboard',
@@ -18,6 +18,12 @@ import { ChartModule } from '@syncfusion/ej2-angular-charts';
     ChartModule
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  providers: [
+    CategoryService,
+    ColumnSeriesService,
+    LegendService,
+    TooltipService
+  ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
 })
@@ -40,29 +46,51 @@ export class Dashboard {
       .slice(0, 3)
   );
 
-  // Chart data for budget visualization
+  // Chart data for budget visualization - with null safety
   protected readonly budgetChartData = computed(() => {
     const budgets = this.dataService.budgets();
-    return budgets.map(b => ({
-      x: b.category,
-      y: b.spent,
-      text: `${b.category}: $${b.spent}`
-    }));
+    const transactions = this.dataService.transactions();
+    
+    // Return empty array if no budgets
+    if (!budgets || budgets.length === 0) {
+      return [];
+    }
+    
+    return budgets.map(b => {
+      // Calculate spent for this budget
+      const spent = transactions
+        .filter(t => t.type === 'expense' && t.categoryId === b.categoryId)
+        .reduce((sum, t) => sum + t.amount, 0);
+      
+      return {
+        x: b.name,
+        y: spent,
+        text: `${b.name}: $${spent.toFixed(2)}`
+      };
+    });
   });
 
-  protected readonly primaryXAxis = {
+  // Chart configuration - properly typed for Syncfusion
+  protected readonly primaryXAxis: any = {
     valueType: 'Category',
-    title: 'Categories'
+    title: 'Budget Categories',
+    labelIntersectAction: 'Rotate45'
   };
 
-  protected readonly primaryYAxis = {
+  protected readonly primaryYAxis: any = {
     title: 'Amount ($)',
-    labelFormat: '${value}'
+    labelFormat: 'c0',
+    minimum: 0
   };
 
   protected readonly chartTitle = 'Budget Spending by Category';
-  protected readonly tooltip = { enable: true, format: '${point.x}: ${point.y}' };
-  protected readonly marker = { 
+  
+  protected readonly tooltip: any = { 
+    enable: true, 
+    format: '${point.x}: ${point.y}' 
+  };
+  
+  protected readonly marker: any = { 
     visible: true, 
     height: 10, 
     width: 10,

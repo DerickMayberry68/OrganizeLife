@@ -1,9 +1,11 @@
-import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, ViewChild } from '@angular/core';
+import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, ViewChild, OnInit, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DataService } from '../../services/data.service';
 import { ToastService } from '../../services/toast.service';
-import { GridModule, PageService, SortService, FilterService } from '@syncfusion/ej2-angular-grids';
+import { StatCard } from '../../shared/stat-card/stat-card';
+import { GridModule, PageService, SortService, FilterService, GroupService } from '@syncfusion/ej2-angular-grids';
+import { ChartModule, CategoryService, ColumnSeriesService, LegendService, TooltipService } from '@syncfusion/ej2-angular-charts';
 import { DialogComponent, DialogModule } from '@syncfusion/ej2-angular-popups';
 import { ButtonModule } from '@syncfusion/ej2-angular-buttons';
 import { DatePickerModule } from '@syncfusion/ej2-angular-calendars';
@@ -16,7 +18,9 @@ import { CheckBoxModule } from '@syncfusion/ej2-angular-buttons';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    StatCard,
     GridModule,
+    ChartModule,
     DialogModule,
     ButtonModule,
     DatePickerModule,
@@ -26,11 +30,20 @@ import { CheckBoxModule } from '@syncfusion/ej2-angular-buttons';
     CheckBoxModule
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  providers: [PageService, SortService, FilterService],
+  providers: [
+    PageService, 
+    SortService, 
+    FilterService, 
+    GroupService,
+    CategoryService,
+    ColumnSeriesService,
+    LegendService,
+    TooltipService
+  ],
   templateUrl: './bills.html',
   styleUrl: './bills.scss'
 })
-export class Bills {
+export class Bills implements OnInit {
   @ViewChild('billDialog') billDialog!: DialogComponent;
 
   private readonly dataService = inject(DataService);
@@ -38,8 +51,84 @@ export class Bills {
   private readonly toastService = inject(ToastService);
 
   protected readonly bills = this.dataService.bills;
+  protected readonly isLoading = signal(false);
+
+  // Computed values
+  protected readonly totalBills = computed(() => this.bills().length);
+  
+  protected readonly upcomingBills = computed(() => 
+    this.bills().filter(b => {
+      const daysUntil = this.getDaysUntil(b.dueDate);
+      return daysUntil >= 0 && daysUntil <= 7 && b.status !== 'paid';
+    }).length
+  );
+
+  protected readonly overdueBills = computed(() => 
+    this.bills().filter(b => b.status === 'overdue').length
+  );
+
+  protected readonly totalDue = computed(() => 
+    this.bills()
+      .filter(b => b.status === 'pending' || b.status === 'overdue')
+      .reduce((sum, b) => sum + b.amount, 0)
+  );
+
+  // Chart data with null safety
+  protected readonly billsByCategoryChart = computed(() => {
+    const data = this.bills();
+    if (!data || data.length === 0) return [];
+    
+    const categoryTotals = data.reduce((acc: any, bill) => {
+      const category = bill.category || 'Other';
+      if (!acc[category]) {
+        acc[category] = 0;
+      }
+      acc[category] += bill.amount;
+      return acc;
+    }, {});
+
+    return Object.entries(categoryTotals).map(([category, total]) => ({
+      x: category,
+      y: total,
+      text: `${category}: $${(total as number).toFixed(2)}`
+    }));
+  });
+
+  protected readonly upcomingBillsList = computed(() => 
+    this.bills()
+      .filter(b => {
+        const daysUntil = this.getDaysUntil(b.dueDate);
+        return daysUntil >= 0 && daysUntil <= 7 && b.status !== 'paid';
+      })
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+      .slice(0, 5)
+  );
+
+  // Grid settings
   protected readonly pageSettings = { pageSize: 10 };
   protected readonly filterSettings = { type: 'Excel' };
+
+  // Chart settings with proper types
+  protected readonly primaryXAxis: any = { 
+    valueType: 'Category', 
+    title: 'Categories',
+    labelIntersectAction: 'Rotate45'
+  };
+  protected readonly primaryYAxis: any = { 
+    title: 'Amount ($)', 
+    labelFormat: 'c0',
+    minimum: 0
+  };
+  protected readonly chartTitle = 'Bills by Category';
+  protected readonly tooltip = { enable: true, format: '${point.x}: ${point.y}' };
+  protected readonly marker = { 
+    visible: true, 
+    height: 10, 
+    width: 10,
+    dataLabel: { visible: false }
+  };
+  protected readonly chartBackground = 'white';
+  protected readonly palettes = ['#d4af37'];
 
   // Dialog settings
   protected readonly dialogWidth = '500px';
@@ -57,6 +146,12 @@ export class Bills {
   protected readonly frequencies = ['weekly', 'monthly', 'quarterly', 'yearly'];
 
   constructor() {
+    // Debug: Log chart data changes
+    effect(() => {
+      const chartData = this.billsByCategoryChart();
+      console.log('Bills Chart Data:', chartData);
+    });
+
     this.billForm = this.fb.group({
       name: ['', Validators.required],
       amount: [0, [Validators.required, Validators.min(0.01)]],
@@ -66,6 +161,14 @@ export class Bills {
       frequency: ['monthly'],
       autoPayEnabled: [false],
       reminderDays: [3, Validators.min(0)]
+    });
+  }
+
+  ngOnInit(): void {
+    // Bills are already loaded via DataService signals
+    // Use setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
+    setTimeout(() => {
+      this.isLoading.set(false);
     });
   }
 
@@ -108,12 +211,20 @@ export class Bills {
     }
   }
 
+  // Utility methods for grid formatters
   protected formatCurrency(args: any): string {
     if (!args.value) return '';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
     }).format(args.value);
+  }
+
+  protected formatCurrencyValue(value: number): string {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(value);
   }
 
   protected formatDate(args: any): string {
@@ -125,11 +236,26 @@ export class Bills {
     }).format(new Date(args.value));
   }
 
+  protected formatDateValue(date: Date): string {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric'
+    }).format(new Date(date));
+  }
+
   protected getDaysUntil(date: Date): number {
     const today = new Date();
     const targetDate = new Date(date);
     const diffTime = targetDate.getTime() - today.getTime();
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }
+
+  protected getDaysUntilText(date: Date): string {
+    const days = this.getDaysUntil(date);
+    if (days < 0) return 'Overdue';
+    if (days === 0) return 'Due Today';
+    if (days === 1) return 'Due Tomorrow';
+    return `Due in ${days} days`;
   }
 
   protected getStatusBadge(status: string): string {

@@ -59,7 +59,7 @@ export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
   
-  private readonly API_URL = 'http://localhost:5000/api';
+  private readonly API_URL = 'https://localhost:7157/api';
   private readonly TOKEN_KEY = 'butler_access_token';
   private readonly REFRESH_TOKEN_KEY = 'butler_refresh_token';
   private readonly USER_KEY = 'butler_user';

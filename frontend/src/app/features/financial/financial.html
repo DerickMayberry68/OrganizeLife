@@ -11,45 +11,56 @@
     </div>
   </h1>
 
+  <!-- Loading Indicator -->
+  @if (isLoading()) {
+    <div class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Loading financial data...</p>
+    </div>
+  }
+
   <!-- Financial Overview -->
     <section class="financial__overview">
       <app-stat-card
         title="Total Budget"
-        [value]="formatCurrency(totalBudget())"
+        [value]="formatCurrencyValue(totalBudget())"
         icon="💵"
         variant="accent"
       />
       
       <app-stat-card
         title="Total Spent"
-        [value]="formatCurrency(totalSpent())"
+        [value]="formatCurrencyValue(totalSpent())"
         icon="💳"
         variant="warning"
       />
       
       <app-stat-card
         title="Remaining"
-        [value]="formatCurrency(budgetRemaining())"
+        [value]="formatCurrencyValue(budgetRemaining())"
         icon="💰"
         [variant]="budgetRemaining() < 0 ? 'error' : 'success'"
       />
     </section>
 
     <!-- Budget Chart -->
-    @if (budgetChartData().length > 0) {
-      <section class="financial__section">
-        <div class="card">
-          <div class="card-header">
-            <h3>Budget Analysis</h3>
-          </div>
-          <div class="card-content">
+    <section class="financial__section">
+      <div class="card">
+        <div class="card-header">
+          <h3>Budget Analysis</h3>
+        </div>
+        <div class="card-content">
+          @if (!isLoading() && budgetChartData().length > 0 && budgets().length > 0) {
             <ejs-chart
-              style="display:block"
+              style="display:block; width:100%;"
               [primaryXAxis]="primaryXAxis"
               [primaryYAxis]="primaryYAxis"
               [title]="chartTitle"
               [tooltip]="tooltip"
-              [height]="'350'">
+              [background]="chartBackground"
+              [palettes]="palettes"
+              [height]="'350'"
+              [enableAnimation]="true">
               <e-series-collection>
                 <e-series 
                   [dataSource]="budgetChartData()" 
@@ -57,8 +68,7 @@
                   xName='x' 
                   yName='y' 
                   name='Spent'
-                  [marker]="marker"
-                  fill='#d4af37'>
+                  [marker]="marker">
                 </e-series>
                 <e-series 
                   [dataSource]="budgetChartData()" 
@@ -66,55 +76,75 @@
                   xName='x' 
                   yName='limit' 
                   name='Budget Limit'
-                  [marker]="marker"
-                  fill='#1a1a2e'>
+                  [marker]="marker">
                 </e-series>
               </e-series-collection>
             </ejs-chart>
-          </div>
+          } @else if (isLoading()) {
+            <div class="empty-state">
+              <div class="spinner"></div>
+              <p>Loading budget data...</p>
+            </div>
+          } @else {
+            <div class="empty-state">
+              <p>📊 No budget data available.</p>
+              <p>Create a budget to see your spending analysis.</p>
+              <button class="btn btn--outline" (click)="openBudgetDialog()">+ Create Budget</button>
+            </div>
+          }
         </div>
-      </section>
-    }
+      </div>
+    </section>
 
     <!-- Budget Categories -->
     <section class="financial__section">
       <h2>Budget by Category</h2>
-      <div class="budget-grid">
-        @for (budget of budgets(); track budget.id) {
-          <div class="card budget-card">
-            <div class="budget-card__header">
-              <h3>{{ budget.category }}</h3>
-              <span class="budget-card__period">{{ budget.period }}</span>
-            </div>
-            <div class="budget-card__content">
-              <div class="budget-card__progress">
-                <div class="progress-bar">
-                  <div 
-                    class="progress-bar__fill" 
-                    [class]="'progress-bar__fill--' + getBudgetStatus(getBudgetPercentage(budget.spent, budget.limit))"
-                    [style.width.%]="getBudgetPercentage(budget.spent, budget.limit)">
+      @if (budgets().length > 0) {
+        <div class="budget-grid">
+          @for (budget of budgets(); track budget.id) {
+            <div class="card budget-card">
+              <div class="budget-card__header">
+                <h3>{{ budget.name }}</h3>
+                <span class="budget-card__period">{{ budget.period }}</span>
+              </div>
+              <div class="budget-card__content">
+                <div class="budget-card__progress">
+                  <div class="progress-bar">
+                    <div 
+                      class="progress-bar__fill" 
+                      [class]="'progress-bar__fill--' + getBudgetStatus(getBudgetPercentage(budget))"
+                      [style.width.%]="getBudgetPercentage(budget)">
+                    </div>
+                  </div>
+                  <div class="progress-bar__labels">
+                    <span>{{ formatCurrencyValue(getBudgetSpent(budget)) }}</span>
+                    <span>{{ formatCurrencyValue(budget.limitAmount) }}</span>
                   </div>
                 </div>
-                <div class="progress-bar__labels">
-                  <span>{{ formatCurrency(budget.spent) }}</span>
-                  <span>{{ formatCurrency(budget.limit) }}</span>
+                
+                <div class="budget-card__footer">
+                  <span class="budget-card__percentage">
+                    {{ getBudgetPercentage(budget).toFixed(0) }}% used
+                  </span>
+                  <span 
+                    class="badge" 
+                    [class]="'badge--' + getBudgetStatus(getBudgetPercentage(budget))">
+                    {{ getBudgetStatus(getBudgetPercentage(budget)) }}
+                  </span>
                 </div>
               </div>
-              
-              <div class="budget-card__footer">
-                <span class="budget-card__percentage">
-                  {{ getBudgetPercentage(budget.spent, budget.limit).toFixed(0) }}% used
-                </span>
-                <span 
-                  class="badge" 
-                  [class]="'badge--' + getBudgetStatus(getBudgetPercentage(budget.spent, budget.limit))">
-                  {{ getBudgetStatus(getBudgetPercentage(budget.spent, budget.limit)) }}
-                </span>
-              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="card">
+          <div class="card-content">
+            <div class="empty-state">
+              <p>No budgets created yet.</p>
             </div>
           </div>
-        }
-      </div>
+        </div>
+      }
     </section>
 
     <!-- Recent Transactions -->
@@ -135,7 +165,8 @@
               <e-columns>
                 <e-column field="date" headerText="Date" width="120" [format]="formatDate"></e-column>
                 <e-column field="description" headerText="Description" width="200"></e-column>
-                <e-column field="category" headerText="Category" width="120"></e-column>
+                <e-column field="accountName" headerText="Account" width="120"></e-column>
+                <e-column field="categoryName" headerText="Category" width="120"></e-column>
                 <e-column field="type" headerText="Type" width="100"></e-column>
                 <e-column field="amount" headerText="Amount" width="120" textAlign="Right" [format]="formatAmount"></e-column>
               </e-columns>
@@ -161,6 +192,16 @@
       <ng-template #content>
         <form [formGroup]="transactionForm" class="form">
           <div class="form-group">
+            <label>Account *</label>
+            <ejs-dropdownlist
+              formControlName="accountId"
+              [dataSource]="accounts()"
+              [fields]="{ text: 'name', value: 'id' }"
+              placeholder="Select account">
+            </ejs-dropdownlist>
+          </div>
+
+          <div class="form-group">
             <label>Description *</label>
             <ejs-textbox formControlName="description" placeholder="Enter description"></ejs-textbox>
           </div>
@@ -177,15 +218,6 @@
           </div>
 
           <div class="form-group">
-            <label>Category *</label>
-            <ejs-dropdownlist
-              formControlName="category"
-              [dataSource]="categories"
-              placeholder="Select category">
-            </ejs-dropdownlist>
-          </div>
-
-          <div class="form-group">
             <label>Type *</label>
             <ejs-dropdownlist
               formControlName="type"
@@ -195,8 +227,35 @@
           </div>
 
           <div class="form-group">
+            <label>Category</label>
+            <ejs-dropdownlist
+              formControlName="categoryId"
+              [dataSource]="categories()"
+              [fields]="{ text: 'name', value: 'id' }"
+              placeholder="Select category (optional)">
+            </ejs-dropdownlist>
+          </div>
+
+          <div class="form-group">
             <label>Date *</label>
             <ejs-datepicker formControlName="date"></ejs-datepicker>
+          </div>
+
+          <div class="form-group">
+            <label>Merchant Name</label>
+            <ejs-textbox formControlName="merchantName" placeholder="Enter merchant name (optional)"></ejs-textbox>
+          </div>
+
+          <div class="form-group">
+            <label>Notes</label>
+            <ejs-textbox formControlName="notes" placeholder="Enter notes (optional)" multiline="true"></ejs-textbox>
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input type="checkbox" formControlName="isRecurring" />
+              Recurring Transaction
+            </label>
           </div>
         </form>
       </ng-template>
@@ -214,14 +273,24 @@
       <ng-template #content>
         <form [formGroup]="budgetForm" class="form">
           <div class="form-group">
-            <label>Category *</label>
-            <ejs-textbox formControlName="category" placeholder="Enter category name"></ejs-textbox>
+            <label>Budget Name *</label>
+            <ejs-textbox formControlName="name" placeholder="Enter budget name"></ejs-textbox>
           </div>
 
           <div class="form-group">
-            <label>Budget Limit *</label>
+            <label>Category *</label>
+            <ejs-dropdownlist
+              formControlName="categoryId"
+              [dataSource]="categories()"
+              [fields]="{ text: 'name', value: 'id' }"
+              placeholder="Select category">
+            </ejs-dropdownlist>
+          </div>
+
+          <div class="form-group">
+            <label>Budget Limit Amount *</label>
             <ejs-numerictextbox
-              formControlName="limit"
+              formControlName="limitAmount"
               [min]="0"
               [step]="10"
               format="c2"
@@ -236,6 +305,23 @@
               [dataSource]="budgetPeriods"
               placeholder="Select period">
             </ejs-dropdownlist>
+          </div>
+
+          <div class="form-group">
+            <label>Start Date *</label>
+            <ejs-datepicker formControlName="startDate"></ejs-datepicker>
+          </div>
+
+          <div class="form-group">
+            <label>End Date</label>
+            <ejs-datepicker formControlName="endDate" placeholder="Optional"></ejs-datepicker>
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input type="checkbox" formControlName="isActive" />
+              Active Budget
+            </label>
           </div>
         </form>
       </ng-template>

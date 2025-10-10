@@ -61,12 +61,13 @@
         </div>
           <div class="card-content">
             <ejs-chart
-              style="display:block"
+              style="display:block; width:100%;"
               [primaryXAxis]="primaryXAxis"
               [primaryYAxis]="primaryYAxis"
               [title]="chartTitle"
               [tooltip]="tooltip"
-              [height]="'300'">
+              [height]="'300'"
+              [enableAnimation]="true">
               <e-series-collection>
                 <e-series 
                   [dataSource]="budgetChartData()" 
@@ -80,6 +81,21 @@
               </e-series-collection>
             </ejs-chart>
           </div>
+      </div>
+    </div>
+  } @else {
+    <div class="dashboard__chart">
+      <div class="card">
+        <div class="card-header">
+          <h3>Budget Overview</h3>
+        </div>
+        <div class="card-content">
+          <div class="widget__empty">
+            <p>📊 No budget data available.</p>
+            <p>Create budgets in the Financial section to see spending overview.</p>
+            <a [routerLink]="['/financial']" class="btn btn--outline">Go to Financial →</a>
+          </div>
+        </div>
       </div>
     </div>
   }
