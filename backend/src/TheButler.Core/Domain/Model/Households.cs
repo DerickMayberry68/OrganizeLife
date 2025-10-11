@@ -65,5 +65,19 @@ public partial class Households
     public virtual ICollection<Subscriptions> Subscriptions { get; set; } = new List<Subscriptions>();
 
     public virtual ICollection<Transactions> Transactions { get; set; } = new List<Transactions>();
+
+    public virtual ICollection<HealthcareProviders> HealthcareProviders { get; set; } = new List<HealthcareProviders>();
+
+    public virtual ICollection<MedicalRecords> MedicalRecords { get; set; } = new List<MedicalRecords>();
+
+    public virtual ICollection<Medications> Medications { get; set; } = new List<Medications>();
+
+    public virtual ICollection<Appointments> Appointments { get; set; } = new List<Appointments>();
+
+    public virtual ICollection<Vaccinations> Vaccinations { get; set; } = new List<Vaccinations>();
+
+    public virtual ICollection<Allergies> Allergies { get; set; } = new List<Allergies>();
+
+    public virtual ICollection<HealthMetrics> HealthMetrics { get; set; } = new List<HealthMetrics>();
 }
 

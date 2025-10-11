@@ -29,5 +29,17 @@ public partial class HouseholdMembers
     public Guid UpdatedBy { get; set; }
 
     public virtual Households Household { get; set; } = null!;
+
+    public virtual ICollection<MedicalRecords> MedicalRecords { get; set; } = new List<MedicalRecords>();
+
+    public virtual ICollection<Medications> Medications { get; set; } = new List<Medications>();
+
+    public virtual ICollection<Appointments> Appointments { get; set; } = new List<Appointments>();
+
+    public virtual ICollection<Vaccinations> Vaccinations { get; set; } = new List<Vaccinations>();
+
+    public virtual ICollection<Allergies> Allergies { get; set; } = new List<Allergies>();
+
+    public virtual ICollection<HealthMetrics> HealthMetrics { get; set; } = new List<HealthMetrics>();
 }
 
