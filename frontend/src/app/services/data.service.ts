@@ -19,6 +19,7 @@ import type { Insurance } from '../models/insurance.model';
 import type { Bill } from '../models/bill.model';
 import type { MaintenanceTask, ServiceProvider } from '../models/maintenance.model';
 import type { DashboardStats, Alert } from '../models/dashboard.model';
+import type { Doctor, Appointment, Prescription, MedicalRecord, HealthcareStats } from '../models/healthcare.model';
 
 @Injectable({
   providedIn: 'root'
@@ -55,6 +56,12 @@ export class DataService {
   // Alerts signal
   private readonly alertsSignal = signal<Alert[]>([]);
 
+  // Healthcare signals
+  private readonly doctorsSignal = signal<Doctor[]>([]);
+  private readonly appointmentsSignal = signal<Appointment[]>([]);
+  private readonly prescriptionsSignal = signal<Prescription[]>([]);
+  private readonly medicalRecordsSignal = signal<MedicalRecord[]>([]);
+
   // Public readonly accessors
   public readonly transactions = this.transactionsSignal.asReadonly();
   public readonly budgets = this.budgetsSignal.asReadonly();
@@ -69,6 +76,10 @@ export class DataService {
   public readonly maintenanceTasks = this.maintenanceTasksSignal.asReadonly();
   public readonly serviceProviders = this.serviceProvidersSignal.asReadonly();
   public readonly alerts = this.alertsSignal.asReadonly();
+  public readonly doctors = this.doctorsSignal.asReadonly();
+  public readonly appointments = this.appointmentsSignal.asReadonly();
+  public readonly prescriptions = this.prescriptionsSignal.asReadonly();
+  public readonly medicalRecords = this.medicalRecordsSignal.asReadonly();
 
   // Computed dashboard stats
   public readonly dashboardStats = computed<DashboardStats>(() => {
@@ -116,6 +127,34 @@ export class DataService {
         status: budgetStatus
       },
       recentActivity: []
+    };
+  });
+
+  // Computed healthcare stats
+  public readonly healthcareStats = computed<HealthcareStats>(() => {
+    const now = new Date();
+    const upcomingAppointments = this.appointmentsSignal().filter(apt =>
+      apt.status === 'scheduled' &&
+      new Date(apt.date) >= now
+    ).length;
+
+    const activePrescriptions = this.prescriptionsSignal().filter(rx =>
+      rx.isActive
+    ).length;
+
+    const prescriptionsNeedingRefill = this.prescriptionsSignal().filter(rx =>
+      rx.isActive &&
+      rx.refillsRemaining <= 2 &&
+      (!rx.nextRefillDate || new Date(rx.nextRefillDate) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000))
+    ).length;
+
+    const doctorsCount = this.doctorsSignal().length;
+
+    return {
+      upcomingAppointments,
+      activePrescriptions,
+      prescriptionsNeedingRefill,
+      doctorsCount
     };
   });
 
@@ -731,6 +770,110 @@ export class DataService {
 
   public dismissAlert(id: string): void {
     this.alertsSignal.update(items => items.filter(item => item.id !== id));
+  }
+
+  public addDocument(document: Document): void {
+    this.documentsSignal.update(items => [...items, document]);
+  }
+
+  public updateDocument(id: string, updates: Partial<Document>): void {
+    this.documentsSignal.update(items =>
+      items.map(item => item.id === id ? { ...item, ...updates } : item)
+    );
+  }
+
+  public deleteDocument(id: string): void {
+    this.documentsSignal.update(items => items.filter(item => item.id !== id));
+  }
+
+  public addInsurancePolicy(policy: Insurance): void {
+    this.insurancePoliciesSignal.update(items => [...items, policy]);
+  }
+
+  public updateInsurancePolicy(id: string, updates: Partial<Insurance>): void {
+    this.insurancePoliciesSignal.update(items =>
+      items.map(item => item.id === id ? { ...item, ...updates } : item)
+    );
+  }
+
+  public deleteInsurancePolicy(id: string): void {
+    this.insurancePoliciesSignal.update(items => items.filter(item => item.id !== id));
+  }
+
+  public addInventoryItem(item: InventoryItem): void {
+    this.inventoryItemsSignal.update(items => [...items, item]);
+  }
+
+  public updateInventoryItem(id: string, updates: Partial<InventoryItem>): void {
+    this.inventoryItemsSignal.update(items =>
+      items.map(item => item.id === id ? { ...item, ...updates } : item)
+    );
+  }
+
+  public deleteInventoryItem(id: string): void {
+    this.inventoryItemsSignal.update(items => items.filter(item => item.id !== id));
+  }
+
+  // ===== HEALTHCARE METHODS =====
+
+  // Doctors
+  public addDoctor(doctor: Doctor): void {
+    this.doctorsSignal.update(items => [...items, doctor]);
+  }
+
+  public updateDoctor(id: string, updates: Partial<Doctor>): void {
+    this.doctorsSignal.update(items =>
+      items.map(item => item.id === id ? { ...item, ...updates } : item)
+    );
+  }
+
+  public deleteDoctor(id: string): void {
+    this.doctorsSignal.update(items => items.filter(item => item.id !== id));
+  }
+
+  // Appointments
+  public addAppointment(appointment: Appointment): void {
+    this.appointmentsSignal.update(items => [...items, appointment]);
+  }
+
+  public updateAppointment(id: string, updates: Partial<Appointment>): void {
+    this.appointmentsSignal.update(items =>
+      items.map(item => item.id === id ? { ...item, ...updates } : item)
+    );
+  }
+
+  public deleteAppointment(id: string): void {
+    this.appointmentsSignal.update(items => items.filter(item => item.id !== id));
+  }
+
+  // Prescriptions
+  public addPrescription(prescription: Prescription): void {
+    this.prescriptionsSignal.update(items => [...items, prescription]);
+  }
+
+  public updatePrescription(id: string, updates: Partial<Prescription>): void {
+    this.prescriptionsSignal.update(items =>
+      items.map(item => item.id === id ? { ...item, ...updates } : item)
+    );
+  }
+
+  public deletePrescription(id: string): void {
+    this.prescriptionsSignal.update(items => items.filter(item => item.id !== id));
+  }
+
+  // Medical Records
+  public addMedicalRecord(record: MedicalRecord): void {
+    this.medicalRecordsSignal.update(items => [...items, record]);
+  }
+
+  public updateMedicalRecord(id: string, updates: Partial<MedicalRecord>): void {
+    this.medicalRecordsSignal.update(items =>
+      items.map(item => item.id === id ? { ...item, ...updates } : item)
+    );
+  }
+
+  public deleteMedicalRecord(id: string): void {
+    this.medicalRecordsSignal.update(items => items.filter(item => item.id !== id));
   }
 }
 

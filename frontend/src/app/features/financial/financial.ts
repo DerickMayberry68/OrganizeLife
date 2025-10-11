@@ -11,6 +11,7 @@ import { ButtonModule } from '@syncfusion/ej2-angular-buttons';
 import { DatePickerModule } from '@syncfusion/ej2-angular-calendars';
 import { TextBoxModule, NumericTextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import { DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
+import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
 
 @Component({
   selector: 'app-financial',
@@ -25,7 +26,8 @@ import { DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
     DatePickerModule,
     TextBoxModule,
     NumericTextBoxModule,
-    DropDownListModule
+    DropDownListModule,
+    AppBarModule
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   providers: [
@@ -159,10 +161,14 @@ export class Financial implements OnInit {
       console.log('Transactions:', this.transactions());
     });
     
+    // Format today's date as YYYY-MM-DD for HTML date inputs
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
     this.transactionForm = this.fb.group({
       accountId: ['', Validators.required],
       categoryId: [''],
-      date: [new Date(), Validators.required],
+      date: [todayStr, Validators.required],
       description: ['', Validators.required],
       amount: [0, [Validators.required, Validators.min(0.01)]],
       type: ['expense', Validators.required],
@@ -176,7 +182,7 @@ export class Financial implements OnInit {
       categoryId: ['', Validators.required],
       limitAmount: [0, [Validators.required, Validators.min(1)]],
       period: ['Monthly', Validators.required],
-      startDate: [new Date(), Validators.required],
+      startDate: [todayStr, Validators.required],
       endDate: [''],
       isActive: [true]
     });
@@ -224,9 +230,10 @@ export class Financial implements OnInit {
       return;
     }
     
+    const todayStr = new Date().toISOString().split('T')[0];
     this.transactionForm.reset({
       type: 'expense',
-      date: new Date(),
+      date: todayStr,
       isRecurring: false
     });
     this.transactionDialog.show();

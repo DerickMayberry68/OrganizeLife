@@ -1,0 +1,196 @@
+---
+description: Theme system architecture and customization
+---
+
+# Theme System Architecture
+
+## Overview
+The Butler application uses a multi-theme system based on Color Admin template with customizations. The active theme is **default** with Blue (#1b76ff) as the primary color.
+
+## Theme Selection
+
+### Available Themes
+The application supports multiple color themes selectable via the theme panel:
+- **Blue** (Default) - `#1b76ff`
+- Red - `#ff5757`
+- Pink - `#ff5c93`
+- Orange - `#ff8c42`
+- Yellow - `#ffd93d`
+- Lime - `#90ed7d`
+- Green - `#3ddc84`
+- Teal - `#1bb8cf`
+- Cyan - `#1bb8ff`
+- Purple - `#a05ce7`
+- Indigo - `#6b5ce7`
+- Gray - `#6c757d`
+
+### Theme Controller
+[theme-panel.component.ts](mdc:src/app/components/theme-panel/theme-panel.component.ts) manages theme selection:
+```typescript
+selectedTheme = 'blue';  // Default theme
+themes = ['red','pink','orange','yellow','lime','green','teal','cyan','blue','purple','indigo','gray-500'];
+```
+
+## Theme Architecture
+
+### Core Files
+1. **[_variables.scss](mdc:src/scss/default/_variables.scss)** - Base theme variables
+   - Color definitions (`$blue`, `$green`, etc.)
+   - Component settings
+   - Layout configuration
+
+2. **[_variables-dark.scss](mdc:src/scss/default/_variables-dark.scss)** - Dark mode overrides
+   - Adjusted colors for dark backgrounds
+   - Contrast improvements
+
+3. **[app-settings.service.ts](mdc:src/app/services/app-settings.service.ts)** - Runtime theme management
+   - Theme switching logic
+   - Local storage persistence
+
+4. **[app-variables.service.ts](mdc:src/app/services/app-variables.service.ts)** - CSS variable access
+   - Reads computed CSS variables
+   - Provides theme colors to TypeScript
+
+## Customizing Themes
+
+### Adding a New Theme Color
+
+1. **Update SCSS Variables** in `_variables.scss`:
+```scss
+$new-color: #hexcode !default;
+$theme-colors: (
+  // ... existing colors ...
+  "new-color": $new-color
+);
+```
+
+2. **Add to Theme Selector** in `theme-panel.component.ts`:
+```typescript
+themes = [...existing, 'new-color'];
+```
+
+3. **Update Global Styles** if needed in `styles.scss`
+
+### Modifying Component Theming
+
+#### Header Theming
+Edit `src/scss/default/app/_app-header.scss`:
+```scss
+$app-header-bg: $white !default;
+$app-header-color: $gray-900 !default;
+```
+
+#### Sidebar Theming
+Edit `src/scss/default/app/_app-sidebar.scss`:
+```scss
+$app-sidebar-bg: $white !default;
+$app-sidebar-component-active-bg: lighten($gray-200, 2.5%) !default;
+```
+
+## Dark Mode
+
+### Enabling Dark Mode
+Dark mode is toggled via theme panel and managed by `app-settings.service.ts`:
+```typescript
+appDarkMode: boolean = false;
+```
+
+### Dark Mode Variables
+Dark mode overrides are in `_variables-dark.scss`:
+```scss
+$body-bg-dark: $gray-900 !default;
+$component-bg-dark: $gray-800 !default;
+```
+
+### Applying Dark Mode Styles
+```scss
+[data-bs-theme="dark"] {
+  --bs-body-bg: var(--bs-body-bg-dark);
+  --bs-component-bg: var(--bs-component-bg-dark);
+}
+```
+
+## Theme Persistence
+
+### Local Storage
+Theme preferences are saved to `localStorage`:
+```typescript
+localStorage['appTheme'] = 'blue';
+localStorage['appDarkMode'] = true;
+localStorage['appHeaderInverse'] = false;
+```
+
+### Initialization
+Theme is restored on app load in `theme-panel.component.ts`:
+```typescript
+ngOnInit(): void {
+  if (localStorage['appTheme']) {
+    this.toggleTheme(localStorage['appTheme']);
+  }
+}
+```
+
+## CSS Custom Properties
+
+### Accessing in Components
+```typescript
+const themeColor = getComputedStyle(document.body)
+  .getPropertyValue('--bs-app-theme')
+  .trim();
+```
+
+### Setting Programmatically
+```typescript
+document.body.style.setProperty('--bs-app-theme', '#1b76ff');
+```
+
+## Best Practices
+
+### 1. Use CSS Variables for Dynamic Theming
+```scss
+// ✅ Good - responds to theme changes
+background: var(--bs-app-theme);
+
+// ❌ Bad - hardcoded, doesn't change
+background: #1b76ff;
+```
+
+### 2. Provide Dark Mode Variants
+When adding new components, consider dark mode:
+```scss
+.component {
+  background: var(--bs-component-bg);
+  color: var(--bs-component-color);
+  
+  [data-bs-theme="dark"] & {
+    // Dark mode specific adjustments if needed
+  }
+}
+```
+
+### 3. Test All Theme Colors
+New UI components should look good with all available theme colors, not just the default blue.
+
+### 4. Maintain Contrast Ratios
+Ensure text remains readable across all theme colors:
+- Light backgrounds: Use dark text
+- Dark backgrounds: Use light text
+- Colored backgrounds: Use white text for consistency
+
+## Gradient System
+
+### Theme-Based Gradients
+When using gradients with theme colors, pair with harmonious colors:
+```scss
+.gradient-primary {
+  background: linear-gradient(135deg, var(--bs-primary) 0%, var(--bs-indigo) 100%);
+}
+```
+
+### Enabling Gradients
+Gradients can be toggled via theme panel:
+```typescript
+appGradientEnabled: boolean = false;
+```
+
+When enabled, components with `@include gradient-enabled` receive gradient backgrounds.

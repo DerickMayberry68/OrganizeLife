@@ -30,7 +30,7 @@ export class ThemePanelComponent implements OnInit {
 	appSidebarGridCheckbox: boolean = false;
 	appGradientEnabledCheckbox: boolean = false;
 	
-	selectedTheme = 'teal';
+	selectedTheme = 'blue';
 	themes = ['red','pink','orange','yellow','lime','green','teal','cyan','blue','purple','indigo','gray-500'];
 	
 	toggleThemePanel(): void {

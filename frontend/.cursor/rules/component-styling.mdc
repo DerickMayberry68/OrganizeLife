@@ -1,0 +1,297 @@
+---
+globs: *.html,*.ts
+description: Component styling and template conventions
+---
+
+# Component Styling Conventions
+
+## Angular Component Structure
+
+### File Organization
+Each component should have three files:
+```
+component-name/
+├── component-name.html   # Template
+├── component-name.scss   # Styles
+└── component-name.ts     # Logic
+```
+
+### Importing Styles
+In the TypeScript component:
+```typescript
+@Component({
+  selector: 'app-component',
+  templateUrl: './component.html',
+  styleUrls: ['./component.scss']  // ❌ Deprecated
+  // or
+  styleUrl: './component.scss'     // ✅ New Angular syntax
+})
+```
+
+## Template Styling Best Practices
+
+### 1. CSS Class Binding
+```html
+<!-- Static classes -->
+<div class="card primary">
+
+<!-- Dynamic classes -->
+<div [ngClass]="{'active': isActive, 'disabled': isDisabled}">
+
+<!-- Combined -->
+<div class="card" [class.selected]="isSelected">
+```
+
+### 2. Style Binding
+Use for dynamic inline styles:
+```html
+<div [style.background-color]="themeColor">
+<div [style.width.px]="dynamicWidth">
+<div [ngStyle]="{'color': textColor, 'font-size': fontSize + 'px'}">
+```
+
+### 3. Avoid Inline Styles in Templates
+❌ **Bad**:
+```html
+<div style="color: #1b76ff; padding: 20px;">
+```
+
+✅ **Good**:
+```html
+<div class="primary-card">
+<!-- Define .primary-card in SCSS -->
+```
+
+## Component-Specific Styling
+
+### Scoped Styles
+Component styles are automatically scoped. No need for deep selectors unless targeting child components:
+
+```scss
+// Automatically scoped to component
+.card {
+  background: white;
+}
+
+// Target child component
+::ng-deep .child-component {
+  margin: 10px;
+}
+```
+
+### Host Element Styling
+Style the component's host element:
+```scss
+:host {
+  display: block;
+  width: 100%;
+  
+  &.compact {
+    padding: 10px;
+  }
+}
+```
+
+## Common Component Patterns
+
+### 1. Stat Cards
+Reference: [stat-card.component.ts](mdc:src/app/shared/stat-card/stat-card.component.ts)
+
+```html
+<div class="stat-card stat-card--primary">
+  <div class="stat-card__main">
+    <div class="stat-card__info">
+      <h6 class="stat-card__title">{{ title }}</h6>
+      <div class="stat-card__value">{{ value }}</div>
+    </div>
+    <i class="stat-card__icon {{ icon }}"></i>
+  </div>
+</div>
+```
+
+### 2. Form Controls
+```html
+<div class="form-group mb-3">
+  <label class="form-label" for="inputId">
+    <i class="fa fa-icon"></i> Label Text
+  </label>
+  <input 
+    type="text" 
+    class="form-control" 
+    id="inputId"
+    [class.is-invalid]="hasError"
+    [(ngModel)]="value"
+  />
+</div>
+```
+
+### 3. Action Buttons
+```html
+<button 
+  class="btn btn-primary"
+  [disabled]="isLoading"
+  (click)="handleAction()"
+>
+  <i class="fa fa-icon me-2"></i>
+  {{ buttonText }}
+</button>
+```
+
+### 4. Cards with Headers
+```html
+<div class="card">
+  <div class="card-header">
+    <h5 class="card-title">{{ title }}</h5>
+  </div>
+  <div class="card-body">
+    <!-- Content -->
+  </div>
+  <div class="card-footer" *ngIf="hasFooter">
+    <!-- Footer actions -->
+  </div>
+</div>
+```
+
+## Syncfusion Component Integration
+
+### Grid Component
+```html
+<ejs-grid 
+  [dataSource]="data"
+  [allowPaging]="true"
+  [allowSorting]="true"
+  [allowFiltering]="true"
+  class="custom-grid"
+>
+  <e-columns>
+    <e-column field="id" headerText="ID"></e-column>
+    <e-column field="name" headerText="Name"></e-column>
+  </e-columns>
+</ejs-grid>
+```
+
+### Dialog Component
+```html
+<ejs-dialog 
+  #dialog
+  [header]="dialogTitle"
+  [visible]="isVisible"
+  [showCloseIcon]="true"
+  (close)="onClose()"
+>
+  <ng-template #content>
+    <div class="dialog-form">
+      <!-- Form content -->
+    </div>
+  </ng-template>
+</ejs-dialog>
+```
+
+### Styling Syncfusion Components
+```scss
+// Component-level overrides
+::ng-deep {
+  .e-grid {
+    border-radius: 6px;
+    overflow: hidden;
+    
+    .e-headercell {
+      background: var(--bs-app-theme);
+      color: white;
+      font-weight: 600;
+    }
+  }
+}
+```
+
+## Responsive Design
+
+### Mobile-First Approach
+```html
+<!-- Stack on mobile, row on desktop -->
+<div class="row">
+  <div class="col-12 col-md-6 col-lg-4">
+    <!-- Content -->
+  </div>
+</div>
+```
+
+### Conditional Rendering
+```html
+<!-- Show only on mobile -->
+<div class="d-block d-md-none">Mobile view</div>
+
+<!-- Show only on desktop -->
+<div class="d-none d-md-block">Desktop view</div>
+```
+
+### Responsive Utilities
+Use Bootstrap responsive classes:
+- `d-{breakpoint}-{value}` - Display
+- `flex-{breakpoint}-{value}` - Flex
+- `justify-content-{breakpoint}-{value}` - Justify
+- `align-items-{breakpoint}-{value}` - Align
+
+## Accessibility
+
+### ARIA Labels
+```html
+<button 
+  aria-label="Close dialog"
+  [attr.aria-expanded]="isExpanded"
+>
+  <i class="fa fa-times"></i>
+</button>
+```
+
+### Form Labels
+Always associate labels with inputs:
+```html
+<label for="email">Email</label>
+<input type="email" id="email" name="email">
+```
+
+### Focus Management
+```scss
+.button {
+  &:focus {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: 2px;
+  }
+  
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+```
+
+## Performance Considerations
+
+### 1. OnPush Change Detection
+```typescript
+@Component({
+  selector: 'app-component',
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+```
+
+### 2. TrackBy Functions
+```html
+<div *ngFor="let item of items; trackBy: trackByFn">
+  {{ item.name }}
+</div>
+```
+
+```typescript
+trackByFn(index: number, item: any): any {
+  return item.id;
+}
+```
+
+### 3. Async Pipe
+Prefer async pipe over manual subscriptions:
+```html
+<div *ngIf="data$ | async as data">
+  {{ data.value }}
+</div>
+```

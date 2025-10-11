@@ -38,6 +38,10 @@ export class AppMenuService {
 			'icon': 'fa fa-shield-alt',
 			'title': 'Insurance',
 			'url': '/insurance'
+		},{
+			'icon': 'fa fa-heartbeat',
+			'title': 'Healthcare',
+			'url': '/healthcare'
 		}];
 	}
 }

@@ -57,6 +57,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/maintenance/maintenance').then(m => m.Maintenance),
     canActivate: [authGuard]
   },
+  {
+    path: 'healthcare',
+    loadComponent: () => import('./features/healthcare/healthcare').then(m => m.Healthcare),
+    canActivate: [authGuard]
+  },
   // Catch all - redirect to login
   {
     path: '**',

@@ -1,12 +1,12 @@
 <div class="bills">
-  <h1 class="page-header">
-    📮 Bill Scheduler
-    <div class="page-header__actions">
-      <button class="btn btn--accent" (click)="openBillDialog()">
-        + Add Bill
-      </button>
-    </div>
-  </h1>
+  <!-- AppBar Header -->
+  <ejs-appbar cssClass="custom-appbar">
+    <span class="appbar-title">📮 Bill Scheduler</span>
+    <div class="e-appbar-spacer"></div>
+    <button ejs-button cssClass="e-inherit" (click)="openBillDialog()">
+      + Add Bill
+    </button>
+  </ejs-appbar>
 
   <!-- Loading Indicator -->
   @if (isLoading()) {
@@ -173,62 +173,109 @@
     [animationSettings]="animationSettings"
     [buttons]="billDialogButtons">
     <ng-template #content>
-      <form [formGroup]="billForm" class="form">
-        <div class="form-group">
-          <label>Bill Name *</label>
-          <ejs-textbox formControlName="name" placeholder="Enter bill name"></ejs-textbox>
+      <form [formGroup]="billForm" class="dialog-form">
+        <!-- First Row: Bill Name & Amount -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="billName" class="form-label">Bill Name *</label>
+            <input 
+              type="text"
+              id="billName"
+              formControlName="name"
+              class="form-control"
+              placeholder="Enter bill name">
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="amount" class="form-label">Amount *</label>
+            <input 
+              type="number"
+              id="amount"
+              formControlName="amount"
+              class="form-control"
+              step="0.01"
+              min="0"
+              placeholder="0.00">
+          </div>
         </div>
 
-        <div class="form-group">
-          <label>Amount *</label>
-          <ejs-numerictextbox
-            formControlName="amount"
-            [min]="0"
-            [step]="0.01"
-            format="c2"
-            placeholder="0.00">
-          </ejs-numerictextbox>
+        <!-- Second Row: Category & Due Date -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="category" class="form-label">Category *</label>
+            <select 
+              id="category"
+              formControlName="category" 
+              class="form-control">
+              <option value="">Select category</option>
+              @for (category of categories; track category) {
+                <option [value]="category">{{ category }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="dueDate" class="form-label">Due Date *</label>
+            <input 
+              type="date"
+              id="dueDate"
+              formControlName="dueDate"
+              class="form-control">
+          </div>
         </div>
 
-        <div class="form-group">
-          <label>Category *</label>
-          <ejs-dropdownlist
-            formControlName="category"
-            [dataSource]="categories"
-            placeholder="Select category">
-          </ejs-dropdownlist>
+        <!-- Third Row: Frequency & Reminder Days -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="frequency" class="form-label">Frequency</label>
+            <select 
+              id="frequency"
+              formControlName="frequency" 
+              class="form-control">
+              <option value="">Select frequency</option>
+              @for (freq of frequencies; track freq) {
+                <option [value]="freq">{{ freq }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="reminderDays" class="form-label">Reminder (days before)</label>
+            <input 
+              type="number"
+              id="reminderDays"
+              formControlName="reminderDays"
+              class="form-control"
+              min="0"
+              step="1"
+              placeholder="3">
+          </div>
         </div>
 
-        <div class="form-group">
-          <label>Due Date *</label>
-          <ejs-datepicker formControlName="dueDate"></ejs-datepicker>
-        </div>
-
-        <div class="form-group">
-          <ejs-checkbox formControlName="isRecurring" label="Recurring Bill"></ejs-checkbox>
-        </div>
-
-        <div class="form-group">
-          <label>Frequency</label>
-          <ejs-dropdownlist
-            formControlName="frequency"
-            [dataSource]="frequencies"
-            placeholder="Select frequency">
-          </ejs-dropdownlist>
-        </div>
-
-        <div class="form-group">
-          <ejs-checkbox formControlName="autoPayEnabled" label="Enable Auto-Pay"></ejs-checkbox>
-        </div>
-
-        <div class="form-group">
-          <label>Reminder (days before due)</label>
-          <ejs-numerictextbox
-            formControlName="reminderDays"
-            [min]="0"
-            [step]="1"
-            placeholder="3">
-          </ejs-numerictextbox>
+        <!-- Checkboxes (Full Width) -->
+        <div class="row">
+          <div class="col-12">
+            <div class="form-check">
+              <input 
+                type="checkbox"
+                id="isRecurring"
+                formControlName="isRecurring"
+                class="form-check-input">
+              <label class="form-check-label" for="isRecurring">
+                Recurring Bill
+              </label>
+            </div>
+            <div class="form-check" style="padding-top: 8px;">
+              <input 
+                type="checkbox"
+                id="autoPayEnabled"
+                formControlName="autoPayEnabled"
+                class="form-check-input">
+              <label class="form-check-label" for="autoPayEnabled">
+                Enable Auto-Pay
+              </label>
+            </div>
+          </div>
         </div>
       </form>
     </ng-template>

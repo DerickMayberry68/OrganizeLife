@@ -1,0 +1,473 @@
+<div class="healthcare">
+  <!-- AppBar Header -->
+  <ejs-appbar cssClass="custom-appbar">
+    <span class="appbar-title">🏥 Healthcare</span>
+    <div class="e-appbar-spacer"></div>
+  </ejs-appbar>
+
+  <!-- Quick Stats -->
+  <section class="healthcare__stats">
+    <div class="stat-card stat-card--primary">
+      <div class="stat-card__main">
+        <div class="stat-card__info">
+          <h6 class="stat-card__title">Upcoming Appointments</h6>
+          <div class="stat-card__value">{{ healthcareStats().upcomingAppointments }}</div>
+        </div>
+        <span class="stat-card__icon">📅</span>
+      </div>
+    </div>
+
+    <div class="stat-card stat-card--success">
+      <div class="stat-card__main">
+        <div class="stat-card__info">
+          <h6 class="stat-card__title">Active Prescriptions</h6>
+          <div class="stat-card__value">{{ healthcareStats().activePrescriptions }}</div>
+        </div>
+        <span class="stat-card__icon">💊</span>
+      </div>
+    </div>
+
+    <div class="stat-card" [ngClass]="healthcareStats().prescriptionsNeedingRefill > 0 ? 'stat-card--error' : 'stat-card--info'">
+      <div class="stat-card__main">
+        <div class="stat-card__info">
+          <h6 class="stat-card__title">Refills Needed</h6>
+          <div class="stat-card__value">{{ healthcareStats().prescriptionsNeedingRefill }}</div>
+        </div>
+        <span class="stat-card__icon">⚠️</span>
+      </div>
+    </div>
+
+    <div class="stat-card stat-card--info">
+      <div class="stat-card__main">
+        <div class="stat-card__info">
+          <h6 class="stat-card__title">Healthcare Providers</h6>
+          <div class="stat-card__value">{{ healthcareStats().doctorsCount }}</div>
+        </div>
+        <span class="stat-card__icon">👨‍⚕️</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content with Tabs -->
+  <div class="healthcare__content">
+    <ejs-tab cssClass="custom-tabs">
+      <e-tabitems>
+        
+        <!-- Appointments Tab -->
+        <e-tabitem>
+          <ng-template #headerText>
+            <div class="tab-title">
+              <span class="tab-icon">📅</span>
+              Appointments
+            </div>
+          </ng-template>
+          <ng-template #content>
+            <div class="tab-content">
+              <div class="content-header">
+                <h2>Medical Appointments</h2>
+                <button class="btn btn-primary" (click)="openAppointmentDialog()">
+                  <i class="fa fa-plus"></i> Schedule Appointment
+                </button>
+              </div>
+
+              <!-- Upcoming Appointments Quick View -->
+              @if (upcomingAppointments().length > 0) {
+                <div class="quick-view">
+                  <h3>Next 5 Appointments</h3>
+                  <div class="appointment-list">
+                    @for (apt of upcomingAppointments(); track apt.id) {
+                      <div class="appointment-card">
+                        <div class="appointment-card__header">
+                          <h4>{{ apt.doctorName }}</h4>
+                          <span class="badge" [ngClass]="getStatusClass(apt.status)">
+                            {{ apt.status }}
+                          </span>
+                        </div>
+                        <div class="appointment-card__body">
+                          <p><i class="fa fa-calendar"></i> {{ formatDateTime(apt.date, apt.time) }}</p>
+                          <p><i class="fa fa-stethoscope"></i> {{ apt.reason }}</p>
+                          <p><i class="fa fa-map-marker"></i> {{ apt.location }}</p>
+                          <p class="days-until">{{ getDaysUntil(apt.date) }} days away</p>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Appointments Grid -->
+              <div class="card-content">
+                <ejs-grid
+                  #appointmentGrid
+                  [dataSource]="appointments()"
+                  [allowPaging]="true"
+                  [allowSorting]="true"
+                  [allowFiltering]="true"
+                  [pageSettings]="pageSettings"
+                  [filterSettings]="filterSettings"
+                  [toolbar]="toolbarOptions"
+                >
+                <e-columns>
+                  <e-column field="date" headerText="Date" type="date" format="yMd" width="120"></e-column>
+                  <e-column field="time" headerText="Time" width="100"></e-column>
+                  <e-column field="doctorName" headerText="Doctor" width="150"></e-column>
+                  <e-column field="type" headerText="Type" width="120"></e-column>
+                  <e-column field="reason" headerText="Reason" width="200"></e-column>
+                  <e-column field="status" headerText="Status" width="120"></e-column>
+                  <e-column headerText="Actions" width="120">
+                    <ng-template #template let-data>
+                      <button class="btn-icon" (click)="openAppointmentDialog(data)" title="Edit">
+                        <i class="fa fa-edit"></i>
+                      </button>
+                      <button class="btn-icon btn-icon--danger" (click)="deleteAppointment(data.id)" title="Delete">
+                        <i class="fa fa-trash"></i>
+                      </button>
+                    </ng-template>
+                  </e-column>
+                </e-columns>
+              </ejs-grid>
+              </div>
+            </div>
+          </ng-template>
+        </e-tabitem>
+
+        <!-- Doctors Tab -->
+        <e-tabitem>
+          <ng-template #headerText>
+            <div class="tab-title">
+              <span class="tab-icon">👨‍⚕️</span>
+              Doctors
+            </div>
+          </ng-template>
+          <ng-template #content>
+            <div class="tab-content">
+              <div class="content-header">
+                <h2>Healthcare Providers</h2>
+                <button class="btn btn-primary" (click)="openDoctorDialog()">
+                  <i class="fa fa-plus"></i> Add Doctor
+                </button>
+              </div>
+
+              <div class="card-content">
+                <ejs-grid
+                  #doctorGrid
+                  [dataSource]="doctors()"
+                  [allowPaging]="true"
+                  [allowSorting]="true"
+                  [allowFiltering]="true"
+                  [pageSettings]="pageSettings"
+                  [filterSettings]="filterSettings"
+                  [toolbar]="toolbarOptions"
+                >
+                <e-columns>
+                  <e-column field="name" headerText="Name" width="180"></e-column>
+                  <e-column field="type" headerText="Type" width="140"></e-column>
+                  <e-column field="specialty" headerText="Specialty" width="150"></e-column>
+                  <e-column field="phone" headerText="Phone" width="130"></e-column>
+                  <e-column field="address" headerText="Address" width="200"></e-column>
+                  <e-column headerText="Actions" width="120">
+                    <ng-template #template let-data>
+                      <button class="btn-icon" (click)="openDoctorDialog(data)" title="Edit">
+                        <i class="fa fa-edit"></i>
+                      </button>
+                      <button class="btn-icon btn-icon--danger" (click)="deleteDoctor(data.id)" title="Delete">
+                        <i class="fa fa-trash"></i>
+                      </button>
+                    </ng-template>
+                  </e-column>
+                </e-columns>
+              </ejs-grid>
+              </div>
+            </div>
+          </ng-template>
+        </e-tabitem>
+
+        <!-- Prescriptions Tab -->
+        <e-tabitem>
+          <ng-template #headerText>
+            <div class="tab-title">
+              <span class="tab-icon">💊</span>
+              Prescriptions
+            </div>
+          </ng-template>
+          <ng-template #content>
+            <div class="tab-content">
+              <div class="content-header">
+                <h2>Prescriptions & Medications</h2>
+                <button class="btn btn-primary" (click)="openPrescriptionDialog()">
+                  <i class="fa fa-plus"></i> Add Prescription
+                </button>
+              </div>
+
+              <!-- Refills Needed Alert -->
+              @if (refillsNeeded().length > 0) {
+                <div class="alert alert--warning">
+                  <i class="fa fa-exclamation-triangle"></i>
+                  <strong>{{ refillsNeeded().length }} prescription(s) need refills soon!</strong>
+                  @for (rx of refillsNeeded(); track rx.id) {
+                    <span>{{ rx.medicationName }}</span>
+                  }
+                </div>
+              }
+
+              <div class="card-content">
+                <ejs-grid
+                  #prescriptionGrid
+                  [dataSource]="prescriptions()"
+                  [allowPaging]="true"
+                  [allowSorting]="true"
+                  [allowFiltering]="true"
+                  [pageSettings]="pageSettings"
+                  [filterSettings]="filterSettings"
+                  [toolbar]="toolbarOptions"
+                >
+                <e-columns>
+                  <e-column field="medicationName" headerText="Medication" width="180"></e-column>
+                  <e-column field="dosage" headerText="Dosage" width="120"></e-column>
+                  <e-column field="frequency" headerText="Frequency" width="130"></e-column>
+                  <e-column field="prescribedBy" headerText="Prescribed By" width="150"></e-column>
+                  <e-column field="refillsRemaining" headerText="Refills Left" width="110"></e-column>
+                  <e-column field="nextRefillDate" headerText="Next Refill" type="date" format="yMd" width="120"></e-column>
+                  <e-column field="isActive" headerText="Active" width="90" displayAsCheckBox="true"></e-column>
+                  <e-column headerText="Actions" width="120">
+                    <ng-template #template let-data>
+                      <button class="btn-icon" (click)="openPrescriptionDialog(data)" title="Edit">
+                        <i class="fa fa-edit"></i>
+                      </button>
+                      <button class="btn-icon btn-icon--danger" (click)="deletePrescription(data.id)" title="Delete">
+                        <i class="fa fa-trash"></i>
+                      </button>
+                    </ng-template>
+                  </e-column>
+                </e-columns>
+              </ejs-grid>
+              </div>
+            </div>
+          </ng-template>
+        </e-tabitem>
+
+      </e-tabitems>
+    </ejs-tab>
+  </div>
+</div>
+
+<!-- Doctor Dialog -->
+<ejs-dialog
+  #doctorDialog
+  [header]="editMode() ? 'Edit Doctor' : 'Add Doctor'"
+  [visible]="false"
+  [showCloseIcon]="true"
+  [isModal]="true"
+  width="600px"
+>
+  <ng-template #content>
+    <div class="dialog-form">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Name *</label>
+          <input type="text" class="form-control" [(ngModel)]="doctorForm().name" />
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Type *</label>
+          <select class="form-control" [(ngModel)]="doctorForm().type">
+            @for (type of doctorTypes; track type) {
+              <option [value]="type">{{ formatDoctorType(type) }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Phone *</label>
+          <input type="tel" class="form-control" [(ngModel)]="doctorForm().phone" />
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-control" [(ngModel)]="doctorForm().email" />
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Specialty</label>
+        <input type="text" class="form-control" [(ngModel)]="doctorForm().specialty" />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Address *</label>
+        <input type="text" class="form-control" [(ngModel)]="doctorForm().address" />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Office Hours</label>
+        <input type="text" class="form-control" [(ngModel)]="doctorForm().officeHours" 
+               placeholder="e.g., Mon-Fri 9AM-5PM" />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Notes</label>
+        <textarea class="form-control" [(ngModel)]="doctorForm().notes" rows="3"></textarea>
+      </div>
+    </div>
+  </ng-template>
+  <ng-template #footerTemplate>
+    <button class="e-btn" (click)="doctorDialog.hide()">Cancel</button>
+    <button class="e-btn e-primary" (click)="saveDoctor()">Save</button>
+  </ng-template>
+</ejs-dialog>
+
+<!-- Appointment Dialog -->
+<ejs-dialog
+  #appointmentDialog
+  [header]="editMode() ? 'Edit Appointment' : 'Schedule Appointment'"
+  [visible]="false"
+  [showCloseIcon]="true"
+  [isModal]="true"
+  width="600px"
+>
+  <ng-template #content>
+    <div class="dialog-form">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Doctor *</label>
+          <input type="text" class="form-control" [(ngModel)]="appointmentForm().doctorName" />
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Type *</label>
+          <select class="form-control" [(ngModel)]="appointmentForm().type">
+            @for (type of appointmentTypes; track type) {
+              <option [value]="type">{{ formatDoctorType(type) }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Date *</label>
+          <input type="date" class="form-control" [(ngModel)]="appointmentForm().date" />
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Time *</label>
+          <input type="time" class="form-control" [(ngModel)]="appointmentForm().time" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Duration (minutes)</label>
+          <input type="number" class="form-control" [(ngModel)]="appointmentForm().duration" />
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Status</label>
+          <select class="form-control" [(ngModel)]="appointmentForm().status">
+            @for (status of appointmentStatuses; track status) {
+              <option [value]="status">{{ formatDoctorType(status) }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Reason for Visit *</label>
+        <input type="text" class="form-control" [(ngModel)]="appointmentForm().reason" />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Location *</label>
+        <input type="text" class="form-control" [(ngModel)]="appointmentForm().location" />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Notes</label>
+        <textarea class="form-control" [(ngModel)]="appointmentForm().notes" rows="3"></textarea>
+      </div>
+    </div>
+  </ng-template>
+  <ng-template #footerTemplate>
+    <button class="e-btn" (click)="appointmentDialog.hide()">Cancel</button>
+    <button class="e-btn e-primary" (click)="saveAppointment()">Save</button>
+  </ng-template>
+</ejs-dialog>
+
+<!-- Prescription Dialog -->
+<ejs-dialog
+  #prescriptionDialog
+  [header]="editMode() ? 'Edit Prescription' : 'Add Prescription'"
+  [visible]="false"
+  [showCloseIcon]="true"
+  [isModal]="true"
+  width="600px"
+>
+  <ng-template #content>
+    <div class="dialog-form">
+      <div class="mb-3">
+        <label class="form-label">Medication Name *</label>
+        <input type="text" class="form-control" [(ngModel)]="prescriptionForm().medicationName" />
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Dosage *</label>
+          <input type="text" class="form-control" [(ngModel)]="prescriptionForm().dosage" 
+                 placeholder="e.g., 10mg" />
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Frequency *</label>
+          <input type="text" class="form-control" [(ngModel)]="prescriptionForm().frequency" 
+                 placeholder="e.g., Twice daily" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Prescribed By *</label>
+          <input type="text" class="form-control" [(ngModel)]="prescriptionForm().prescribedBy" />
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Pharmacy *</label>
+          <input type="text" class="form-control" [(ngModel)]="prescriptionForm().pharmacy" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Prescribed Date *</label>
+          <input type="date" class="form-control" [(ngModel)]="prescriptionForm().prescribedDate" />
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Refills Remaining</label>
+          <input type="number" class="form-control" [(ngModel)]="prescriptionForm().refillsRemaining" />
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Instructions *</label>
+        <textarea class="form-control" [(ngModel)]="prescriptionForm().instructions" rows="2" 
+                  placeholder="e.g., Take with food"></textarea>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="isActive" 
+                   [(ngModel)]="prescriptionForm().isActive" />
+            <label class="form-check-label" for="isActive">Active Prescription</label>
+          </div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="reminderEnabled" 
+                   [(ngModel)]="prescriptionForm().reminderEnabled" />
+            <label class="form-check-label" for="reminderEnabled">Enable Refill Reminders</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+  <ng-template #footerTemplate>
+    <button class="e-btn" (click)="prescriptionDialog.hide()">Cancel</button>
+    <button class="e-btn e-primary" (click)="savePrescription()">Save</button>
+  </ng-template>
+</ejs-dialog>
+

@@ -1,156 +1,291 @@
 <div class="maintenance">
-  <h1 class="page-header">
-    Home Maintenance
-    <div class="page-header__actions">
-      <button class="btn btn--accent" (click)="openTaskDialog()">
-        + Add Task
-      </button>
+  <!-- AppBar Header -->
+  <ejs-appbar cssClass="custom-appbar">
+    <span class="appbar-title">🔧 Home Maintenance</span>
+    <div class="e-appbar-spacer"></div>
+    <button ejs-button cssClass="e-inherit" (click)="openTaskDialog()">
+      + Add Task
+    </button>
+  </ejs-appbar>
+
+  <!-- Loading Indicator -->
+  @if (isLoading()) {
+    <div class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Loading maintenance tasks...</p>
     </div>
-  </h1>
+  }
 
-  @if (tasks().length > 0) {
-    <div class="task-grid">
-      @for (task of tasks(); track task.id) {
-        <div class="card task-card" [class.priority-urgent]="task.priority === 'urgent'" 
-             [class.priority-high]="task.priority === 'high'"
-             [class.priority-medium]="task.priority === 'medium'"
-             [class.priority-low]="task.priority === 'low'">
-          <div class="card-header">
-            <h4 class="card-title">{{ task.title }}</h4>
-            <span class="badge" [ngClass]="{
-              'badge-danger': task.priority === 'urgent',
-              'badge-warning': task.priority === 'high',
-              'badge-info': task.priority === 'medium',
-              'badge-success': task.priority === 'low'
-            }">{{ task.priority }}</span>
+  <!-- Maintenance Overview -->
+  <section class="maintenance__overview">
+    <app-stat-card
+      title="Total Tasks"
+      [value]="totalTasks().toString()"
+      icon="🔧"
+      variant="primary"
+    />
+    
+    <app-stat-card
+      title="Pending"
+      [value]="pendingTasks().toString()"
+      icon="⏰"
+      variant="warning"
+    />
+    
+    <app-stat-card
+      title="Urgent"
+      [value]="urgentTasks().toString()"
+      icon="🚨"
+      [variant]="urgentTasks() > 0 ? 'error' : 'success'"
+    />
+    
+    <app-stat-card
+      title="Estimated Cost"
+      [value]="formatCurrencyValue(totalEstimatedCost())"
+      icon="💰"
+      variant="accent"
+    />
+  </section>
+
+  <!-- Tasks by Category Chart -->
+  <section class="maintenance__section">
+    <div class="card">
+      <div class="card-header">
+        <h3>Tasks by Category</h3>
+      </div>
+      <div class="card-content">
+        @if (isLoading()) {
+          <div class="chart-loading">
+            <div class="spinner"></div>
+            <p>Loading chart data...</p>
           </div>
-          <div class="card-body">
-            <div class="task-meta">
-              <div class="task-category">
-                <i class="fa fa-tag"></i>
-                <span>{{ task.category }}</span>
-              </div>
-              <div class="task-status">
-                <i class="fa fa-circle" [ngClass]="{
-                  'text-success': task.status === 'completed',
-                  'text-warning': task.status === 'scheduled',
-                  'text-muted': task.status === 'pending'
-                }"></i>
-                <span>{{ task.status }}</span>
-              </div>
-            </div>
+        } @else if (tasksByCategoryChart().length > 0) {
+          <ejs-chart
+            style="display:block"
+            [primaryXAxis]="primaryXAxis"
+            [primaryYAxis]="primaryYAxis"
+            [title]="chartTitle"
+            [tooltip]="tooltip"
+            [background]="chartBackground"
+            [palettes]="palettes"
+            [enableAnimation]="true"
+            [height]="'350'">
+            <e-series-collection>
+              <e-series 
+                [dataSource]="tasksByCategoryChart()" 
+                type='Column' 
+                xName='x' 
+                yName='y' 
+                name='Tasks'
+                [marker]="marker">
+              </e-series>
+            </e-series-collection>
+          </ejs-chart>
+        } @else {
+          <div class="empty-state">
+            <div class="empty-state__icon">📊</div>
+            <h3>No Maintenance Data Yet</h3>
+            <p>Add your first maintenance task to see analytics by category</p>
+            <button class="btn btn--accent" (click)="openTaskDialog()">
+              + Add Your First Task
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
 
-            <div class="task-details">
-              <div class="detail-item">
-                <i class="fa fa-calendar"></i>
-                <span>{{ formatDate(task.dueDate) }}</span>
-              </div>
-
-              @if (task.estimatedCost) {
-                <div class="detail-item">
-                  <i class="fa fa-dollar-sign"></i>
-                  <span>{{ formatCurrency(task.estimatedCost) }}</span>
+  <!-- Upcoming Tasks -->
+  @if (upcomingTasksList().length > 0) {
+    <section class="maintenance__section">
+      <div class="card">
+        <div class="card-header">
+          <h3>📅 Upcoming Tasks</h3>
+        </div>
+        <div class="card-content">
+          <div class="upcoming-tasks-list">
+            @for (task of upcomingTasksList(); track task.id) {
+              <div class="upcoming-task-item" [class]="'priority-' + task.priority">
+                <div class="upcoming-task-item__info">
+                  <h4>{{ task.title }}</h4>
+                  <span class="upcoming-task-item__category">{{ task.category }}</span>
                 </div>
-              }
-
-              @if (task.isRecurring) {
-                <div class="detail-item">
-                  <i class="fa fa-sync"></i>
-                  <span>{{ task.frequency }}</span>
-                </div>
-              }
-            </div>
-
-            @if (task.serviceProvider) {
-              <div class="task-provider">
-                <i class="fa fa-user-circle"></i>
-                <div>
-                  <strong>{{ task.serviceProvider.name }}</strong>
-                  <small>{{ task.serviceProvider.phone }}</small>
+                <div class="upcoming-task-item__details">
+                  <span class="badge badge--{{getPriorityBadge(task.priority)}}">{{ task.priority }}</span>
+                  <span class="upcoming-task-item__date">{{ getDaysUntilText(task.dueDate) }}</span>
+                  @if (task.estimatedCost) {
+                    <span class="upcoming-task-item__cost">{{ formatCurrencyValue(task.estimatedCost) }}</span>
+                  }
                 </div>
               </div>
             }
           </div>
         </div>
-      }
-    </div>
-  } @else {
-    <div class="card">
-      <div class="card-body text-center">
-        <i class="fa fa-wrench fa-3x text-muted mb-3"></i>
-        <p class="text-muted">No maintenance tasks scheduled. Click "+ Add Task" to get started.</p>
       </div>
-    </div>
+    </section>
   }
 
-    <!-- Add Maintenance Task Dialog -->
-    <ejs-dialog
-      #taskDialog
-      header="Add Maintenance Task"
-      [width]="dialogWidth"
-      [isModal]="true"
-      [visible]="false"
-      [animationSettings]="animationSettings"
-      [buttons]="taskDialogButtons">
-      <ng-template #content>
-        <form [formGroup]="taskForm" class="form">
-          <div class="form-group">
-            <label>Task Title *</label>
-            <ejs-textbox formControlName="title" placeholder="Enter task title"></ejs-textbox>
+  <!-- All Tasks Grid -->
+  <section class="maintenance__section">
+    <div class="card">
+      <div class="card-header">
+        <h3>All Maintenance Tasks</h3>
+      </div>
+      <div class="card-content">
+        @if (tasks().length > 0) {
+          <ejs-grid 
+            [dataSource]="tasks()" 
+            [allowPaging]="true"
+            [allowSorting]="true"
+            [allowFiltering]="true"
+            [allowGrouping]="true"
+            [pageSettings]="pageSettings"
+            [filterSettings]="filterSettings"
+            (queryCellInfo)="queryCellInfo($event)">
+            <e-columns>
+              <e-column field="title" headerText="Task" width="200"></e-column>
+              <e-column field="category" headerText="Category" width="120"></e-column>
+              <e-column field="priority" headerText="Priority" width="100"></e-column>
+              <e-column field="status" headerText="Status" width="120"></e-column>
+              <e-column field="dueDate" headerText="Due Date" width="140" [format]="formatDate"></e-column>
+              <e-column field="estimatedCost" headerText="Est. Cost" width="120" textAlign="Right" [format]="formatCurrency"></e-column>
+              <e-column field="isRecurring" headerText="Recurring" width="100" type="boolean"></e-column>
+            </e-columns>
+          </ejs-grid>
+        } @else {
+          <div class="empty-state">
+            <div class="empty-state__icon">🔧</div>
+            <h3>No Maintenance Tasks</h3>
+            <p>You haven't added any maintenance tasks yet. Start by adding your first task to track home maintenance.</p>
+            <button class="btn btn--accent" (click)="openTaskDialog()">
+              + Add Your First Task
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Add Maintenance Task Dialog -->
+  <ejs-dialog
+    #taskDialog
+    header="Add Maintenance Task"
+    [width]="dialogWidth"
+    [isModal]="true"
+    [visible]="false"
+    [animationSettings]="animationSettings"
+    [buttons]="taskDialogButtons">
+    <ng-template #content>
+      <form [formGroup]="taskForm" class="dialog-form">
+        <!-- First Row: Task Title & Category -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="taskTitle" class="form-label">Task Title *</label>
+            <input 
+              type="text"
+              id="taskTitle"
+              formControlName="title"
+              class="form-control"
+              placeholder="Enter task title">
           </div>
 
-          <div class="form-group">
-            <label>Category *</label>
-            <ejs-dropdownlist
-              formControlName="category"
-              [dataSource]="categories"
-              placeholder="Select category">
-            </ejs-dropdownlist>
+          <div class="col-md-6 mb-3">
+            <label for="category" class="form-label">Category *</label>
+            <select 
+              id="category"
+              formControlName="category" 
+              class="form-control">
+              <option value="">Select category</option>
+              @for (category of categories; track category) {
+                <option [value]="category">{{ category }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Second Row: Priority & Due Date -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="priority" class="form-label">Priority *</label>
+            <select 
+              id="priority"
+              formControlName="priority" 
+              class="form-control">
+              <option value="">Select priority</option>
+              @for (priority of priorities; track priority) {
+                <option [value]="priority">{{ priority }}</option>
+              }
+            </select>
           </div>
 
-          <div class="form-group">
-            <label>Priority *</label>
-            <ejs-dropdownlist
-              formControlName="priority"
-              [dataSource]="priorities"
-              placeholder="Select priority">
-            </ejs-dropdownlist>
+          <div class="col-md-6 mb-3">
+            <label for="dueDate" class="form-label">Due Date *</label>
+            <input 
+              type="date"
+              id="dueDate"
+              formControlName="dueDate"
+              class="form-control">
           </div>
+        </div>
 
-          <div class="form-group">
-            <label>Due Date *</label>
-            <ejs-datepicker formControlName="dueDate"></ejs-datepicker>
-          </div>
-
-          <div class="form-group">
-            <label>Estimated Cost</label>
-            <ejs-numerictextbox
+        <!-- Third Row: Estimated Cost & Frequency -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="estimatedCost" class="form-label">Estimated Cost</label>
+            <input 
+              type="number"
+              id="estimatedCost"
               formControlName="estimatedCost"
-              [min]="0"
-              [step]="10"
-              format="c2"
+              class="form-control"
+              step="10"
+              min="0"
               placeholder="0.00">
-            </ejs-numerictextbox>
           </div>
 
-          <div class="form-group">
-            <label>Notes</label>
-            <ejs-textbox formControlName="notes" multiline="true" placeholder="Additional notes"></ejs-textbox>
+          <div class="col-md-6 mb-3">
+            <label for="frequency" class="form-label">Frequency</label>
+            <select 
+              id="frequency"
+              formControlName="frequency" 
+              class="form-control">
+              <option value="">Select frequency</option>
+              @for (freq of frequencies; track freq) {
+                <option [value]="freq">{{ freq }}</option>
+              }
+            </select>
           </div>
+        </div>
 
-          <div class="form-group">
-            <ejs-checkbox formControlName="isRecurring" label="Recurring Task"></ejs-checkbox>
+        <!-- Fourth Row: Notes (Full Width) -->
+        <div class="row">
+          <div class="col-12 mb-3">
+            <label for="notes" class="form-label">Notes</label>
+            <textarea 
+              id="notes"
+              formControlName="notes"
+              class="form-control"
+              rows="3"
+              placeholder="Additional notes...">
+            </textarea>
           </div>
+        </div>
 
-          <div class="form-group">
-            <label>Frequency</label>
-            <ejs-dropdownlist
-              formControlName="frequency"
-              [dataSource]="frequencies"
-              placeholder="Select frequency">
-            </ejs-dropdownlist>
+        <!-- Checkbox (Full Width) -->
+        <div class="row">
+          <div class="col-12">
+            <div class="form-check">
+              <input 
+                type="checkbox"
+                id="isRecurring"
+                formControlName="isRecurring"
+                class="form-check-input">
+              <label class="form-check-label" for="isRecurring">
+                Recurring Task
+              </label>
+            </div>
           </div>
-        </form>
-      </ng-template>
-    </ejs-dialog>
+        </div>
+      </form>
+    </ng-template>
+  </ejs-dialog>
 </div>

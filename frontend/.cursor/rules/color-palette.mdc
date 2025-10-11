@@ -1,0 +1,83 @@
+---
+alwaysApply: true
+description: Application color palette and usage guidelines
+---
+
+# Color Palette and Theme System
+
+## Primary Color Palette
+
+The application uses a color wheel-based palette with **Blue (#1b76ff)** as the primary theme color.
+
+### Core Colors
+- **Blue** `#1b76ff` - Primary theme, headers, sidebar, active states, primary buttons
+- **Cyan** `#1bb8ff` - Info notifications, secondary accents
+- **Indigo** `#6b5ce7` - Gradient pairs with blue, tertiary accents
+- **Green** `#3ddc84` - Success messages, positive states, confirmations
+- **Orange** `#ff8c42` - Warnings, attention items, pending states
+- **Red** `#ff5757` - Errors, danger states, destructive actions
+- **Pink** `#ff5c93` - Special highlights, decorative accents
+- **Purple** `#a05ce7` - Alternative accents
+- **Yellow** `#ffd93d` - Caution, important notifications
+- **Lime** `#90ed7d` - Fresh accents, growth indicators
+- **Teal** `#1bb8cf` - Alternative cool accent
+
+## Color Usage Guidelines
+
+### Semantic Color Mapping
+- **Primary Actions**: Always use Blue (`#1b76ff`)
+- **Success/Complete**: Always use Green (`#3ddc84`)
+- **Warning/Pending**: Always use Orange (`#ff8c42`)
+- **Error/Failed**: Always use Red (`#ff5757`)
+- **Info/Notice**: Always use Cyan (`#1bb8ff`)
+
+### Where Colors Are Defined
+- **SCSS Variables**: [_variables.scss](mdc:src/scss/default/_variables.scss)
+- **Global Styles**: [styles.scss](mdc:src/styles.scss)
+- **Component Styles**: Individual component `.scss` files
+
+### Gradient Patterns
+When creating gradients, pair colors harmoniously:
+- Blue → Indigo: `linear-gradient(135deg, #1b76ff 0%, #6b5ce7 100%)`
+- Cyan → Light Cyan: `linear-gradient(135deg, #1bb8ff 0%, #4dcbff 100%)`
+- Green → Light Green: `linear-gradient(135deg, #3ddc84 0%, #67e79d 100%)`
+- Orange → Light Orange: `linear-gradient(135deg, #ff8c42 0%, #ffaa6b 100%)`
+
+## Rules for Adding New Colors
+
+1. **Never hardcode colors** - Always use SCSS variables from `$theme-colors` map
+2. **Check existing palette first** - Use existing colors before adding new ones
+3. **Follow color wheel theory** - New colors should harmonize with the base blue
+4. **Maintain contrast ratios** - Ensure WCAG AA compliance (4.5:1 for text)
+5. **Test in both light and dark modes** - Colors should work in both contexts
+
+## Common Patterns
+
+### Buttons
+```scss
+// Primary button
+background: linear-gradient(135deg, #1b76ff 0%, #6b5ce7 100%);
+&:hover { background: #1565e0; }
+
+// Success button
+background: linear-gradient(135deg, #3ddc84 0%, #67e79d 100%);
+
+// Danger button
+background: linear-gradient(135deg, #ff5757 0%, #ff7979 100%);
+```
+
+### Focus States
+```scss
+&:focus {
+  border-color: #1b76ff;
+  box-shadow: 0 0 0 3px rgba(27, 118, 255, 0.1);
+}
+```
+
+### Active/Selected States
+```scss
+&.active {
+  color: var(--bs-app-theme-color);
+  background-color: var(--bs-app-theme);
+}
+```

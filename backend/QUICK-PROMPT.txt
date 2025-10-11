@@ -1,0 +1,20 @@
+Update the [PAGE_NAME] component to match the design patterns used in Dashboard and Financial pages:
+
+1. Add Syncfusion chart services: Import CategoryService, ColumnSeriesService, LegendService, TooltipService and add to providers
+2. Add null safety to chart data: if (!data || data.length === 0) return []
+3. Fix axis config: primaryXAxis/primaryYAxis as 'any' type with proper properties (labelIntersectAction, labelFormat: 'c0', minimum: 0)
+4. Add three-state chart rendering: data exists → show chart with enableAnimation, loading → spinner, empty → helpful message with CTA
+5. Add PageService, SortService, FilterService, GroupService to grid providers
+6. Wrap page in proper structure with page-header, loading state, sections, and cards
+7. Add stat-card overview if applicable
+8. Add empty states with emoji icons and CTA buttons everywhere
+9. Add isLoading signal and loadData() method in setTimeout
+10. Use formatCurrency, formatDate utility methods
+11. Use @if/@for control flow, signals, and computed values
+12. Add dialogs with ViewChild, proper buttons, and form validation
+13. Use consistent styling: btn--accent, btn--outline, badge classes, card structure
+
+Reference: src/app/features/dashboard/ and src/app/features/financial/
+
+Fix all calculateRangeAndInterval chart errors and standardize the entire page design.
+

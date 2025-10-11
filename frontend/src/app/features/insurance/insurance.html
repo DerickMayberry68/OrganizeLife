@@ -1,136 +1,265 @@
 <div class="insurance">
-  <h1 class="page-header">
-    🛡️ Insurance Center
-    <div class="page-header__actions">
-      <button class="btn btn--accent" (click)="openPolicyDialog()">
-        + Add Policy
-      </button>
+  <!-- AppBar Header -->
+  <ejs-appbar cssClass="custom-appbar">
+    <span class="appbar-title">🛡️ Insurance Center</span>
+    <div class="e-appbar-spacer"></div>
+    <button ejs-button cssClass="e-inherit" (click)="openPolicyDialog()">
+      + Add Policy
+    </button>
+  </ejs-appbar>
+
+  <!-- Loading Indicator -->
+  @if (isLoading()) {
+    <div class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Loading insurance policies...</p>
     </div>
-  </h1>
+  }
 
-  <section class="insurance__content">
-      @if (policies().length > 0) {
-        <div class="policy-grid">
-          @for (policy of policies(); track policy.id) {
-            <div class="policy-card">
-              <div class="policy-card__header">
-                <span class="policy-card__icon">🛡️</span>
-                <span class="badge badge--info">{{ policy.type }}</span>
-              </div>
-              <h3>{{ policy.provider }}</h3>
-              <p class="policy-card__number">Policy #{{ policy.policyNumber }}</p>
-              
-              <div class="policy-card__details">
-                <div class="detail-row">
-                  <span>Premium:</span>
-                  <span>{{ formatCurrency(policy.premium) }}</span>
-                </div>
-                <div class="detail-row">
-                  <span>Frequency:</span>
-                  <span>{{ policy.billingFrequency }}</span>
-                </div>
-                @if (policy.deductible) {
-                  <div class="detail-row">
-                    <span>Deductible:</span>
-                    <span>{{ formatCurrency(policy.deductible) }}</span>
-                  </div>
-                }
-                <div class="detail-row renewal">
-                  <span>Renewal Date:</span>
-                  <span>{{ formatDate(policy.renewalDate) }}</span>
-                </div>
-                @if (getDaysUntilRenewal(policy.renewalDate) <= 30) {
-                  <span class="badge badge--warning">Renewing Soon</span>
-                }
-              </div>
-            </div>
-          }
+  <!-- Insurance Overview -->
+  <section class="insurance__overview">
+    <app-stat-card
+      title="Total Policies"
+      [value]="totalPolicies().toString()"
+      icon="🛡️"
+      variant="primary"
+    />
+    
+    <app-stat-card
+      title="Total Premiums"
+      [value]="formatCurrencyValue(totalPremiums())"
+      icon="💵"
+      variant="accent"
+    />
+    
+    <app-stat-card
+      title="Renewing Soon"
+      [value]="renewingSoon().toString()"
+      icon="⏰"
+      [variant]="renewingSoon() > 0 ? 'warning' : 'success'"
+    />
+    
+    <app-stat-card
+      title="Coverage Types"
+      [value]="totalCoverage().toString()"
+      icon="📋"
+      variant="info"
+    />
+  </section>
+
+  <!-- Policies by Type Chart -->
+  <section class="insurance__section">
+    <div class="card">
+      <div class="card-header">
+        <h3>Policies by Type</h3>
+      </div>
+      <div class="card-content">
+        @if (isLoading()) {
+          <div class="chart-loading">
+            <div class="spinner"></div>
+            <p>Loading chart data...</p>
+          </div>
+        } @else if (policiesByTypeChart().length > 0) {
+          <ejs-chart
+            style="display:block"
+            [primaryXAxis]="primaryXAxis"
+            [primaryYAxis]="primaryYAxis"
+            [title]="chartTitle"
+            [tooltip]="tooltip"
+            [background]="chartBackground"
+            [palettes]="palettes"
+            [enableAnimation]="true"
+            [height]="'350'">
+            <e-series-collection>
+              <e-series 
+                [dataSource]="policiesByTypeChart()" 
+                type='Column' 
+                xName='x' 
+                yName='y' 
+                name='Policies'
+                [marker]="marker">
+              </e-series>
+            </e-series-collection>
+          </ejs-chart>
+        } @else {
+          <div class="empty-state">
+            <div class="empty-state__icon">📊</div>
+            <h3>No Insurance Data Yet</h3>
+            <p>Add your first insurance policy to see analytics by type</p>
+            <button class="btn btn--accent" (click)="openPolicyDialog()">
+              + Add Your First Policy
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- All Policies Grid -->
+  <section class="insurance__section">
+    <div class="card">
+      <div class="card-header">
+        <h3>All Insurance Policies</h3>
+      </div>
+      <div class="card-content">
+        @if (policies().length > 0) {
+          <ejs-grid 
+            [dataSource]="policies()" 
+            [allowPaging]="true"
+            [allowSorting]="true"
+            [allowFiltering]="true"
+            [allowGrouping]="true"
+            [pageSettings]="pageSettings"
+            [filterSettings]="filterSettings"
+            (queryCellInfo)="queryCellInfo($event)">
+            <e-columns>
+              <e-column field="provider" headerText="Provider" width="150"></e-column>
+              <e-column field="type" headerText="Type" width="120"></e-column>
+              <e-column field="policyNumber" headerText="Policy #" width="150"></e-column>
+              <e-column field="premium" headerText="Premium" width="120" textAlign="Right" [format]="formatCurrency"></e-column>
+              <e-column field="billingFrequency" headerText="Frequency" width="120"></e-column>
+              <e-column field="renewalDate" headerText="Renewal Date" width="140" [format]="formatDate"></e-column>
+            </e-columns>
+          </ejs-grid>
+        } @else {
+          <div class="empty-state">
+            <div class="empty-state__icon">🛡️</div>
+            <h3>No Insurance Policies</h3>
+            <p>You haven't added any insurance policies yet. Track your policies to manage renewals and coverage.</p>
+            <button class="btn btn--accent" (click)="openPolicyDialog()">
+              + Add Your First Policy
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Add Insurance Policy Dialog -->
+  <ejs-dialog
+    #policyDialog
+    header="Add Insurance Policy"
+    [width]="dialogWidth"
+    [isModal]="true"
+    [visible]="false"
+    [animationSettings]="animationSettings"
+    [buttons]="policyDialogButtons">
+    <ng-template #content>
+      <form [formGroup]="policyForm" class="dialog-form">
+        <!-- First Row: Insurance Provider & Type -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="provider" class="form-label">Insurance Provider *</label>
+            <input 
+              type="text"
+              id="provider"
+              formControlName="provider"
+              class="form-control"
+              placeholder="e.g., State Farm, Geico">
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="insuranceType" class="form-label">Insurance Type *</label>
+            <select 
+              id="insuranceType"
+              formControlName="type" 
+              class="form-control">
+              <option value="">Select type</option>
+              @for (type of insuranceTypes; track type) {
+                <option [value]="type">{{ type }}</option>
+              }
+            </select>
+          </div>
         </div>
-      } @else {
-        <div class="empty-state">
-          <span class="empty-state__icon">🛡️</span>
-          <h3>No Insurance Policies</h3>
-          <p>Add your insurance policies to track renewals and coverage</p>
-        </div>
-      }
-    </section>
 
-    <!-- Add Insurance Policy Dialog -->
-    <ejs-dialog
-      #policyDialog
-      header="Add Insurance Policy"
-      [width]="dialogWidth"
-      [isModal]="true"
-      [visible]="false"
-      [animationSettings]="animationSettings"
-      [buttons]="policyDialogButtons">
-      <ng-template #content>
-        <form [formGroup]="policyForm" class="form">
-          <div class="form-group">
-            <label>Insurance Provider *</label>
-            <ejs-textbox formControlName="provider" placeholder="e.g., State Farm, Geico"></ejs-textbox>
+        <!-- Second Row: Policy Number & Premium Amount -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="policyNumber" class="form-label">Policy Number *</label>
+            <input 
+              type="text"
+              id="policyNumber"
+              formControlName="policyNumber"
+              class="form-control"
+              placeholder="Enter policy number">
           </div>
 
-          <div class="form-group">
-            <label>Insurance Type *</label>
-            <ejs-dropdownlist
-              formControlName="type"
-              [dataSource]="insuranceTypes"
-              placeholder="Select type">
-            </ejs-dropdownlist>
-          </div>
-
-          <div class="form-group">
-            <label>Policy Number *</label>
-            <ejs-textbox formControlName="policyNumber" placeholder="Enter policy number"></ejs-textbox>
-          </div>
-
-          <div class="form-group">
-            <label>Premium Amount *</label>
-            <ejs-numerictextbox
+          <div class="col-md-6 mb-3">
+            <label for="premium" class="form-label">Premium Amount *</label>
+            <input 
+              type="number"
+              id="premium"
               formControlName="premium"
-              [min]="0"
-              [step]="10"
-              format="c2"
+              class="form-control"
+              step="10"
+              min="0"
               placeholder="0.00">
-            </ejs-numerictextbox>
+          </div>
+        </div>
+
+        <!-- Third Row: Billing Frequency & Deductible -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="billingFrequency" class="form-label">Billing Frequency *</label>
+            <select 
+              id="billingFrequency"
+              formControlName="billingFrequency" 
+              class="form-control">
+              <option value="">Select frequency</option>
+              @for (freq of billingFrequencies; track freq) {
+                <option [value]="freq">{{ freq }}</option>
+              }
+            </select>
           </div>
 
-          <div class="form-group">
-            <label>Billing Frequency *</label>
-            <ejs-dropdownlist
-              formControlName="billingFrequency"
-              [dataSource]="billingFrequencies"
-              placeholder="Select frequency">
-            </ejs-dropdownlist>
-          </div>
-
-          <div class="form-group">
-            <label>Start Date *</label>
-            <ejs-datepicker formControlName="startDate"></ejs-datepicker>
-          </div>
-
-          <div class="form-group">
-            <label>Renewal Date *</label>
-            <ejs-datepicker formControlName="renewalDate"></ejs-datepicker>
-          </div>
-
-          <div class="form-group">
-            <label>Coverage Details *</label>
-            <ejs-textbox formControlName="coverage" multiline="true" placeholder="Describe coverage"></ejs-textbox>
-          </div>
-
-          <div class="form-group">
-            <label>Deductible</label>
-            <ejs-numerictextbox
+          <div class="col-md-6 mb-3">
+            <label for="deductible" class="form-label">Deductible</label>
+            <input 
+              type="number"
+              id="deductible"
               formControlName="deductible"
-              [min]="0"
-              [step]="100"
-              format="c2"
+              class="form-control"
+              step="100"
+              min="0"
               placeholder="0.00">
-            </ejs-numerictextbox>
           </div>
-        </form>
-      </ng-template>
-    </ejs-dialog>
+        </div>
+
+        <!-- Fourth Row: Start Date & Renewal Date -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="startDate" class="form-label">Start Date *</label>
+            <input 
+              type="date"
+              id="startDate"
+              formControlName="startDate"
+              class="form-control">
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="renewalDate" class="form-label">Renewal Date *</label>
+            <input 
+              type="date"
+              id="renewalDate"
+              formControlName="renewalDate"
+              class="form-control">
+          </div>
+        </div>
+
+        <!-- Fifth Row: Coverage Details (Full Width) -->
+        <div class="row">
+          <div class="col-12 mb-3">
+            <label for="coverage" class="form-label">Coverage Details *</label>
+            <textarea 
+              id="coverage"
+              formControlName="coverage"
+              class="form-control"
+              rows="3"
+              placeholder="Describe coverage">
+            </textarea>
+          </div>
+        </div>
+      </form>
+    </ng-template>
+  </ejs-dialog>
 </div>

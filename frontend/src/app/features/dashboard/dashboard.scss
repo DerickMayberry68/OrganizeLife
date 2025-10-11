@@ -1,3 +1,29 @@
+// Remove breadcrumb bottom margin in dashboard
+app-breadcrumb {
+  margin-bottom: 0 !important;
+  
+  ::ng-deep .breadcrumb {
+    margin-bottom: 0 !important;
+  }
+}
+
+// AppBar styling - match header color
+.e-appbar.custom-appbar {
+  background: #2d353c !important;
+  margin-bottom: 20px;
+  margin-top: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  .appbar-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
 .dashboard {
   &__alerts {
     margin-bottom: 20px;
@@ -12,8 +38,28 @@
 
   &__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    grid-template-columns: 2fr 1fr;
     gap: 15px;
+
+    @media (max-width: 1200px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__calendar-widget {
+    grid-column: 1;
+
+    @media (max-width: 1200px) {
+      grid-column: 1;
+    }
+  }
+
+  &__quick-actions {
+    grid-column: 2;
+
+    @media (max-width: 1200px) {
+      grid-column: 1;
+    }
   }
 
   &__chart {
@@ -46,7 +92,7 @@
   }
 
   &__link {
-    color: #49b6d6;
+    color: #1bb8ff;
     text-decoration: none;
     font-weight: 500;
     font-size: 13px;
@@ -56,7 +102,7 @@
     gap: 4px;
 
     &:hover {
-      color: #6dc5de;
+      color: #4dcbff;
     }
 
     &::after {
@@ -66,6 +112,17 @@
 
     &:hover::after {
       transform: translateX(3px);
+    }
+  }
+
+  &__legend {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+
+    @media (max-width: 768px) {
+      display: none;
     }
   }
 
@@ -275,6 +332,136 @@
   background: white;
 }
 
+// Calendar legend styling
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+// Syncfusion Schedule custom styling
+::ng-deep .custom-schedule {
+  border-radius: 6px;
+  overflow: hidden;
+
+  // Header styling
+  .e-schedule-toolbar {
+    background: #2d353c !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+    .e-toolbar-items {
+      .e-toolbar-item {
+        .e-tbar-btn {
+          color: white !important;
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+          }
+        }
+
+        &.e-active .e-tbar-btn {
+          background: #1b76ff !important;
+        }
+      }
+    }
+
+    .e-date-range {
+      color: white !important;
+    }
+  }
+
+  // Calendar header (days of week)
+  .e-header-cells {
+    background: #f8f9fa !important;
+    font-weight: 600 !important;
+    color: #2d353c !important;
+  }
+
+  // Today cell highlight
+  .e-current-day {
+    background: rgba(27, 118, 255, 0.05) !important;
+  }
+
+  // Event styling
+  .e-appointment {
+    border-radius: 4px !important;
+    border: none !important;
+    font-weight: 500 !important;
+    padding: 4px 8px !important;
+  }
+
+  // Month view cells
+  .e-work-cells {
+    &:hover {
+      background: rgba(27, 118, 255, 0.05) !important;
+    }
+  }
+
+  // Other month dates
+  .e-other-month {
+    opacity: 0.4 !important;
+  }
+
+  // Quick popup styling
+  .e-quick-popup-wrapper {
+    .e-popup-header {
+      background: #2d353c !important;
+      color: white !important;
+    }
+
+    .e-event-popup {
+      .e-popup-content {
+        color: #2d353c !important;
+      }
+    }
+  }
+
+  // Navigation buttons
+  .e-navigate {
+    background: transparent !important;
+    color: white !important;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1) !important;
+    }
+  }
+}
+
+.quick-links {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  justify-content: center;
+}
+
+.btn {
+  &--outline {
+    padding: 8px 16px;
+    border: 2px solid #1b76ff;
+    color: #1b76ff;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #1b76ff;
+      color: white;
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .dashboard {
     &__stats {
@@ -288,6 +475,10 @@
 
   .quick-actions {
     grid-template-columns: 1fr;
+  }
+
+  ::ng-deep .custom-schedule {
+    height: 500px !important;
   }
 }
 

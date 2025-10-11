@@ -12,6 +12,7 @@ import { DatePickerModule } from '@syncfusion/ej2-angular-calendars';
 import { TextBoxModule, NumericTextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import { DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
 import { CheckBoxModule } from '@syncfusion/ej2-angular-buttons';
+import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
 
 @Component({
   selector: 'app-bills',
@@ -27,7 +28,8 @@ import { CheckBoxModule } from '@syncfusion/ej2-angular-buttons';
     TextBoxModule,
     NumericTextBoxModule,
     DropDownListModule,
-    CheckBoxModule
+    CheckBoxModule,
+    AppBarModule
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   providers: [
@@ -173,8 +175,9 @@ export class Bills implements OnInit {
   }
 
   protected openBillDialog(): void {
+    const todayStr = new Date().toISOString().split('T')[0];
     this.billForm.reset({
-      dueDate: new Date(),
+      dueDate: todayStr,
       isRecurring: false,
       frequency: 'monthly',
       autoPayEnabled: false,
@@ -200,8 +203,9 @@ export class Bills implements OnInit {
       };
       this.dataService.addBill(bill);
       this.billDialog.hide();
+      const todayStr = new Date().toISOString().split('T')[0];
       this.billForm.reset({
-        dueDate: new Date(),
+        dueDate: todayStr,
         isRecurring: false,
         frequency: 'monthly',
         autoPayEnabled: false,

@@ -1,0 +1,185 @@
+---
+globs: *.scss,*.css
+description: SCSS structure and styling conventions
+---
+
+# SCSS Structure and Styling Conventions
+
+## File Organization
+
+### Theme Structure
+```
+src/scss/
+├── default/           # Main theme (active)
+│   ├── _variables.scss      # Color & sizing variables
+│   ├── _variables-dark.scss # Dark mode variables
+│   ├── _functions.scss      # SCSS utility functions
+│   ├── _mixins.scss         # Reusable mixins
+│   ├── app/                 # App-specific styles
+│   ├── layout/              # Layout components
+│   ├── ui/                  # UI components
+│   └── styles.scss          # Main import file
+├── apple/             # Alternative theme
+├── facebook/          # Alternative theme
+├── google/            # Alternative theme
+├── material/          # Alternative theme
+└── transparent/       # Alternative theme
+```
+
+### Component Styles
+```
+src/app/
+├── features/          # Feature-specific styles
+│   └── [feature]/
+│       └── [feature].scss
+└── shared/            # Shared component styles
+    └── [component]/
+        └── [component].scss
+```
+
+## Variable Usage
+
+### Always Use Variables
+❌ **Bad**: `background: #1b76ff;`
+✅ **Good**: `background: var(--bs-app-theme);`
+
+❌ **Bad**: `color: #3ddc84;`
+✅ **Good**: `color: var(--bs-success);`
+
+### Theme Variables
+- `var(--bs-app-theme)` - Primary theme color
+- `var(--bs-app-theme-color)` - Text color on theme background
+- `var(--bs-app-header-bg)` - Header background
+- `var(--bs-app-sidebar-bg)` - Sidebar background
+
+### Color Variables
+- `var(--bs-primary)` - Blue
+- `var(--bs-success)` - Green
+- `var(--bs-warning)` - Orange
+- `var(--bs-danger)` - Red
+- `var(--bs-info)` - Cyan
+
+## Naming Conventions
+
+### BEM Methodology
+Use BEM (Block Element Modifier) for component classes:
+```scss
+.stat-card {              // Block
+  &__title { }           // Element
+  &__value { }           // Element
+  &--primary { }         // Modifier
+  &--info { }            // Modifier
+}
+```
+
+### Semantic Class Names
+- Use descriptive names that explain purpose, not appearance
+- ❌ `.blue-box` ✅ `.notification-card`
+- ❌ `.big-text` ✅ `.heading-primary`
+
+## Best Practices
+
+### 1. Nesting
+- Limit nesting to 3 levels maximum
+- Use `&` for pseudo-classes and modifiers
+```scss
+.component {
+  &:hover { }
+  &.active { }
+  
+  &__element {
+    &--modifier { }
+  }
+}
+```
+
+### 2. Responsiveness
+Use Bootstrap breakpoint mixins:
+```scss
+@include media-breakpoint-down(md) {
+  // Mobile styles
+}
+
+@include media-breakpoint-up(lg) {
+  // Desktop styles
+}
+```
+
+### 3. Transitions
+Always add smooth transitions:
+```scss
+transition: all 0.3s ease;
+// or specific properties
+transition: background-color 0.2s ease, transform 0.2s ease;
+```
+
+### 4. Z-Index
+Use defined z-index variables from `_variables.scss`:
+- `$app-header-zindex: 1020`
+- `$app-sidebar-zindex: 1010`
+- `$app-theme-panel-zindex: 1035`
+
+### 5. Spacing
+Use rem-based spacing from variables:
+```scss
+padding: $spacer;                    // Base spacing
+margin-bottom: $spacer * 2;          // Double spacing
+gap: rem(15px);                      // Custom rem conversion
+```
+
+## Syncfusion Component Styling
+
+### Dialog Overrides
+Global Syncfusion overrides are in [styles.scss](mdc:src/styles.scss):
+```scss
+.e-dialog {
+  .e-dlg-header-content { }
+  .e-dlg-content { }
+  .e-footer-content { }
+}
+```
+
+### Component-Specific Styles
+Override Syncfusion classes in component `.scss` files:
+```scss
+::ng-deep .e-grid {
+  // Grid customizations
+}
+```
+
+## Common Patterns
+
+### Card Components
+```scss
+.card {
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+  
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+  }
+}
+```
+
+### Gradients
+```scss
+background: linear-gradient(135deg, $start-color 0%, $end-color 100%);
+```
+
+### Form Controls
+```scss
+.form-control {
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  
+  &:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 3px rgba(27, 118, 255, 0.1);
+    outline: none;
+  }
+}
+```

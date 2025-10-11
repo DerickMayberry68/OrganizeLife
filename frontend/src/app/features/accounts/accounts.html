@@ -1,162 +1,319 @@
 <div class="accounts">
-  <h1 class="page-header">
-    🏦 Accounts Hub
-    <div class="page-header__actions">
-      <button class="btn btn--accent" (click)="openAccountDialog()">
-        + Add Account
-      </button>
-      <button class="btn btn--outline" (click)="openSubscriptionDialog()">
-        + Add Subscription
-      </button>
+  <!-- AppBar Header -->
+  <ejs-appbar cssClass="custom-appbar">
+    <span class="appbar-title">🏦 Accounts Hub</span>
+    <div class="e-appbar-spacer"></div>
+    <button ejs-button cssClass="e-inherit" (click)="openAccountDialog()">
+      + Add Account
+    </button>
+    <button ejs-button cssClass="e-inherit" (click)="openSubscriptionDialog()">
+      + Add Subscription
+    </button>
+  </ejs-appbar>
+
+  <!-- Loading Indicator -->
+  @if (isLoading()) {
+    <div class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Loading accounts...</p>
     </div>
-  </h1>
+  }
 
+  <!-- Accounts Overview -->
+  <section class="accounts__overview">
+    <app-stat-card
+      title="Total Accounts"
+      [value]="totalAccounts().toString()"
+      icon="🏦"
+      variant="primary"
+    />
+    
+    <app-stat-card
+      title="Total Balance"
+      [value]="formatCurrencyValue(totalBalance())"
+      icon="💰"
+      variant="accent"
+    />
+    
+    <app-stat-card
+      title="Subscriptions"
+      [value]="totalSubscriptions().toString()"
+      icon="📱"
+      variant="info"
+    />
+    
+    <app-stat-card
+      title="Yearly Sub Cost"
+      [value]="formatCurrencyValue(yearlySubscriptionCost())"
+      icon="💳"
+      variant="warning"
+    />
+  </section>
+
+  <!-- Accounts by Type Chart -->
   <section class="accounts__section">
-      <h2>Financial Accounts</h2>
-      @if (accounts().length > 0) {
-        <div class="account-grid">
-          @for (account of accounts(); track account.id) {
-            <div class="account-card">
-              <div class="account-card__header">
-                <span class="account-card__icon">
-                  @if (account.type === 'checking') { 💳 }
-                  @else if (account.type === 'savings') { 💰 }
-                  @else if (account.type === 'credit') { 🏦 }
-                  @else { 📊 }
-                </span>
-                <span class="badge badge--info">{{ account.type }}</span>
-              </div>
-              <h3>{{ account.name }}</h3>
-              <p class="account-card__institution">{{ account.institution }}</p>
-              <div class="account-card__balance">
-                {{ formatCurrency(account.balance) }}
-              </div>
-              <span class="account-card__updated">
-                Updated {{ formatDate(account.lastUpdated) }}
-              </span>
-            </div>
-          }
-        </div>
-      } @else {
-        <div class="empty-state-small">
-          <p>No accounts added yet</p>
-        </div>
-      }
-    </section>
+    <div class="card">
+      <div class="card-header">
+        <h3>Accounts by Type</h3>
+      </div>
+      <div class="card-content">
+        @if (isLoading()) {
+          <div class="chart-loading">
+            <div class="spinner"></div>
+            <p>Loading chart data...</p>
+          </div>
+        } @else if (accountsByTypeChart().length > 0) {
+          <ejs-chart
+            style="display:block"
+            [primaryXAxis]="primaryXAxis"
+            [primaryYAxis]="primaryYAxis"
+            [title]="chartTitle"
+            [tooltip]="tooltip"
+            [background]="chartBackground"
+            [palettes]="palettes"
+            [enableAnimation]="true"
+            [height]="'350'">
+            <e-series-collection>
+              <e-series 
+                [dataSource]="accountsByTypeChart()" 
+                type='Column' 
+                xName='x' 
+                yName='y' 
+                name='Balance'
+                [marker]="marker">
+              </e-series>
+            </e-series-collection>
+          </ejs-chart>
+        } @else {
+          <div class="empty-state">
+            <div class="empty-state__icon">📊</div>
+            <h3>No Account Data Yet</h3>
+            <p>Add your first financial account to see balance analytics</p>
+            <button class="btn btn--accent" (click)="openAccountDialog()">
+              + Add Your First Account
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
 
-    <section class="accounts__section">
-      <h2>Active Subscriptions</h2>
-      @if (subscriptions().length > 0) {
-        <div class="subscription-list">
-          @for (sub of subscriptions(); track sub.id) {
-            <div class="subscription-item">
-              <div class="subscription-item__info">
-                <h4>{{ sub.name }}</h4>
-                <span class="subscription-item__category">{{ sub.category }}</span>
-              </div>
-              <div class="subscription-item__details">
-                <span class="subscription-item__amount">{{ formatCurrency(sub.amount) }}</span>
-                <span class="subscription-item__cycle">{{ sub.billingCycle }}</span>
-              </div>
-            </div>
-          }
-        </div>
-      } @else {
-        <div class="empty-state-small">
-          <p>No subscriptions tracked</p>
-        </div>
-      }
-    </section>
+  <!-- Financial Accounts Grid -->
+  <section class="accounts__section">
+    <div class="card">
+      <div class="card-header">
+        <h3>Financial Accounts</h3>
+      </div>
+      <div class="card-content">
+        @if (accounts().length > 0) {
+          <ejs-grid 
+            [dataSource]="accounts()" 
+            [allowPaging]="true"
+            [allowSorting]="true"
+            [allowFiltering]="true"
+            [allowGrouping]="true"
+            [pageSettings]="pageSettings"
+            [filterSettings]="filterSettings"
+            (queryCellInfo)="queryCellInfo($event)">
+            <e-columns>
+              <e-column field="name" headerText="Account Name" width="200"></e-column>
+              <e-column field="type" headerText="Type" width="120"></e-column>
+              <e-column field="institution" headerText="Institution" width="150"></e-column>
+              <e-column field="balance" headerText="Balance" width="150" textAlign="Right" [format]="formatCurrency"></e-column>
+              <e-column field="lastUpdated" headerText="Last Updated" width="150" [format]="formatDate"></e-column>
+            </e-columns>
+          </ejs-grid>
+        } @else {
+          <div class="empty-state">
+            <div class="empty-state__icon">🏦</div>
+            <h3>No Accounts Found</h3>
+            <p>You haven't added any financial accounts yet. Start by adding your first account to track balances.</p>
+            <button class="btn btn--accent" (click)="openAccountDialog()">
+              + Add Your First Account
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
 
-    <!-- Add Account Dialog -->
-    <ejs-dialog
-      #accountDialog
-      header="Add Financial Account"
-      [width]="dialogWidth"
-      [isModal]="true"
-      [visible]="false"
-      [animationSettings]="animationSettings"
-      [buttons]="accountDialogButtons">
-      <ng-template #content>
-        <form [formGroup]="accountForm" class="form">
-          <div class="form-group">
-            <label>Account Name *</label>
-            <ejs-textbox formControlName="name" placeholder="e.g., Chase Checking"></ejs-textbox>
+  <!-- Active Subscriptions Grid -->
+  <section class="accounts__section">
+    <div class="card">
+      <div class="card-header">
+        <h3>Active Subscriptions</h3>
+      </div>
+      <div class="card-content">
+        @if (subscriptions().length > 0) {
+          <ejs-grid 
+            [dataSource]="subscriptions()" 
+            [allowPaging]="true"
+            [allowSorting]="true"
+            [allowFiltering]="true"
+            [allowGrouping]="true"
+            [pageSettings]="pageSettings"
+            [filterSettings]="filterSettings"
+            (queryCellInfo)="queryCellInfo($event)">
+            <e-columns>
+              <e-column field="name" headerText="Service" width="180"></e-column>
+              <e-column field="category" headerText="Category" width="120"></e-column>
+              <e-column field="amount" headerText="Amount" width="120" textAlign="Right" [format]="formatCurrency"></e-column>
+              <e-column field="billingCycle" headerText="Billing Cycle" width="120"></e-column>
+              <e-column field="nextBillingDate" headerText="Next Billing" width="140" [format]="formatDate"></e-column>
+            </e-columns>
+          </ejs-grid>
+        } @else {
+          <div class="empty-state">
+            <div class="empty-state__icon">📱</div>
+            <h3>No Subscriptions Tracked</h3>
+            <p>You haven't added any subscriptions yet. Track your recurring services to manage monthly costs.</p>
+            <button class="btn btn--accent" (click)="openSubscriptionDialog()">
+              + Add Your First Subscription
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Add Account Dialog -->
+  <ejs-dialog
+    #accountDialog
+    header="Add Financial Account"
+    [width]="dialogWidth"
+    [isModal]="true"
+    [visible]="false"
+    [animationSettings]="animationSettings"
+    [buttons]="accountDialogButtons">
+    <ng-template #content>
+      <form [formGroup]="accountForm" class="dialog-form">
+        <!-- First Row: Account Name & Account Type -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="accountName" class="form-label">Account Name *</label>
+            <input 
+              type="text"
+              id="accountName"
+              formControlName="name"
+              class="form-control"
+              placeholder="e.g., Chase Checking">
           </div>
 
-          <div class="form-group">
-            <label>Account Type *</label>
-            <ejs-dropdownlist
-              formControlName="type"
-              [dataSource]="accountTypes"
-              placeholder="Select type">
-            </ejs-dropdownlist>
+          <div class="col-md-6 mb-3">
+            <label for="accountType" class="form-label">Account Type *</label>
+            <select 
+              id="accountType"
+              formControlName="type" 
+              class="form-control">
+              <option value="">Select type</option>
+              @for (type of accountTypes; track type) {
+                <option [value]="type">{{ type }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Second Row: Institution & Current Balance -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="institution" class="form-label">Institution *</label>
+            <input 
+              type="text"
+              id="institution"
+              formControlName="institution"
+              class="form-control"
+              placeholder="Bank or institution name">
           </div>
 
-          <div class="form-group">
-            <label>Institution *</label>
-            <ejs-textbox formControlName="institution" placeholder="Bank or institution name"></ejs-textbox>
-          </div>
-
-          <div class="form-group">
-            <label>Current Balance *</label>
-            <ejs-numerictextbox
+          <div class="col-md-6 mb-3">
+            <label for="balance" class="form-label">Current Balance *</label>
+            <input 
+              type="number"
+              id="balance"
               formControlName="balance"
-              [step]="100"
-              format="c2"
+              class="form-control"
+              step="100"
               placeholder="0.00">
-            </ejs-numerictextbox>
           </div>
-        </form>
-      </ng-template>
-    </ejs-dialog>
+        </div>
+      </form>
+    </ng-template>
+  </ejs-dialog>
 
-    <!-- Add Subscription Dialog -->
-    <ejs-dialog
-      #subscriptionDialog
-      header="Add Subscription"
-      [width]="dialogWidth"
-      [isModal]="true"
-      [visible]="false"
-      [animationSettings]="animationSettings"
-      [buttons]="subscriptionDialogButtons">
-      <ng-template #content>
-        <form [formGroup]="subscriptionForm" class="form">
-          <div class="form-group">
-            <label>Subscription Name *</label>
-            <ejs-textbox formControlName="name" placeholder="e.g., Netflix, Spotify"></ejs-textbox>
+  <!-- Add Subscription Dialog -->
+  <ejs-dialog
+    #subscriptionDialog
+    header="Add Subscription"
+    [width]="dialogWidth"
+    [isModal]="true"
+    [visible]="false"
+    [animationSettings]="animationSettings"
+    [buttons]="subscriptionDialogButtons">
+    <ng-template #content>
+      <form [formGroup]="subscriptionForm" class="dialog-form">
+        <!-- First Row: Subscription Name & Category -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="subscriptionName" class="form-label">Subscription Name *</label>
+            <input 
+              type="text"
+              id="subscriptionName"
+              formControlName="name"
+              class="form-control"
+              placeholder="e.g., Netflix, Spotify">
           </div>
 
-          <div class="form-group">
-            <label>Amount *</label>
-            <ejs-numerictextbox
+          <div class="col-md-6 mb-3">
+            <label for="subscriptionCategory" class="form-label">Category *</label>
+            <input 
+              type="text"
+              id="subscriptionCategory"
+              formControlName="category"
+              class="form-control"
+              placeholder="e.g., Entertainment, Productivity">
+          </div>
+        </div>
+
+        <!-- Second Row: Amount & Billing Cycle -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="subscriptionAmount" class="form-label">Amount *</label>
+            <input 
+              type="number"
+              id="subscriptionAmount"
               formControlName="amount"
-              [min]="0"
-              [step]="1"
-              format="c2"
+              class="form-control"
+              step="1"
+              min="0"
               placeholder="0.00">
-            </ejs-numerictextbox>
           </div>
 
-          <div class="form-group">
-            <label>Category *</label>
-            <ejs-textbox formControlName="category" placeholder="e.g., Entertainment, Productivity"></ejs-textbox>
+          <div class="col-md-6 mb-3">
+            <label for="billingCycle" class="form-label">Billing Cycle *</label>
+            <select 
+              id="billingCycle"
+              formControlName="billingCycle" 
+              class="form-control">
+              <option value="">Select billing cycle</option>
+              @for (cycle of billingCycles; track cycle) {
+                <option [value]="cycle">{{ cycle }}</option>
+              }
+            </select>
           </div>
+        </div>
 
-          <div class="form-group">
-            <label>Billing Cycle *</label>
-            <ejs-dropdownlist
-              formControlName="billingCycle"
-              [dataSource]="billingCycles"
-              placeholder="Select billing cycle">
-            </ejs-dropdownlist>
+        <!-- Third Row: Next Billing Date (Full Width for better visibility) -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="nextBillingDate" class="form-label">Next Billing Date *</label>
+            <input 
+              type="date"
+              id="nextBillingDate"
+              formControlName="nextBillingDate"
+              class="form-control">
           </div>
-
-          <div class="form-group">
-            <label>Next Billing Date *</label>
-            <ejs-datepicker formControlName="nextBillingDate"></ejs-datepicker>
-          </div>
-        </form>
-      </ng-template>
-    </ejs-dialog>
+        </div>
+      </form>
+    </ng-template>
+  </ejs-dialog>
 </div>

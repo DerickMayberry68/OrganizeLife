@@ -37,6 +37,7 @@
     "@syncfusion/ej2-angular-navigations": "^31.1.20",
     "@syncfusion/ej2-angular-notifications": "^31.1.17",
     "@syncfusion/ej2-angular-popups": "^31.1.20",
+    "@syncfusion/ej2-angular-schedule": "^31.1.21",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
     "ngx-scrollbar": "^18.0.0",

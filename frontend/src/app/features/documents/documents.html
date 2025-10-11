@@ -1,95 +1,215 @@
 <div class="documents">
-  <h1 class="page-header">
-    📄 Document Vault
-    <div class="page-header__actions">
-      <button class="btn btn--accent" (click)="openDocumentDialog()">
-        + Upload Document
-      </button>
+  <!-- AppBar Header -->
+  <ejs-appbar cssClass="custom-appbar">
+    <span class="appbar-title">📄 Document Vault</span>
+    <div class="e-appbar-spacer"></div>
+    <button ejs-button cssClass="e-inherit" (click)="openDocumentDialog()">
+      + Upload Document
+    </button>
+  </ejs-appbar>
+
+  <!-- Loading Indicator -->
+  @if (isLoading()) {
+    <div class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Loading documents...</p>
     </div>
-  </h1>
+  }
 
-  <section class="documents__content">
-      @if (documents().length > 0) {
-        <div class="document-grid">
-          @for (doc of documents(); track doc.id) {
-            <div class="document-card">
-              <div class="document-card__icon">📄</div>
-              <h3>{{ doc.title }}</h3>
-              <span class="document-card__category badge badge--info">{{ doc.category }}</span>
-              <div class="document-card__details">
-                <div class="detail-row">
-                  <span>Type:</span>
-                  <span>{{ doc.fileType }}</span>
-                </div>
-                <div class="detail-row">
-                  <span>Size:</span>
-                  <span>{{ formatFileSize(doc.fileSize) }}</span>
-                </div>
-                <div class="detail-row">
-                  <span>Uploaded:</span>
-                  <span>{{ formatDate(doc.uploadDate) }}</span>
-                </div>
-                @if (doc.expiryDate) {
-                  <div class="detail-row expiry">
-                    <span>Expires:</span>
-                    <span>{{ formatDate(doc.expiryDate) }}</span>
-                  </div>
-                }
-                @if (doc.isImportant) {
-                  <span class="badge badge--warning">Important</span>
-                }
-              </div>
+  <!-- Documents Overview -->
+  <section class="documents__overview">
+    <app-stat-card
+      title="Total Documents"
+      [value]="totalDocuments().toString()"
+      icon="📄"
+      variant="primary"
+    />
+    
+    <app-stat-card
+      title="Important"
+      [value]="importantDocuments().toString()"
+      icon="⭐"
+      variant="warning"
+    />
+    
+    <app-stat-card
+      title="Expiring Soon"
+      [value]="expiringDocuments().toString()"
+      icon="⏰"
+      [variant]="expiringDocuments() > 0 ? 'error' : 'success'"
+    />
+    
+    <app-stat-card
+      title="Total Size"
+      [value]="totalSize()"
+      icon="💾"
+      variant="info"
+    />
+  </section>
+
+  <!-- Documents by Category Chart -->
+  <section class="documents__section">
+    <div class="card">
+      <div class="card-header">
+        <h3>Documents by Category</h3>
+      </div>
+      <div class="card-content">
+        @if (isLoading()) {
+          <div class="chart-loading">
+            <div class="spinner"></div>
+            <p>Loading chart data...</p>
+          </div>
+        } @else if (documentsByCategoryChart().length > 0) {
+          <ejs-chart
+            style="display:block"
+            [primaryXAxis]="primaryXAxis"
+            [primaryYAxis]="primaryYAxis"
+            [title]="chartTitle"
+            [tooltip]="tooltip"
+            [background]="chartBackground"
+            [palettes]="palettes"
+            [enableAnimation]="true"
+            [height]="'350'">
+            <e-series-collection>
+              <e-series 
+                [dataSource]="documentsByCategoryChart()" 
+                type='Column' 
+                xName='x' 
+                yName='y' 
+                name='Documents'
+                [marker]="marker">
+              </e-series>
+            </e-series-collection>
+          </ejs-chart>
+        } @else {
+          <div class="empty-state">
+            <div class="empty-state__icon">📊</div>
+            <h3>No Document Data Yet</h3>
+            <p>Upload your first document to see analytics by category</p>
+            <button class="btn btn--accent" (click)="openDocumentDialog()">
+              + Upload Your First Document
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- All Documents Grid -->
+  <section class="documents__section">
+    <div class="card">
+      <div class="card-header">
+        <h3>All Documents</h3>
+      </div>
+      <div class="card-content">
+        @if (documents().length > 0) {
+          <ejs-grid 
+            [dataSource]="documents()" 
+            [allowPaging]="true"
+            [allowSorting]="true"
+            [allowFiltering]="true"
+            [allowGrouping]="true"
+            [pageSettings]="pageSettings"
+            [filterSettings]="filterSettings"
+            (queryCellInfo)="queryCellInfo($event)">
+            <e-columns>
+              <e-column field="title" headerText="Title" width="200"></e-column>
+              <e-column field="category" headerText="Category" width="120"></e-column>
+              <e-column field="fileType" headerText="Type" width="100"></e-column>
+              <e-column field="uploadDate" headerText="Uploaded" width="140" [format]="formatDate"></e-column>
+              <e-column field="expiryDate" headerText="Expires" width="140" [format]="formatDate"></e-column>
+              <e-column field="isImportant" headerText="Priority" width="120"></e-column>
+            </e-columns>
+          </ejs-grid>
+        } @else {
+          <div class="empty-state">
+            <div class="empty-state__icon">📄</div>
+            <h3>No Documents Found</h3>
+            <p>You haven't uploaded any documents yet. Start by uploading your first document for safe keeping.</p>
+            <button class="btn btn--accent" (click)="openDocumentDialog()">
+              + Upload Your First Document
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Add Document Dialog -->
+  <ejs-dialog
+    #documentDialog
+    header="Upload Document"
+    [width]="dialogWidth"
+    [isModal]="true"
+    [visible]="false"
+    [animationSettings]="animationSettings"
+    [buttons]="documentDialogButtons">
+    <ng-template #content>
+      <form [formGroup]="documentForm" class="dialog-form">
+        <!-- First Row: Document Title & Category -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="documentTitle" class="form-label">Document Title *</label>
+            <input 
+              type="text"
+              id="documentTitle"
+              formControlName="title"
+              class="form-control"
+              placeholder="Enter document title">
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="documentCategory" class="form-label">Category *</label>
+            <select 
+              id="documentCategory"
+              formControlName="category" 
+              class="form-control">
+              <option value="">Select category</option>
+              @for (category of categories; track category) {
+                <option [value]="category">{{ category }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Second Row: Tags & Expiry Date -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="documentTags" class="form-label">Tags (comma separated)</label>
+            <input 
+              type="text"
+              id="documentTags"
+              formControlName="tags"
+              class="form-control"
+              placeholder="e.g., important, tax, 2025">
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="expiryDate" class="form-label">Expiry Date (if applicable)</label>
+            <input 
+              type="date"
+              id="expiryDate"
+              formControlName="expiryDate"
+              class="form-control">
+          </div>
+        </div>
+
+        <!-- Checkbox (Full Width) -->
+        <div class="row">
+          <div class="col-12">
+            <div class="form-check">
+              <input 
+                type="checkbox"
+                id="isImportant"
+                formControlName="isImportant"
+                class="form-check-input">
+              <label class="form-check-label" for="isImportant">
+                Mark as Important
+              </label>
             </div>
-          }
+          </div>
         </div>
-      } @else {
-        <div class="empty-state">
-          <span class="empty-state__icon">📄</span>
-          <h3>No Documents Yet</h3>
-          <p>Upload your important documents for safe keeping</p>
-        </div>
-      }
-    </section>
-
-    <!-- Add Document Dialog -->
-    <ejs-dialog
-      #documentDialog
-      header="Upload Document"
-      [width]="dialogWidth"
-      [isModal]="true"
-      [visible]="false"
-      [animationSettings]="animationSettings"
-      [buttons]="documentDialogButtons">
-      <ng-template #content>
-        <form [formGroup]="documentForm" class="form">
-          <div class="form-group">
-            <label>Document Title *</label>
-            <ejs-textbox formControlName="title" placeholder="Enter document title"></ejs-textbox>
-          </div>
-
-          <div class="form-group">
-            <label>Category *</label>
-            <ejs-dropdownlist
-              formControlName="category"
-              [dataSource]="categories"
-              placeholder="Select category">
-            </ejs-dropdownlist>
-          </div>
-
-          <div class="form-group">
-            <label>Tags (comma separated)</label>
-            <ejs-textbox formControlName="tags" placeholder="e.g., important, tax, 2025"></ejs-textbox>
-          </div>
-
-          <div class="form-group">
-            <label>Expiry Date (if applicable)</label>
-            <ejs-datepicker formControlName="expiryDate" placeholder="Select expiry date"></ejs-datepicker>
-          </div>
-
-          <div class="form-group">
-            <ejs-checkbox formControlName="isImportant" label="Mark as Important"></ejs-checkbox>
-          </div>
-        </form>
-      </ng-template>
-    </ejs-dialog>
+      </form>
+    </ng-template>
+  </ejs-dialog>
 </div>

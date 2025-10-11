@@ -12,7 +12,7 @@
 
   // Primary blue gradient (like "Total Visitors")
   &--primary {
-    background: linear-gradient(135deg, #348fe2 0%, #5da5e8 100%);
+    background: linear-gradient(135deg, #1b76ff 0%, #4d94ff 100%);
     
     .stat-card__title,
     .stat-card__value,
@@ -31,7 +31,7 @@
 
   // Info cyan gradient (like "Bounce Rate")
   &--info {
-    background: linear-gradient(135deg, #49b6d6 0%, #6dc5de 100%);
+    background: linear-gradient(135deg, #1bb8ff 0%, #4dcbff 100%);
     
     .stat-card__title,
     .stat-card__value,
@@ -50,7 +50,7 @@
 
   // Warning orange gradient (like "Unique Visitors")
   &--warning {
-    background: linear-gradient(135deg, #f59c1a 0%, #f7b048 100%);
+    background: linear-gradient(135deg, #ff8c42 0%, #ffaa6b 100%);
     
     .stat-card__title,
     .stat-card__value,
@@ -69,7 +69,7 @@
 
   // Error red/pink gradient (like "Avg Time on Site")
   &--error {
-    background: linear-gradient(135deg, #ff5b57 0%, #ff7b78 100%);
+    background: linear-gradient(135deg, #ff5757 0%, #ff7979 100%);
     
     .stat-card__title,
     .stat-card__value,
@@ -88,7 +88,7 @@
 
   // Success green gradient
   &--success {
-    background: linear-gradient(135deg, #32a932 0%, #4ec34e 100%);
+    background: linear-gradient(135deg, #3ddc84 0%, #67e79d 100%);
     
     .stat-card__title,
     .stat-card__value,

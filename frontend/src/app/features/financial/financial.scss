@@ -4,6 +4,7 @@
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 15px;
     margin-bottom: 20px;
+    margin-top: 20px;
   }
 
   &__section {
@@ -14,6 +15,45 @@
       font-weight: 600;
       color: rgba(255, 255, 255, 0.9);
       margin-bottom: 15px;
+    }
+  }
+}
+
+// AppBar styling - match header color
+.e-appbar.custom-appbar {
+  background: #2d353c !important;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  .appbar-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  button.e-btn {
+    margin-left: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    &:first-of-type {
+      background: #d4af37;
+      border-color: #d4af37;
+      color: #1a1a2e;
+
+      &:hover {
+        background: #dfc159;
+        border-color: #dfc159;
+      }
     }
   }
 }

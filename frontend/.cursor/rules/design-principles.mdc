@@ -1,0 +1,293 @@
+---
+alwaysApply: true
+description: Design principles and color theory for UI consistency
+---
+
+# Design Principles & Color Theory
+
+## Color Wheel Theory Applied
+
+### Primary Color: Blue (#1b76ff)
+The application's primary color is positioned on the color wheel and all other colors are chosen based on their relationship to it.
+
+### Color Relationships
+
+#### Analogous Colors (Adjacent on wheel)
+Colors next to each other create harmony:
+- Blue (#1b76ff) → Cyan (#1bb8ff) → Teal (#1bb8cf)
+- Blue (#1b76ff) → Indigo (#6b5ce7) → Purple (#a05ce7)
+
+**Usage**: Gradients, subtle variations, harmonious palettes
+
+#### Complementary Colors (Opposite on wheel)
+Colors opposite each other create contrast:
+- Blue (#1b76ff) ↔ Orange (#ff8c42)
+
+**Usage**: Call-to-action buttons, important notices, highlights
+
+#### Triadic Colors (120° apart)
+Three colors equally spaced:
+- Blue (#1b76ff) + Green (#3ddc84) + Red (#ff5757)
+
+**Usage**: Diverse content cards, status indicators, varied UI elements
+
+#### Split-Complementary
+Base color + two adjacent to its complement:
+- Blue (#1b76ff) + Orange (#ff8c42) + Pink (#ff5c93)
+
+**Usage**: Rich, balanced palettes without harsh contrast
+
+## Visual Hierarchy
+
+### Priority Levels
+
+#### 1. Primary Elements (Highest Priority)
+- Color: Blue (#1b76ff)
+- Weight: Bold
+- Size: Large
+- Examples: Primary CTAs, main navigation, active states
+
+#### 2. Secondary Elements
+- Color: Cyan (#1bb8ff), Indigo (#6b5ce7)
+- Weight: Medium
+- Size: Medium
+- Examples: Secondary actions, info badges, supporting text
+
+#### 3. Tertiary Elements (Lowest Priority)
+- Color: Gray shades
+- Weight: Normal
+- Size: Small
+- Examples: Metadata, timestamps, helper text
+
+### Color Weight in UI
+```
+Most Attention → Least Attention
+────────────────────────────────
+Blue > Green/Orange/Red > Cyan > Purple > Gray
+```
+
+## Contrast & Readability
+
+### WCAG AA Standards
+All text must meet minimum contrast ratios:
+- **Normal text**: 4.5:1 minimum
+- **Large text** (18pt+): 3:1 minimum
+- **UI components**: 3:1 minimum
+
+### Text on Colored Backgrounds
+
+#### Light Text on Dark
+```scss
+// ✅ Good contrast
+background: #1b76ff;
+color: #ffffff;  // Ratio: 6.2:1
+```
+
+#### Dark Text on Light
+```scss
+// ✅ Good contrast
+background: #ffffff;
+color: #2d353c;  // Ratio: 12.6:1
+```
+
+#### Colored Text on White
+```scss
+// ✅ Good contrast
+background: #ffffff;
+color: #1b76ff;  // Ratio: 5.3:1
+```
+
+## Spacing & Layout
+
+### 8px Grid System
+All spacing should be multiples of 8px:
+```scss
+// Base spacing unit
+$spacing-unit: 8px;
+
+// Common spacing values
+$spacing-xs:  4px;   // 0.5x
+$spacing-sm:  8px;   // 1x
+$spacing-md:  16px;  // 2x
+$spacing-lg:  24px;  // 3x
+$spacing-xl:  32px;  // 4x
+$spacing-xxl: 48px;  // 6x
+```
+
+### White Space Principles
+- **Micro white space**: 8-16px between related elements
+- **Macro white space**: 24-48px between unrelated sections
+- **Breathing room**: Don't fill every pixel
+
+## Typography Hierarchy
+
+### Font Sizes
+```scss
+$h1: 30px;  // Page titles
+$h2: 24px;  // Section headings
+$h3: 21px;  // Subsection headings
+$h4: 18px;  // Component headings
+$h5: 15px;  // Small headings
+$h6: 12px;  // Micro headings
+
+$body: 12px;    // Default text
+$small: 11px;   // Helper text
+$large: 14px;   // Emphasized text
+```
+
+### Font Weights
+- **100**: Ultra light (brand name in header)
+- **400**: Normal (body text)
+- **500**: Medium (emphasis)
+- **600**: Semi-bold (headings)
+- **700**: Bold (strong emphasis)
+
+## Animation & Motion
+
+### Timing Functions
+```scss
+// Use ease for natural motion
+transition: all 0.3s ease;
+
+// Use ease-in-out for symmetrical motion
+transition: transform 0.4s ease-in-out;
+
+// Use linear for continuous motion
+animation: rotate 1s linear infinite;
+```
+
+### Duration Guidelines
+- **Micro interactions**: 150-200ms (hover, focus)
+- **Small animations**: 200-300ms (dropdowns, tooltips)
+- **Medium animations**: 300-500ms (modals, panels)
+- **Large animations**: 500-800ms (page transitions)
+
+### Motion Principles
+1. **Purposeful**: Every animation should have a reason
+2. **Subtle**: Don't distract from content
+3. **Consistent**: Use same timing throughout
+4. **Responsive**: Fast devices can handle more motion
+
+## Component Design Patterns
+
+### Card Components
+```scss
+.card {
+  // Elevation through shadow
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  
+  // Subtle border radius
+  border-radius: 6px;
+  
+  // Hover effect for interactivity
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+  }
+}
+```
+
+### Button States
+```scss
+.button {
+  // Default state
+  background: var(--bs-primary);
+  transform: scale(1);
+  
+  // Hover state - lighter and lifted
+  &:hover {
+    background: lighten($primary, 5%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba($primary, 0.3);
+  }
+  
+  // Active state - pressed
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba($primary, 0.2);
+  }
+  
+  // Disabled state - faded
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+```
+
+### Focus States
+```scss
+// Visible focus ring for accessibility
+&:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), 0.2);
+}
+
+// Remove focus ring for mouse users
+&:focus:not(:focus-visible) {
+  box-shadow: none;
+}
+```
+
+## Consistency Guidelines
+
+### 1. Color Application
+- **Consistent mapping**: Same colors for same meanings across app
+- **Limited palette**: Use defined colors, avoid adding new ones
+- **Semantic naming**: Use purpose-based names (`.success` not `.green`)
+
+### 2. Component Reuse
+- **DRY principle**: Don't repeat component styles
+- **Shared components**: Use components from `/shared` directory
+- **Utility classes**: Use Bootstrap utilities before custom CSS
+
+### 3. Responsive Behavior
+- **Mobile first**: Start with mobile, enhance for desktop
+- **Touch targets**: Minimum 44x44px for interactive elements
+- **Readable text**: Minimum 16px font size on mobile
+
+## Accessibility (A11y)
+
+### Color Independence
+- **Never use color alone**: Combine with icons, text, or patterns
+- **High contrast mode**: Test in Windows high contrast mode
+- **Color blindness**: Test with color blindness simulators
+
+### Focus Management
+```typescript
+// Trap focus in modals
+trapFocus(modal: HTMLElement) {
+  const focusableElements = modal.querySelectorAll(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  );
+  // Implement focus trap logic
+}
+```
+
+### Screen Reader Support
+```html
+<!-- Provide context for screen readers -->
+<button aria-label="Close dialog">
+  <i class="fa fa-times" aria-hidden="true"></i>
+</button>
+
+<!-- Announce dynamic changes -->
+<div role="status" aria-live="polite">
+  {{ statusMessage }}
+</div>
+```
+
+## Design Checklist
+
+Before considering a UI component complete:
+
+- [ ] Uses colors from defined palette
+- [ ] Meets WCAG AA contrast ratios
+- [ ] Responsive across all breakpoints
+- [ ] Smooth transitions (200-300ms)
+- [ ] Visible focus states
+- [ ] Touch targets ≥44x44px
+- [ ] Works in high contrast mode
+- [ ] Screen reader friendly
+- [ ] Consistent with existing patterns
+- [ ] Follows 8px grid system

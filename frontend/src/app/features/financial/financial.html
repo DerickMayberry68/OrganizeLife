@@ -1,15 +1,15 @@
 <div class="financial">
-  <h1 class="page-header">
-    💰 Financial Management
-    <div class="page-header__actions">
-      <button class="btn btn--accent" (click)="openTransactionDialog()">
-        + Add Transaction
-      </button>
-      <button class="btn btn--outline" (click)="openBudgetDialog()">
-        + Add Budget
-      </button>
-    </div>
-  </h1>
+  <!-- AppBar Header -->
+  <ejs-appbar cssClass="custom-appbar">
+    <span class="appbar-title">💰 Financial Management</span>
+    <div class="e-appbar-spacer"></div>
+    <button ejs-button cssClass="e-inherit" (click)="openTransactionDialog()">
+      + Add Transaction
+    </button>
+    <button ejs-button cssClass="e-inherit" (click)="openBudgetDialog()">
+      + Add Budget
+    </button>
+  </ejs-appbar>
 
   <!-- Loading Indicator -->
   @if (isLoading()) {
@@ -190,72 +190,123 @@
       [animationSettings]="animationSettings"
       [buttons]="transactionDialogButtons">
       <ng-template #content>
-        <form [formGroup]="transactionForm" class="form">
-          <div class="form-group">
-            <label>Account *</label>
-            <ejs-dropdownlist
-              formControlName="accountId"
-              [dataSource]="accounts()"
-              [fields]="{ text: 'name', value: 'id' }"
-              placeholder="Select account">
-            </ejs-dropdownlist>
+        <form [formGroup]="transactionForm" class="dialog-form">
+          <!-- First Row: Account & Description -->
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="accountId" class="form-label">Account *</label>
+              <select 
+                id="accountId"
+                formControlName="accountId" 
+                class="form-control">
+                <option value="">Select an account</option>
+                @for (account of accounts(); track account.id) {
+                  <option [value]="account.id">{{ account.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="description" class="form-label">Description *</label>
+              <input 
+                type="text"
+                id="description"
+                formControlName="description"
+                class="form-control"
+                placeholder="Enter description">
+            </div>
           </div>
 
-          <div class="form-group">
-            <label>Description *</label>
-            <ejs-textbox formControlName="description" placeholder="Enter description"></ejs-textbox>
+          <!-- Second Row: Amount & Type -->
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="amount" class="form-label">Amount *</label>
+              <input 
+                type="number"
+                id="amount"
+                formControlName="amount"
+                class="form-control"
+                step="0.01"
+                min="0"
+                placeholder="0.00">
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="type" class="form-label">Type *</label>
+              <select 
+                id="type"
+                formControlName="type" 
+                class="form-control">
+                @for (type of transactionTypes; track type) {
+                  <option [value]="type">{{ type }}</option>
+                }
+              </select>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label>Amount *</label>
-            <ejs-numerictextbox
-              formControlName="amount"
-              [min]="0"
-              [step]="0.01"
-              format="c2"
-              placeholder="0.00">
-            </ejs-numerictextbox>
+          <!-- Third Row: Category & Date -->
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="categoryId" class="form-label">Category</label>
+              <select 
+                id="categoryId"
+                formControlName="categoryId" 
+                class="form-control">
+                <option value="">Select a category</option>
+                @for (category of categories(); track category.id) {
+                  <option [value]="category.id">{{ category.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="date" class="form-label">Date *</label>
+              <input 
+                type="date"
+                id="date"
+                formControlName="date"
+                class="form-control">
+            </div>
           </div>
 
-          <div class="form-group">
-            <label>Type *</label>
-            <ejs-dropdownlist
-              formControlName="type"
-              [dataSource]="transactionTypes"
-              placeholder="Select type">
-            </ejs-dropdownlist>
+          <!-- Fourth Row: Merchant Name & Notes -->
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="merchantName" class="form-label">Merchant Name</label>
+              <input 
+                type="text"
+                id="merchantName"
+                formControlName="merchantName"
+                class="form-control"
+                placeholder="Enter merchant name">
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="notes" class="form-label">Notes</label>
+              <textarea 
+                id="notes"
+                formControlName="notes"
+                class="form-control"
+                rows="2"
+                placeholder="Additional notes...">
+              </textarea>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label>Category</label>
-            <ejs-dropdownlist
-              formControlName="categoryId"
-              [dataSource]="categories()"
-              [fields]="{ text: 'name', value: 'id' }"
-              placeholder="Select category (optional)">
-            </ejs-dropdownlist>
-          </div>
-
-          <div class="form-group">
-            <label>Date *</label>
-            <ejs-datepicker formControlName="date"></ejs-datepicker>
-          </div>
-
-          <div class="form-group">
-            <label>Merchant Name</label>
-            <ejs-textbox formControlName="merchantName" placeholder="Enter merchant name (optional)"></ejs-textbox>
-          </div>
-
-          <div class="form-group">
-            <label>Notes</label>
-            <ejs-textbox formControlName="notes" placeholder="Enter notes (optional)" multiline="true"></ejs-textbox>
-          </div>
-
-          <div class="form-group">
-            <label>
-              <input type="checkbox" formControlName="isRecurring" />
-              Recurring Transaction
-            </label>
+          <!-- Checkbox (Full Width) -->
+          <div class="row">
+            <div class="col-12">
+              <div class="form-check">
+                <input 
+                  type="checkbox"
+                  id="isRecurring"
+                  formControlName="isRecurring"
+                  class="form-check-input">
+                <label class="form-check-label" for="isRecurring">
+                  Recurring Transaction
+                </label>
+              </div>
+            </div>
           </div>
         </form>
       </ng-template>
@@ -271,57 +322,95 @@
       [animationSettings]="animationSettings"
       [buttons]="budgetDialogButtons">
       <ng-template #content>
-        <form [formGroup]="budgetForm" class="form">
-          <div class="form-group">
-            <label>Budget Name *</label>
-            <ejs-textbox formControlName="name" placeholder="Enter budget name"></ejs-textbox>
+        <form [formGroup]="budgetForm" class="dialog-form">
+          <!-- First Row: Budget Name & Category -->
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="budgetName" class="form-label">Budget Name *</label>
+              <input 
+                type="text"
+                id="budgetName"
+                formControlName="name"
+                class="form-control"
+                placeholder="Enter budget name">
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="budgetCategoryId" class="form-label">Category *</label>
+              <select 
+                id="budgetCategoryId"
+                formControlName="categoryId" 
+                class="form-control">
+                <option value="">Select a category</option>
+                @for (category of categories(); track category.id) {
+                  <option [value]="category.id">{{ category.name }}</option>
+                }
+              </select>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label>Category *</label>
-            <ejs-dropdownlist
-              formControlName="categoryId"
-              [dataSource]="categories()"
-              [fields]="{ text: 'name', value: 'id' }"
-              placeholder="Select category">
-            </ejs-dropdownlist>
+          <!-- Second Row: Budget Limit & Period -->
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="limitAmount" class="form-label">Budget Limit *</label>
+              <input 
+                type="number"
+                id="limitAmount"
+                formControlName="limitAmount"
+                class="form-control"
+                step="10"
+                min="0"
+                placeholder="0.00">
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="period" class="form-label">Period *</label>
+              <select 
+                id="period"
+                formControlName="period" 
+                class="form-control">
+                @for (period of budgetPeriods; track period) {
+                  <option [value]="period">{{ period }}</option>
+                }
+              </select>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label>Budget Limit Amount *</label>
-            <ejs-numerictextbox
-              formControlName="limitAmount"
-              [min]="0"
-              [step]="10"
-              format="c2"
-              placeholder="0.00">
-            </ejs-numerictextbox>
+          <!-- Third Row: Start Date & End Date -->
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="startDate" class="form-label">Start Date *</label>
+              <input 
+                type="date"
+                id="startDate"
+                formControlName="startDate"
+                class="form-control">
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="endDate" class="form-label">End Date</label>
+              <input 
+                type="date"
+                id="endDate"
+                formControlName="endDate"
+                class="form-control">
+            </div>
           </div>
 
-          <div class="form-group">
-            <label>Period *</label>
-            <ejs-dropdownlist
-              formControlName="period"
-              [dataSource]="budgetPeriods"
-              placeholder="Select period">
-            </ejs-dropdownlist>
-          </div>
-
-          <div class="form-group">
-            <label>Start Date *</label>
-            <ejs-datepicker formControlName="startDate"></ejs-datepicker>
-          </div>
-
-          <div class="form-group">
-            <label>End Date</label>
-            <ejs-datepicker formControlName="endDate" placeholder="Optional"></ejs-datepicker>
-          </div>
-
-          <div class="form-group">
-            <label>
-              <input type="checkbox" formControlName="isActive" />
-              Active Budget
-            </label>
+          <!-- Checkbox (Full Width) -->
+          <div class="row">
+            <div class="col-12">
+              <div class="form-check">
+                <input 
+                  type="checkbox"
+                  id="isActive"
+                  formControlName="isActive"
+                  class="form-check-input">
+                <label class="form-check-label" for="isActive">
+                  Active Budget
+                </label>
+              </div>
+            </div>
           </div>
         </form>
       </ng-template>

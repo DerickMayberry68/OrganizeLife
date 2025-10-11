@@ -1,7 +1,9 @@
 <div class="dashboard">
-  <app-breadcrumb [items]="breadcrumbs" />
-  
-  <h1 class="page-header">Dashboard</h1>
+  <!-- AppBar Header -->
+  <ejs-appbar cssClass="custom-appbar">
+    <span class="appbar-title">🏠 Dashboard</span>
+    <div class="e-appbar-spacer"></div>
+  </ejs-appbar>
 
   <!-- Alerts Section -->
   @if (alerts().length > 0) {
@@ -102,83 +104,49 @@
 
   <!-- Main Content Grid -->
   <div class="dashboard__grid">
-      <!-- Upcoming Bills Widget -->
-      <div class="card dashboard__widget">
+      <!-- Event Calendar Widget -->
+      <div class="card dashboard__calendar-widget">
         <div class="widget__header">
           <h2 class="widget__title">
-            <span class="widget__icon">📮</span>
-            Upcoming Bills
+            <span class="widget__icon">📅</span>
+            Event Calendar
           </h2>
-          <a [routerLink]="['/bills']" class="widget__link">View All →</a>
+          <div class="widget__legend">
+            <span class="legend-item"><span class="legend-dot" style="background: #1b76ff;"></span> Bills</span>
+            <span class="legend-item"><span class="legend-dot" style="background: #ff5757;"></span> Urgent</span>
+            <span class="legend-item"><span class="legend-dot" style="background: #ff8c42;"></span> Maintenance</span>
+            <span class="legend-item"><span class="legend-dot" style="background: #6b5ce7;"></span> Insurance</span>
+            <span class="legend-item"><span class="legend-dot" style="background: #a05ce7;"></span> Healthcare</span>
+          </div>
         </div>
         
         <div class="widget__content">
-          @if (recentBills().length > 0) {
-            <div class="bill-list">
-              @for (bill of recentBills(); track bill.id) {
-                <div class="bill-item">
-                  <div class="bill-item__info">
-                    <h3 class="bill-item__name">{{ bill.name }}</h3>
-                    <span class="bill-item__date">Due {{ formatDate(bill.dueDate) }}</span>
-                  </div>
-                  <div class="bill-item__amount">
-                    <span class="amount">{{ formatCurrency(bill.amount) }}</span>
-                    @if (getDaysUntil(bill.dueDate) <= 3) {
-                      <span class="badge badge--warning">{{ getDaysUntil(bill.dueDate) }}d</span>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
+          @if (calendarEvents().length > 0) {
+            <ejs-schedule
+              [selectedDate]="selectedDate"
+              [eventSettings]="eventSettings"
+              [views]="views"
+              [currentView]="'Month'"
+              (eventRendered)="onEventRendered($event)"
+              cssClass="custom-schedule"
+              height="600px"
+            >
+            </ejs-schedule>
           } @else {
             <div class="widget__empty">
-              <p>No upcoming bills</p>
-            </div>
-          }
-        </div>
-      </div>
-
-      <!-- Maintenance Tasks Widget -->
-      <div class="card dashboard__widget">
-        <div class="widget__header">
-          <h2 class="widget__title">
-            <span class="widget__icon">🔧</span>
-            Maintenance Tasks
-          </h2>
-          <a [routerLink]="['/maintenance']" class="widget__link">View All →</a>
-        </div>
-        
-        <div class="widget__content">
-          @if (upcomingMaintenance().length > 0) {
-            <div class="task-list">
-              @for (task of upcomingMaintenance(); track task.id) {
-                <div class="task-item">
-                  <div class="task-item__info">
-                    <h3 class="task-item__title">{{ task.title }}</h3>
-                    <span class="task-item__category">{{ task.category }}</span>
-                  </div>
-                  <div class="task-item__meta">
-                    @if (task.priority === 'urgent') {
-                      <span class="badge badge--error">Urgent</span>
-                    } @else if (task.priority === 'high') {
-                      <span class="badge badge--warning">High</span>
-                    } @else {
-                      <span class="badge badge--info">{{ task.priority }}</span>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-          } @else {
-            <div class="widget__empty">
-              <p>No pending tasks</p>
+              <p>📅 No upcoming events</p>
+              <p>Bills, maintenance tasks, and insurance renewals will appear here.</p>
+              <div class="quick-links">
+                <a [routerLink]="['/bills']" class="btn btn--outline">Add Bill →</a>
+                <a [routerLink]="['/maintenance']" class="btn btn--outline">Add Task →</a>
+              </div>
             </div>
           }
         </div>
       </div>
 
       <!-- Quick Actions Widget -->
-      <div class="card card--accent">
+      <div class="card card--accent dashboard__quick-actions">
         <div class="widget__header">
           <h2 class="widget__title">
             <span class="widget__icon">⚡</span>
@@ -203,6 +171,10 @@
             <a [routerLink]="['/documents']" class="action-button">
               <span class="action-button__icon">📄</span>
               <span class="action-button__label">Upload Document</span>
+            </a>
+            <a [routerLink]="['/healthcare']" class="action-button">
+              <span class="action-button__icon">🏥</span>
+              <span class="action-button__label">Healthcare</span>
             </a>
           </div>
         </div>

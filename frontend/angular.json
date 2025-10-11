@@ -39,6 +39,7 @@
               "node_modules/@syncfusion/ej2-dropdowns/styles/material.css",
               "node_modules/@syncfusion/ej2-notifications/styles/material.css",
               "node_modules/@syncfusion/ej2-angular-popups/styles/material.css",
+              "node_modules/@syncfusion/ej2-schedule/styles/material.css",
               "src/styles.scss"
             ]
           },
@@ -99,6 +100,13 @@
               "node_modules/@syncfusion/ej2-popups/styles/material.css",
               "node_modules/@syncfusion/ej2-lists/styles/material.css",
               "node_modules/@syncfusion/ej2-navigations/styles/material.css",
+              "node_modules/@syncfusion/ej2-splitbuttons/styles/material.css",
+              "node_modules/@syncfusion/ej2-grids/styles/material.css",
+              "node_modules/@syncfusion/ej2-calendars/styles/material.css",
+              "node_modules/@syncfusion/ej2-dropdowns/styles/material.css",
+              "node_modules/@syncfusion/ej2-notifications/styles/material.css",
+              "node_modules/@syncfusion/ej2-angular-popups/styles/material.css",
+              "node_modules/@syncfusion/ej2-schedule/styles/material.css",
               "src/styles.scss"
             ]
           }
