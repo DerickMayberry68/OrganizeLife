@@ -1,22 +1,38 @@
-import { Component, Input, Output, EventEmitter, Renderer2, OnDestroy, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, Renderer2, OnDestroy, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { AppSettings } from '../../services/app-settings.service';
 import { AuthService } from '../../services/auth.service';
+import { DataService } from '../../services/data.service';
 import { slideToggle } from '../../utils/slide-animations';
 
 @Component({
   selector: 'header',
   templateUrl: './header.component.html',
+  styleUrl: './header.component.scss',
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule, RouterLink]
 })
-export class HeaderComponent implements OnDestroy {
+export class HeaderComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
+  private dataService = inject(DataService);
   
   @Input() appSidebarTwo: any;
 	@Output() appSidebarEndToggled = new EventEmitter<boolean>();
 	@Output() appSidebarMobileToggled = new EventEmitter<boolean>();
 	@Output() appSidebarEndMobileToggled = new EventEmitter<boolean>();
+	
+	// Alerts
+	protected readonly alerts = this.dataService.alerts;
+	protected readonly recentAlerts = computed(() => 
+    this.alerts()
+      .filter(a => !a.isDismissed)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 5)
+  );
+	protected readonly notificationCount = computed(() => 
+    this.alerts().filter(a => !a.isRead && !a.isDismissed).length
+  );
 	
 	// Get current user info
 	get currentUser() {
@@ -70,6 +86,38 @@ export class HeaderComponent implements OnDestroy {
 	toggleAppHeaderMegaMenuMobile(): void {
 	  this.appSettings.appHeaderMegaMenuMobileToggled = !this.appSettings.appHeaderMegaMenuMobileToggled;
 	}
+
+	ngOnInit(): void {
+    this.dataService.loadAlerts().subscribe();
+  }
+
+	markAlertAsRead(id: string, event: Event): void {
+    event.stopPropagation();
+    this.dataService.markAlertAsRead(id).subscribe();
+  }
+
+	getSeverityIcon(severity: string): string {
+    switch (severity) {
+      case 'Critical': return '🚨';
+      case 'High': return '⚠️';
+      case 'Medium': return 'ℹ️';
+      case 'Low': return '✅';
+      default: return '🔔';
+    }
+  }
+
+	getRelativeTime(date: Date): string {
+    const now = new Date();
+    const diff = now.getTime() - new Date(date).getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    return `${days}d ago`;
+  }
 
 	logout(): void {
 	  this.authService.logout();

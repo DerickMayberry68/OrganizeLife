@@ -22,12 +22,3 @@ export interface ActivityItem {
   icon: string;
 }
 
-export interface Alert {
-  id: string;
-  type: 'info' | 'warning' | 'error' | 'success';
-  message: string;
-  timestamp: Date;
-  actionLabel?: string;
-  actionRoute?: string;
-}
-

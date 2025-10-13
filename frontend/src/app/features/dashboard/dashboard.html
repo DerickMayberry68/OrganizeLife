@@ -5,21 +5,7 @@
     <div class="e-appbar-spacer"></div>
   </ejs-appbar>
 
-  <!-- Alerts Section -->
-  @if (alerts().length > 0) {
-    <div class="dashboard__alerts">
-      @for (alert of alerts(); track alert.id) {
-        <app-alert
-          [type]="alert.type"
-          [message]="alert.message"
-          [dismissible]="true"
-          (dismiss)="dismissAlert(alert.id)"
-        />
-      }
-    </div>
-  }
-
-    <!-- Quick Stats -->
+  <!-- Quick Stats -->
     <section class="dashboard__stats">
       <app-stat-card
         title="Upcoming Bills"

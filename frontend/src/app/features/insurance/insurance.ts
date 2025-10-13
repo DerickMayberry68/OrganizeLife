@@ -176,7 +176,6 @@ export class Insurance implements OnInit {
     if (this.policyForm.valid) {
       const formValue = this.policyForm.value;
       const policy = {
-        id: Date.now().toString(),
         provider: formValue.provider,
         type: formValue.type,
         policyNumber: formValue.policyNumber,
@@ -187,16 +186,22 @@ export class Insurance implements OnInit {
         coverage: formValue.coverage,
         deductible: formValue.deductible || undefined
       };
-      this.dataService.addInsurancePolicy(policy);
-      this.policyDialog.hide();
-      this.policyForm.reset({
-        billingFrequency: 'annual',
-        startDate: new Date(),
-        renewalDate: new Date(),
-        premium: 0,
-        deductible: 0
+      
+      this.dataService.addInsurancePolicy(policy).subscribe({
+        next: () => {
+          this.policyDialog.hide();
+          this.policyForm.reset({
+            billingFrequency: 'annual',
+            startDate: new Date(),
+            renewalDate: new Date(),
+            premium: 0,
+            deductible: 0
+          });
+        },
+        error: (error) => {
+          console.error('Error saving insurance policy:', error);
+        }
       });
-      this.toastService.success('Policy Added', `${formValue.provider} policy has been added successfully.`);
     }
   }
 

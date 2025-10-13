@@ -555,5 +555,153 @@ public class PaymentsController : ControllerBase
     }
 
     #endregion
+
+    #region Payment History
+
+    /// <summary>
+    /// Get payment history for a specific bill
+    /// </summary>
+    [HttpGet("bill/{billId}/history")]
+    [ProducesResponseType(typeof(List<PaymentHistoryResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetBillPaymentHistory(Guid billId)
+    {
+        var bill = await _context.Bills
+            .Where(b => b.Id == billId && b.DeletedAt == null)
+            .FirstOrDefaultAsync();
+
+        if (bill == null)
+            return NotFound(new { message = "Bill not found" });
+
+        if (!await IsUserMemberOfHousehold(bill.HouseholdId))
+            return Forbid();
+
+        var paymentHistory = await _context.PaymentHistory
+            .Where(ph => ph.BillId == billId)
+            .OrderByDescending(ph => ph.PaidDate)
+            .Select(ph => new PaymentHistoryResponseDto(
+                ph.Id,
+                ph.BillId,
+                ph.Bill.Name,
+                ph.TransactionId,
+                ph.PaidDate,
+                ph.Amount,
+                ph.ConfirmationNumber,
+                ph.PaymentMethod,
+                ph.Notes,
+                ph.CreatedAt
+            ))
+            .ToListAsync();
+
+        return Ok(paymentHistory);
+    }
+
+    /// <summary>
+    /// Record a bill payment
+    /// </summary>
+    [HttpPost("bill/{billId}/history")]
+    [ProducesResponseType(typeof(PaymentHistoryResponseDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RecordBillPayment(Guid billId, [FromBody] RecordPaymentDto dto)
+    {
+        var bill = await _context.Bills
+            .Where(b => b.Id == billId && b.DeletedAt == null)
+            .FirstOrDefaultAsync();
+
+        if (bill == null)
+            return NotFound(new { message = "Bill not found" });
+
+        if (!await IsUserMemberOfHousehold(bill.HouseholdId))
+            return Forbid();
+
+        var userId = GetCurrentUserId();
+        var now = DateTime.UtcNow;
+
+        var payment = new PaymentHistory
+        {
+            Id = Guid.NewGuid(),
+            BillId = billId,
+            TransactionId = dto.TransactionId,
+            PaidDate = dto.PaidDate,
+            Amount = dto.Amount,
+            ConfirmationNumber = dto.ConfirmationNumber,
+            PaymentMethod = dto.PaymentMethod,
+            Notes = dto.Notes,
+            CreatedAt = now,
+            CreatedBy = userId
+        };
+
+        _context.PaymentHistory.Add(payment);
+
+        // Check if bill is fully paid
+        var totalPaid = await _context.PaymentHistory
+            .Where(ph => ph.BillId == billId)
+            .SumAsync(ph => ph.Amount);
+        totalPaid += dto.Amount;
+
+        if (totalPaid >= bill.Amount)
+        {
+            bill.Status = "Paid";
+            bill.UpdatedAt = now;
+            bill.UpdatedBy = userId;
+        }
+
+        await _context.SaveChangesAsync();
+
+        var response = new PaymentHistoryResponseDto(
+            payment.Id,
+            payment.BillId,
+            bill.Name,
+            payment.TransactionId,
+            payment.PaidDate,
+            payment.Amount,
+            payment.ConfirmationNumber,
+            payment.PaymentMethod,
+            payment.Notes,
+            payment.CreatedAt
+        );
+
+        return CreatedAtAction(nameof(GetBillPaymentHistory), new { billId = billId }, response);
+    }
+
+    /// <summary>
+    /// Delete a payment history record
+    /// </summary>
+    [HttpDelete("history/{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeletePaymentHistory(Guid id)
+    {
+        var payment = await _context.PaymentHistory
+            .Include(ph => ph.Bill)
+            .Where(ph => ph.Id == id)
+            .FirstOrDefaultAsync();
+
+        if (payment == null)
+            return NotFound(new { message = "Payment history record not found" });
+
+        if (!await IsUserMemberOfHousehold(payment.Bill.HouseholdId))
+            return Forbid();
+
+        _context.PaymentHistory.Remove(payment);
+
+        // Recalculate bill status
+        var totalPaid = await _context.PaymentHistory
+            .Where(ph => ph.BillId == payment.BillId && ph.Id != id)
+            .SumAsync(ph => ph.Amount);
+
+        if (totalPaid < payment.Bill.Amount)
+        {
+            payment.Bill.Status = "Pending";
+            payment.Bill.UpdatedAt = DateTime.UtcNow;
+            payment.Bill.UpdatedBy = GetCurrentUserId();
+        }
+
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    #endregion
 }
 

@@ -190,7 +190,6 @@ export class Bills implements OnInit {
     if (this.billForm.valid) {
       const formValue = this.billForm.value;
       const bill = {
-        id: Date.now().toString(),
         name: formValue.name,
         amount: formValue.amount,
         category: formValue.category,
@@ -201,17 +200,22 @@ export class Bills implements OnInit {
         autoPayEnabled: formValue.autoPayEnabled,
         reminderDays: formValue.reminderDays
       };
-      this.dataService.addBill(bill);
-      this.billDialog.hide();
-      const todayStr = new Date().toISOString().split('T')[0];
-      this.billForm.reset({
-        dueDate: todayStr,
-        isRecurring: false,
-        frequency: 'monthly',
-        autoPayEnabled: false,
-        reminderDays: 3
+      this.dataService.addBill(bill).subscribe({
+        next: () => {
+          this.billDialog.hide();
+          const todayStr = new Date().toISOString().split('T')[0];
+          this.billForm.reset({
+            dueDate: todayStr,
+            isRecurring: false,
+            frequency: 'monthly',
+            autoPayEnabled: false,
+            reminderDays: 3
+          });
+        },
+        error: (error) => {
+          console.error('Error saving bill:', error);
+        }
       });
-      this.toastService.success('Bill Added', `${formValue.name} has been scheduled successfully.`);
     }
   }
 

@@ -1,0 +1,212 @@
+<div class="alerts">
+  <!-- AppBar Header -->
+  <ejs-appbar colorMode="Primary" cssClass="custom-appbar">
+    <div class="appbar-title">
+      🔔 Alert Center
+    </div>
+  </ejs-appbar>
+
+  <!-- Stats Cards -->
+  <div class="alerts__stats">
+    <app-stat-card
+      title="Total Alerts"
+      [value]="totalAlerts()"
+      icon="🔔"
+      variant="primary"
+    />
+    <app-stat-card
+      title="Unread Alerts"
+      [value]="unreadAlerts()"
+      icon="✉️"
+      variant="info"
+    />
+    <app-stat-card
+      title="Critical Alerts"
+      [value]="criticalAlerts()"
+      icon="🚨"
+      variant="error"
+    />
+    <app-stat-card
+      title="High Priority"
+      [value]="highPriorityAlerts()"
+      icon="🚩"
+      variant="warning"
+    />
+  </div>
+
+  <!-- Main Content -->
+  <div class="alerts__content">
+    <!-- Filters & Actions -->
+    <div class="widget">
+      <div class="widget__header">
+        <div class="widget__filters">
+          <h5 class="widget__title">All Alerts</h5>
+          
+          <div class="filter-group">
+            <label>Category:</label>
+            <ejs-dropdownlist
+              [dataSource]="categories"
+              [value]="selectedCategory()"
+              (change)="onCategoryChange($event)"
+              placeholder="Select category"
+              cssClass="filter-dropdown"
+            ></ejs-dropdownlist>
+          </div>
+
+          <div class="filter-group">
+            <label>Severity:</label>
+            <ejs-dropdownlist
+              [dataSource]="severities"
+              [value]="selectedSeverity()"
+              (change)="onSeverityChange($event)"
+              placeholder="Select severity"
+              cssClass="filter-dropdown"
+            ></ejs-dropdownlist>
+          </div>
+        </div>
+
+        <div class="widget__actions">
+          <button type="button" class="btn btn--sm btn--outline" (click)="markAllAsRead()">
+            <i class="fa fa-check-double me-2"></i>Mark All Read
+          </button>
+          <button type="button" class="btn btn--sm btn--outline" (click)="dismissAll()">
+            <i class="fa fa-times-circle me-2"></i>Dismiss All
+          </button>
+        </div>
+      </div>
+
+      <div class="widget__body">
+        @if (!isLoading()) {
+          @if (filteredAlerts().length > 0) {
+            <!-- Alert Cards View -->
+            <div class="alerts-list">
+              @for (alert of filteredAlerts(); track alert.id) {
+                <div class="alert-item" 
+                     [class]="getSeverityClass(alert.severity)"
+                     [class.alert-item--unread]="!alert.isRead"
+                     (click)="navigateToEntity(alert)">
+                  
+                  <!-- Unread Indicator -->
+                  @if (!alert.isRead) {
+                    <div class="alert-item__unread-dot"></div>
+                  }
+
+                  <!-- Icon -->
+                  <div class="alert-item__icon">
+                    {{ getSeverityIconEmoji(alert.severity) }}
+                  </div>
+
+                  <!-- Content -->
+                  <div class="alert-item__content">
+                    <div class="alert-item__header">
+                      <h6 class="alert-item__title">{{ alert.title }}</h6>
+                      <span class="alert-item__time">{{ getRelativeTime(alert.createdAt) }}</span>
+                    </div>
+
+                    <p class="alert-item__message">{{ alert.message }}</p>
+
+                    @if (alert.relatedEntityName) {
+                      <div class="alert-item__entity">
+                        🔗 {{ alert.relatedEntityName }}
+                      </div>
+                    }
+
+                    <div class="alert-item__meta">
+                      <span class="badge badge--{{ alert.severity === 'Critical' ? 'error' : alert.severity === 'High' ? 'warning' : alert.severity === 'Medium' ? 'info' : 'success' }}">
+                        {{ alert.severity }}
+                      </span>
+                      <span class="badge badge--primary">{{ alert.category }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Actions -->
+                  <div class="alert-item__actions" (click)="$event.stopPropagation()">
+                    @if (!alert.isRead) {
+                      <button type="button" 
+                              class="btn btn--sm btn--icon" 
+                              (click)="markAsRead(alert)"
+                              title="Mark as read">
+                        ✓
+                      </button>
+                    }
+                    
+                    <button type="button" 
+                            class="btn btn--sm btn--icon" 
+                            (click)="dismissAlert(alert.id)"
+                            title="Dismiss">
+                      ✕
+                    </button>
+
+                    <button type="button" 
+                            class="btn btn--sm btn--icon btn--danger" 
+                            (click)="deleteAlert(alert.id)"
+                            title="Delete">
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Data Grid View (Alternative) -->
+            <div class="card-content" style="display: none;">
+              <ejs-grid
+                [dataSource]="filteredAlerts()"
+                [allowPaging]="true"
+                [allowSorting]="true"
+                [allowFiltering]="true"
+                [pageSettings]="pageSettings"
+                [filterSettings]="filterSettings"
+                [toolbar]="toolbar"
+                (queryCellInfo)="queryCellInfo($event)"
+              >
+                <e-columns>
+                  <e-column field="isRead" headerText="" width="40" textAlign="Center"></e-column>
+                  <e-column field="title" headerText="Alert" width="200"></e-column>
+                  <e-column field="message" headerText="Message" width="300"></e-column>
+                  <e-column field="category" headerText="Category" width="120"></e-column>
+                  <e-column field="severity" headerText="Severity" width="100"></e-column>
+                  <e-column field="createdAt" headerText="Created" width="140" type="date" [valueAccessor]="formatDate"></e-column>
+                  <e-column headerText="Actions" width="140" textAlign="Center">
+                    <ng-template #template let-data>
+                      @if (!data.isRead) {
+                        <button type="button" class="btn btn--sm btn--icon" (click)="markAsRead(data)" title="Mark as read">
+                          <i class="fa fa-check"></i>
+                        </button>
+                      }
+                      <button type="button" class="btn btn--sm btn--icon" (click)="dismissAlert(data.id)" title="Dismiss">
+                        <i class="fa fa-times"></i>
+                      </button>
+                      <button type="button" class="btn btn--sm btn--icon btn--danger" (click)="deleteAlert(data.id)" title="Delete">
+                        <i class="fa fa-trash"></i>
+                      </button>
+                    </ng-template>
+                  </e-column>
+                </e-columns>
+              </ejs-grid>
+            </div>
+          } @else {
+            <!-- Empty State -->
+            <div class="empty-state">
+              <i class="fa fa-bell-slash fa-3x mb-3"></i>
+              <h4>No Alerts</h4>
+              <p>You're all caught up! No alerts match your current filters.</p>
+              @if (selectedCategory() !== 'All' || selectedSeverity() !== 'All') {
+                <button type="button" class="btn btn--outline" (click)="selectedCategory.set('All'); selectedSeverity.set('All')">
+                  <i class="fa fa-redo me-2"></i>Clear Filters
+                </button>
+              }
+            </div>
+          }
+        } @else {
+          <!-- Loading State -->
+          <div class="loading-state">
+            <i class="fa fa-spinner fa-spin fa-3x"></i>
+            <p>Loading alerts...</p>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+

@@ -23,6 +23,41 @@
   }
 }
 
+// Primary Doctor Checkbox
+.primary-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  .form-check-input {
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    
+    &:checked {
+      background-color: #1b76ff;
+      border-color: #1b76ff;
+    }
+  }
+
+  .primary-badge {
+    font-size: 18px;
+    animation: pulse 2s infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
 .healthcare__stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -431,38 +466,50 @@
   
   ::ng-deep {
     .e-grid {
-      background: white;
-      color: #242a30;
+      background: white !important;
+      color: #242a30 !important;
       
       .e-gridheader {
-        background: white;
+        background: white !important;
         
         .e-headercell {
-          color: #242a30;
+          color: #242a30 !important;
           font-weight: 600;
         }
       }
       
       .e-gridcontent {
-        background: white;
+        background: white !important;
         
         .e-row {
-          background: white;
-          color: #242a30;
+          background: white !important;
+          color: #242a30 !important;
           
           .e-rowcell {
-            color: #242a30;
+            color: #242a30 !important;
+            
+            * {
+              color: #242a30 !important;
+            }
           }
           
           &:hover {
-            background: rgba(27, 118, 255, 0.05);
+            background: rgba(27, 118, 255, 0.05) !important;
+          }
+          
+          &.e-altrow {
+            background: white !important;
+            
+            .e-rowcell {
+              color: #242a30 !important;
+            }
           }
         }
       }
       
       .e-pager {
-        background: white;
-        color: #242a30;
+        background: white !important;
+        color: #242a30 !important;
       }
     }
     

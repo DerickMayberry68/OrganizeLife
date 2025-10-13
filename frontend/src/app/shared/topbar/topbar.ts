@@ -1,14 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  time: string;
-  type: 'info' | 'warning' | 'success';
-}
+import { RouterLink, Router } from '@angular/router';
+import { DataService } from '../../services/data.service';
 
 @Component({
   selector: 'app-topbar',
@@ -16,7 +9,10 @@ interface Notification {
   templateUrl: './topbar.html',
   styleUrl: './topbar.scss'
 })
-export class Topbar {
+export class Topbar implements OnInit {
+  private readonly dataService = inject(DataService);
+  private readonly router = inject(Router);
+  
   protected readonly isNotificationsOpen = signal(false);
   protected readonly isProfileOpen = signal(false);
 
@@ -27,31 +23,25 @@ export class Topbar {
     email: 'manager@thebutler.com'
   };
 
-  protected readonly notifications = signal<Notification[]>([
-    {
-      id: '1',
-      title: 'Bill Due Soon',
-      message: 'Electric bill due in 3 days',
-      time: '5 min ago',
-      type: 'warning'
-    },
-    {
-      id: '2',
-      title: 'Maintenance Complete',
-      message: 'HVAC filter replacement completed',
-      time: '1 hour ago',
-      type: 'success'
-    },
-    {
-      id: '3',
-      title: 'Budget Alert',
-      message: 'Groceries budget at 85%',
-      time: '2 hours ago',
-      type: 'warning'
-    }
-  ]);
+  // Get alerts from DataService
+  protected readonly alerts = this.dataService.alerts;
+  
+  // Computed values
+  protected readonly recentAlerts = computed(() => 
+    this.alerts()
+      .filter(a => !a.isDismissed)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 5) // Show top 5 recent alerts
+  );
 
-  protected readonly notificationCount = signal(3);
+  protected readonly notificationCount = computed(() => 
+    this.alerts().filter(a => !a.isRead && !a.isDismissed).length
+  );
+
+  ngOnInit(): void {
+    // Load alerts when component initializes
+    this.dataService.loadAlerts().subscribe();
+  }
 
   protected toggleNotifications(event?: Event): void {
     event?.stopPropagation();
@@ -68,6 +58,48 @@ export class Topbar {
   protected closeDropdowns(): void {
     this.isNotificationsOpen.set(false);
     this.isProfileOpen.set(false);
+  }
+
+  protected viewAllAlerts(): void {
+    this.router.navigate(['/alerts']);
+    this.closeDropdowns();
+  }
+
+  protected markAlertAsRead(id: string, event: Event): void {
+    event.stopPropagation();
+    this.dataService.markAlertAsRead(id).subscribe();
+  }
+
+  protected navigateToAlert(alert: any): void {
+    if (alert.actionUrl) {
+      this.router.navigateByUrl(alert.actionUrl);
+    } else {
+      this.router.navigate(['/alerts']);
+    }
+    this.closeDropdowns();
+  }
+
+  protected getRelativeTime(date: Date): string {
+    const now = new Date();
+    const diff = now.getTime() - new Date(date).getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    return `${days}d ago`;
+  }
+
+  protected getSeverityIcon(severity: string): string {
+    switch (severity) {
+      case 'Critical': return '🚨';
+      case 'High': return '⚠️';
+      case 'Medium': return 'ℹ️';
+      case 'Low': return '✅';
+      default: return '🔔';
+    }
   }
 
   protected logout(): void {

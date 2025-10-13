@@ -20,10 +20,6 @@
       color: white;
     }
     
-    .stat-card__icon {
-      color: rgba(255, 255, 255, 0.3);
-    }
-    
     .stat-card__footer {
       background: rgba(0, 0, 0, 0.15);
     }
@@ -37,10 +33,6 @@
     .stat-card__value,
     .stat-card__link {
       color: white;
-    }
-    
-    .stat-card__icon {
-      color: rgba(255, 255, 255, 0.3);
     }
     
     .stat-card__footer {
@@ -58,10 +50,6 @@
       color: white;
     }
     
-    .stat-card__icon {
-      color: rgba(255, 255, 255, 0.3);
-    }
-    
     .stat-card__footer {
       background: rgba(0, 0, 0, 0.15);
     }
@@ -75,10 +63,6 @@
     .stat-card__value,
     .stat-card__link {
       color: white;
-    }
-    
-    .stat-card__icon {
-      color: rgba(255, 255, 255, 0.3);
     }
     
     .stat-card__footer {
@@ -96,10 +80,6 @@
       color: white;
     }
     
-    .stat-card__icon {
-      color: rgba(255, 255, 255, 0.3);
-    }
-    
     .stat-card__footer {
       background: rgba(0, 0, 0, 0.15);
     }
@@ -113,10 +93,6 @@
     .stat-card__value,
     .stat-card__link {
       color: #1a1a2e;
-    }
-    
-    .stat-card__icon {
-      color: rgba(26, 26, 46, 0.2);
     }
     
     .stat-card__footer {
@@ -158,7 +134,7 @@
   &__icon {
     font-size: 56px;
     line-height: 1;
-    opacity: 0.4;
+    opacity: 0.8;
   }
 
   &__footer {

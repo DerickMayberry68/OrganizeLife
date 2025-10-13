@@ -79,5 +79,7 @@ public partial class Households
     public virtual ICollection<Allergies> Allergies { get; set; } = new List<Allergies>();
 
     public virtual ICollection<HealthMetrics> HealthMetrics { get; set; } = new List<HealthMetrics>();
+
+    public virtual ICollection<Alerts> Alerts { get; set; } = new List<Alerts>();
 }
 

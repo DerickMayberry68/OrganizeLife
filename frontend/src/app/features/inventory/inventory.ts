@@ -170,7 +170,6 @@ export class Inventory implements OnInit {
     if (this.itemForm.valid) {
       const formValue = this.itemForm.value;
       const item = {
-        id: Date.now().toString(),
         name: formValue.name,
         category: formValue.category,
         purchaseDate: formValue.purchaseDate,
@@ -178,10 +177,16 @@ export class Inventory implements OnInit {
         location: formValue.location,
         notes: formValue.notes || undefined
       };
-      this.dataService.addInventoryItem(item);
-      this.itemDialog.hide();
-      this.itemForm.reset({ purchaseDate: new Date(), purchasePrice: 0 });
-      this.toastService.success('Item Added', `${formValue.name} has been added to inventory.`);
+      
+      this.dataService.addInventoryItem(item).subscribe({
+        next: () => {
+          this.itemDialog.hide();
+          this.itemForm.reset({ purchaseDate: new Date(), purchasePrice: 0 });
+        },
+        error: (error) => {
+          console.error('Error saving inventory item:', error);
+        }
+      });
     }
   }
 

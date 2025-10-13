@@ -212,7 +212,6 @@ export class Maintenance implements OnInit {
     if (this.taskForm.valid) {
       const formValue = this.taskForm.value;
       const task = {
-        id: Date.now().toString(),
         title: formValue.title,
         category: formValue.category,
         priority: formValue.priority,
@@ -223,16 +222,22 @@ export class Maintenance implements OnInit {
         isRecurring: formValue.isRecurring,
         frequency: formValue.frequency
       };
-      this.dataService.addMaintenanceTask(task);
-      this.taskDialog.hide();
-      this.taskForm.reset({
-        priority: 'medium',
-        dueDate: new Date(),
-        estimatedCost: 0,
-        isRecurring: false,
-        frequency: 'monthly'
+      
+      this.dataService.addMaintenanceTask(task).subscribe({
+        next: () => {
+          this.taskDialog.hide();
+          this.taskForm.reset({
+            priority: 'medium',
+            dueDate: new Date(),
+            estimatedCost: 0,
+            isRecurring: false,
+            frequency: 'monthly'
+          });
+        },
+        error: (error) => {
+          console.error('Error saving maintenance task:', error);
+        }
       });
-      this.toastService.success('Task Created', `${formValue.title} has been scheduled successfully.`);
     }
   }
 

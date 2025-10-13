@@ -170,7 +170,6 @@ export class Documents implements OnInit {
     if (this.documentForm.valid) {
       const formValue = this.documentForm.value;
       const document = {
-        id: Date.now().toString(),
         title: formValue.title,
         category: formValue.category,
         uploadDate: new Date(),
@@ -181,10 +180,16 @@ export class Documents implements OnInit {
         isImportant: formValue.isImportant,
         url: '#'
       };
-      this.dataService.addDocument(document);
-      this.documentDialog.hide();
-      this.documentForm.reset({ isImportant: false });
-      this.toastService.success('Document Added', `${formValue.title} has been uploaded successfully.`);
+      
+      this.dataService.addDocument(document).subscribe({
+        next: () => {
+          this.documentDialog.hide();
+          this.documentForm.reset({ isImportant: false });
+        },
+        error: (error) => {
+          console.error('Error saving document:', error);
+        }
+      });
     }
   }
 

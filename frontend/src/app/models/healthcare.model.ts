@@ -12,6 +12,7 @@ export interface Doctor {
   acceptedInsurance: string[];
   website?: string;
   notes?: string;
+  isPrimary: boolean; // Mark as primary healthcare provider
 }
 
 export type DoctorType = 
@@ -82,6 +83,7 @@ export interface Prescription {
   dosage: string;
   frequency: string;
   prescribedBy: string;
+  doctorId?: string; // Link to doctor if selected from list
   prescribedDate: Date;
   refillsRemaining: number;
   lastRefillDate?: Date;

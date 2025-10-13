@@ -1,0 +1,227 @@
+<div class="budgets">
+  <!-- AppBar Header -->
+  <ejs-appbar colorMode="Primary" cssClass="custom-appbar">
+    <div class="appbar-title">
+      📊 Budgets
+    </div>
+  </ejs-appbar>
+
+  <!-- Stats Cards -->
+  <div class="budgets__stats">
+    <app-stat-card
+      title="Total Budgets"
+      [value]="totalBudgets()"
+      icon="📋"
+      variant="primary"
+    />
+    <app-stat-card
+      title="Active Budgets"
+      [value]="activeBudgets()"
+      icon="✅"
+      variant="success"
+    />
+    <app-stat-card
+      title="Total Budget Amount"
+      [value]="formatCurrencyValue(totalBudgetAmount())"
+      icon="💵"
+      variant="info"
+    />
+    <app-stat-card
+      title="Monthly Budgets"
+      [value]="monthlyBudgets()"
+      icon="📅"
+      variant="warning"
+    />
+  </div>
+
+  <!-- Main Content -->
+  <div class="budgets__content">
+    <!-- Budgets Chart -->
+    <div class="widget">
+      <div class="widget__header">
+        <h5 class="widget__title">Budget Distribution</h5>
+      </div>
+      <div class="widget__body">
+        @if (budgetsByCategoryChart().length > 0) {
+          <ejs-chart
+            [primaryXAxis]="primaryXAxis"
+            [primaryYAxis]="primaryYAxis"
+            [title]="chartTitle"
+            [tooltip]="tooltip"
+            [background]="chartBackground"
+            [palettes]="palettes"
+          >
+            <e-series-collection>
+              <e-series
+                [dataSource]="budgetsByCategoryChart()"
+                type="Column"
+                xName="x"
+                yName="y"
+                name="Budget Amount"
+                [marker]="marker"
+              ></e-series>
+            </e-series-collection>
+          </ejs-chart>
+        } @else {
+          <div class="empty-state">
+            <div class="empty-state__icon">📊</div>
+            <p>No budgets to display</p>
+            <button type="button" class="btn btn--primary" (click)="openBudgetDialog()">
+              ➕ Create Your First Budget
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Budgets Grid -->
+    <div class="widget">
+      <div class="widget__header">
+        <h5 class="widget__title">All Budgets</h5>
+        <button type="button" class="btn btn--primary" (click)="openBudgetDialog()">
+          ➕ Add Budget
+        </button>
+      </div>
+      <div class="widget__body">
+        <div class="card-content">
+          <ejs-grid
+            [dataSource]="budgets()"
+            [allowPaging]="true"
+            [allowSorting]="true"
+            [allowFiltering]="true"
+            [pageSettings]="pageSettings"
+            [filterSettings]="filterSettings"
+            [toolbar]="toolbar"
+            (queryCellInfo)="queryCellInfo($event)"
+            (actionBegin)="onActionBegin($event)"
+          >
+            <e-columns>
+              <e-column field="name" headerText="Budget Name" width="180"></e-column>
+              <e-column field="categoryName" headerText="Category" width="150"></e-column>
+              <e-column field="limitAmount" headerText="Limit Amount" width="140" [valueAccessor]="formatCurrency" textAlign="Right"></e-column>
+              <e-column field="period" headerText="Period" width="120"></e-column>
+              <e-column field="startDate" headerText="Start Date" width="140" type="date" format="yMd"></e-column>
+              <e-column field="endDate" headerText="End Date" width="140" type="date" format="yMd"></e-column>
+              <e-column field="isActive" headerText="Status" width="120"></e-column>
+              <e-column headerText="Actions" width="120" textAlign="Center">
+                <ng-template #template let-data>
+                  <button type="button" class="btn btn--sm btn--icon" (click)="openBudgetDialog(data)" title="Edit">
+                    ✏️
+                  </button>
+                  <button type="button" class="btn btn--sm btn--icon btn--danger" (click)="deleteBudget(data.id)" title="Delete">
+                    🗑️
+                  </button>
+                </ng-template>
+              </e-column>
+            </e-columns>
+          </ejs-grid>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Budget Dialog -->
+  <ejs-dialog
+    #budgetDialog
+    [header]="editMode() ? 'Edit Budget' : 'Add New Budget'"
+    [visible]="false"
+    [showCloseIcon]="true"
+    [width]="dialogWidth"
+    [animationSettings]="animationSettings"
+    [buttons]="budgetDialogButtons"
+    [isModal]="true"
+  >
+    <ng-template #content>
+      <form [formGroup]="budgetForm" class="dialog-form">
+        <div class="form-group">
+          <label class="form-label" for="budgetName">
+            🏷️ Budget Name
+          </label>
+          <input
+            type="text"
+            class="form-control"
+            id="budgetName"
+            formControlName="name"
+            placeholder="e.g., Monthly Groceries"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="category">
+            📁 Category
+          </label>
+          <ejs-dropdownlist
+            id="category"
+            formControlName="categoryId"
+            [dataSource]="categories()"
+            [fields]="{ text: 'name', value: 'id' }"
+            placeholder="Select a category"
+            cssClass="form-control"
+          ></ejs-dropdownlist>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="limitAmount">
+            💵 Limit Amount
+          </label>
+          <ejs-numerictextbox
+            id="limitAmount"
+            formControlName="limitAmount"
+            [format]="'c2'"
+            [min]="0"
+            placeholder="Enter limit amount"
+            cssClass="form-control"
+          ></ejs-numerictextbox>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="period">
+            ⏰ Period
+          </label>
+          <ejs-dropdownlist
+            id="period"
+            formControlName="period"
+            [dataSource]="periods"
+            placeholder="Select period"
+            cssClass="form-control"
+          ></ejs-dropdownlist>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="startDate">
+              📅 Start Date
+            </label>
+            <ejs-datepicker
+              id="startDate"
+              formControlName="startDate"
+              placeholder="Select start date"
+              cssClass="form-control"
+            ></ejs-datepicker>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="endDate">
+              🗓️ End Date (Optional)
+            </label>
+            <ejs-datepicker
+              id="endDate"
+              formControlName="endDate"
+              placeholder="Select end date"
+              cssClass="form-control"
+            ></ejs-datepicker>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <ejs-checkbox
+            formControlName="isActive"
+            label="Active"
+            cssClass="form-check"
+          ></ejs-checkbox>
+        </div>
+      </form>
+    </ng-template>
+  </ejs-dialog>
+</div>
+

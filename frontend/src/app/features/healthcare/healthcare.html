@@ -165,13 +165,29 @@
                   <e-column field="specialty" headerText="Specialty" width="150"></e-column>
                   <e-column field="phone" headerText="Phone" width="130"></e-column>
                   <e-column field="address" headerText="Address" width="200"></e-column>
+                  <e-column headerText="Primary" width="100" textAlign="Center">
+                    <ng-template #template let-data>
+                      <div class="primary-checkbox">
+                        <input 
+                          type="checkbox" 
+                          class="form-check-input" 
+                          [checked]="data.isPrimary"
+                          (change)="togglePrimaryDoctor(data)"
+                          [title]="data.isPrimary ? 'Primary Healthcare Provider' : 'Mark as Primary'"
+                        />
+                        @if (data.isPrimary) {
+                          <span class="primary-badge">⭐</span>
+                        }
+                      </div>
+                    </ng-template>
+                  </e-column>
                   <e-column headerText="Actions" width="120">
                     <ng-template #template let-data>
                       <button class="btn-icon" (click)="openDoctorDialog(data)" title="Edit">
-                        <i class="fa fa-edit"></i>
+                        ✏️
                       </button>
                       <button class="btn-icon btn-icon--danger" (click)="deleteDoctor(data.id)" title="Delete">
-                        <i class="fa fa-trash"></i>
+                        🗑️
                       </button>
                     </ng-template>
                   </e-column>
@@ -305,6 +321,23 @@
       </div>
 
       <div class="mb-3">
+        <div class="form-check">
+          <input 
+            type="checkbox" 
+            class="form-check-input" 
+            id="isPrimaryDoctor" 
+            [(ngModel)]="doctorForm().isPrimary" 
+          />
+          <label class="form-check-label" for="isPrimaryDoctor">
+            ⭐ Mark as Primary Healthcare Provider
+          </label>
+          <small class="form-text text-muted d-block">
+            Your primary provider will appear first in prescription dropdowns
+          </small>
+        </div>
+      </div>
+
+      <div class="mb-3">
         <label class="form-label">Notes</label>
         <textarea class="form-control" [(ngModel)]="doctorForm().notes" rows="3"></textarea>
       </div>
@@ -421,11 +454,24 @@
 
       <div class="row">
         <div class="col-md-6 mb-3">
-          <label class="form-label">Prescribed By *</label>
-          <input type="text" class="form-control" [(ngModel)]="prescriptionForm().prescribedBy" />
+          <label class="form-label">💊 Prescribed By *</label>
+          <ejs-combobox
+            [dataSource]="doctorList()"
+            [fields]="comboBoxFields"
+            [allowCustom]="true"
+            [value]="prescriptionForm().prescribedBy"
+            (select)="onDoctorSelected($event)"
+            (change)="onDoctorChanged($event)"
+            placeholder="Select or type doctor name"
+            cssClass="form-control"
+            [popupHeight]="300"
+          ></ejs-combobox>
+          <small class="form-text text-muted">
+            Select from your doctors list or type a custom name
+          </small>
         </div>
         <div class="col-md-6 mb-3">
-          <label class="form-label">Pharmacy *</label>
+          <label class="form-label">🏥 Pharmacy *</label>
           <input type="text" class="form-control" [(ngModel)]="prescriptionForm().pharmacy" />
         </div>
       </div>

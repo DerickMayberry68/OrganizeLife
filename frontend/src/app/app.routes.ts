@@ -62,6 +62,26 @@ export const routes: Routes = [
     loadComponent: () => import('./features/healthcare/healthcare').then(m => m.Healthcare),
     canActivate: [authGuard]
   },
+  {
+    path: 'budgets',
+    loadComponent: () => import('./features/budgets/budgets').then(m => m.Budgets),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'categories',
+    loadComponent: () => import('./features/categories/categories').then(m => m.Categories),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'payments',
+    loadComponent: () => import('./features/payments/payments').then(m => m.Payments),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'alerts',
+    loadComponent: () => import('./features/alerts/alerts').then(m => m.Alerts),
+    canActivate: [authGuard]
+  },
   // Catch all - redirect to login
   {
     path: '**',

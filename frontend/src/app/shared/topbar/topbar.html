@@ -29,26 +29,44 @@
         @if (isNotificationsOpen()) {
           <div class="dropdown notifications-dropdown" (click)="$event.stopPropagation()">
             <div class="dropdown__header">
-              <strong>NOTIFICATIONS ({{ notificationCount() }})</strong>
+              <strong>ALERTS ({{ notificationCount() }})</strong>
             </div>
             <div class="dropdown__body">
-              @for (notification of notifications(); track notification.id) {
-                <a href="javascript:;" class="notification-item">
-                  <div class="notification-item__icon" [class]="'notification-item__icon--' + notification.type">
-                    @if (notification.type === 'warning') { ⚠️ }
-                    @else if (notification.type === 'success') { ✓ }
-                    @else { ℹ }
-                  </div>
+              @if (recentAlerts().length > 0) {
+                @for (alert of recentAlerts(); track alert.id) {
+                  <a href="javascript:;" 
+                     class="notification-item" 
+                     [class.notification-item--unread]="!alert.isRead"
+                     (click)="navigateToAlert(alert)">
+                    <div class="notification-item__icon" 
+                         [class]="'notification-item__icon--' + alert.severity.toLowerCase()">
+                      {{ getSeverityIcon(alert.severity) }}
+                    </div>
+                    <div class="notification-item__content">
+                      <h6 class="notification-item__title">{{ alert.title }}</h6>
+                      <p class="notification-item__message">{{ alert.message }}</p>
+                      <div class="notification-item__time">{{ getRelativeTime(alert.createdAt) }}</div>
+                    </div>
+                    @if (!alert.isRead) {
+                      <button 
+                        class="notification-item__mark-read"
+                        (click)="markAlertAsRead(alert.id, $event)"
+                        title="Mark as read">
+                        ✓
+                      </button>
+                    }
+                  </a>
+                }
+              } @else {
+                <div class="notification-item notification-item--empty">
                   <div class="notification-item__content">
-                    <h6 class="notification-item__title">{{ notification.title }}</h6>
-                    <p class="notification-item__message">{{ notification.message }}</p>
-                    <div class="notification-item__time">{{ notification.time }}</div>
+                    <p class="notification-item__message">No alerts at this time</p>
                   </div>
-                </a>
+                </div>
               }
             </div>
             <div class="dropdown__footer">
-              <a href="javascript:;" class="dropdown__link">View more</a>
+              <a href="javascript:;" class="dropdown__link" (click)="viewAllAlerts()">View all alerts</a>
             </div>
           </div>
         }

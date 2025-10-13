@@ -1,6 +1,6 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, of } from 'rxjs';
+import { Observable, tap, catchError, of, map } from 'rxjs';
 import { AuthService } from './auth.service';
 import { ToastService } from './toast.service';
 import type { 
@@ -18,8 +18,9 @@ import type { Document } from '../models/document.model';
 import type { Insurance } from '../models/insurance.model';
 import type { Bill } from '../models/bill.model';
 import type { MaintenanceTask, ServiceProvider } from '../models/maintenance.model';
-import type { DashboardStats, Alert } from '../models/dashboard.model';
+import type { DashboardStats } from '../models/dashboard.model';
 import type { Doctor, Appointment, Prescription, MedicalRecord, HealthcareStats } from '../models/healthcare.model';
+import type { Alert, AlertStats } from '../models/alert.model';
 
 @Injectable({
   providedIn: 'root'
@@ -738,130 +739,856 @@ export class DataService {
     );
   }
 
-  // ===== LEGACY METHODS (keeping for now for compatibility) =====
+  // ===== BILLS API METHODS =====
 
-  public addBill(bill: Bill): void {
-    this.billsSignal.update(items => [...items, bill]);
+  public loadBills(): Observable<Bill[]> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      console.error('No household ID available');
+      return of([]);
+    }
+
+    return this.http.get<Bill[]>(
+      `${this.API_URL}/Bills/household/${householdId}`,
+      this.getHeaders()
+    ).pipe(
+      tap(bills => this.billsSignal.set(bills)),
+      catchError(error => {
+        console.error('Error loading bills:', error);
+        this.toastService.error('Error', 'Failed to load bills');
+        return of([]);
+      })
+    );
   }
 
-  public updateBill(id: string, updates: Partial<Bill>): void {
+  public addBill(bill: Omit<Bill, 'id'>): Observable<Bill> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      this.toastService.error('Error', 'No household selected');
+      return of({} as Bill);
+    }
+
+    const billDto = { ...bill, householdId };
+
+    return this.http.post<Bill>(
+      `${this.API_URL}/Bills`,
+      billDto,
+      this.getHeaders()
+    ).pipe(
+      tap(newBill => {
+        this.billsSignal.update(items => [...items, newBill]);
+        this.toastService.success('Success', 'Bill added successfully');
+      }),
+      catchError(error => {
+        console.error('Error adding bill:', error);
+        this.toastService.error('Error', 'Failed to add bill');
+        throw error;
+      })
+    );
+  }
+
+  public updateBill(id: string, updates: Partial<Bill>): Observable<Bill> {
+    return this.http.put<Bill>(
+      `${this.API_URL}/Bills/${id}`,
+      updates,
+      this.getHeaders()
+    ).pipe(
+      tap(updatedBill => {
     this.billsSignal.update(items => 
-      items.map(item => item.id === id ? { ...item, ...updates } : item)
+          items.map(item => item.id === id ? updatedBill : item)
+        );
+        this.toastService.success('Success', 'Bill updated successfully');
+      }),
+      catchError(error => {
+        console.error('Error updating bill:', error);
+        this.toastService.error('Error', 'Failed to update bill');
+        throw error;
+      })
     );
   }
 
-  public deleteBill(id: string): void {
+  public deleteBill(id: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.API_URL}/Bills/${id}`,
+      this.getHeaders()
+    ).pipe(
+      tap(() => {
     this.billsSignal.update(items => items.filter(item => item.id !== id));
+        this.toastService.success('Success', 'Bill deleted successfully');
+      }),
+      catchError(error => {
+        console.error('Error deleting bill:', error);
+        this.toastService.error('Error', 'Failed to delete bill');
+        throw error;
+      })
+    );
   }
 
-  public addMaintenanceTask(task: MaintenanceTask): void {
-    this.maintenanceTasksSignal.update(items => [...items, task]);
+  public markBillPaid(id: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.API_URL}/Bills/${id}/mark-paid`,
+      {},
+      this.getHeaders()
+    ).pipe(
+      tap(() => {
+        this.toastService.success('Success', 'Bill marked as paid');
+        this.loadBills().subscribe();
+      }),
+      catchError(error => {
+        console.error('Error marking bill as paid:', error);
+        this.toastService.error('Error', 'Failed to mark bill as paid');
+        throw error;
+      })
+    );
   }
 
-  public updateMaintenanceTask(id: string, updates: Partial<MaintenanceTask>): void {
+  public loadUpcomingBills(): Observable<Bill[]> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) return of([]);
+
+    return this.http.get<Bill[]>(
+      `${this.API_URL}/Bills/household/${householdId}/upcoming`,
+      this.getHeaders()
+    ).pipe(
+      catchError(error => {
+        console.error('Error loading upcoming bills:', error);
+        return of([]);
+      })
+    );
+  }
+
+  // ===== PAYMENTS API METHODS =====
+
+  public loadPayments(): Observable<any[]> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) return of([]);
+
+    return this.http.get<any[]>(
+      `${this.API_URL}/Payments/household/${householdId}`,
+      this.getHeaders()
+    ).pipe(
+      catchError(error => {
+        console.error('Error loading payments:', error);
+        this.toastService.error('Error', 'Failed to load payments');
+        return of([]);
+      })
+    );
+  }
+
+  public addPayment(payment: any): Observable<any> {
+    return this.http.post<any>(
+      `${this.API_URL}/Payments`,
+      payment,
+      this.getHeaders()
+    ).pipe(
+      tap(() => {
+        this.toastService.success('Success', 'Payment recorded successfully');
+      }),
+      catchError(error => {
+        console.error('Error adding payment:', error);
+        this.toastService.error('Error', 'Failed to record payment');
+        throw error;
+      })
+    );
+  }
+
+  // ===== MAINTENANCE API METHODS =====
+  // TODO: Backend endpoints need to be implemented
+  // Expected endpoints:
+  // GET    /api/Maintenance/household/{householdId}
+  // POST   /api/Maintenance
+  // PUT    /api/Maintenance/{id}
+  // DELETE /api/Maintenance/{id}
+  // POST   /api/Maintenance/{id}/complete
+
+  public loadMaintenanceTasks(): Observable<MaintenanceTask[]> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      console.error('No household ID available');
+      return of([]);
+    }
+
+    return this.http.get<MaintenanceTask[]>(
+      `${this.API_URL}/Maintenance/household/${householdId}`,
+      this.getHeaders()
+    ).pipe(
+      tap(tasks => this.maintenanceTasksSignal.set(tasks)),
+      catchError(error => {
+        console.error('Error loading maintenance tasks:', error);
+        this.toastService.error('Error', 'Failed to load maintenance tasks');
+        return of([]);
+      })
+    );
+  }
+
+  public addMaintenanceTask(task: Omit<MaintenanceTask, 'id'>): Observable<MaintenanceTask> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      this.toastService.error('Error', 'No household selected');
+      return of({} as MaintenanceTask);
+    }
+
+    const taskDto = { ...task, householdId };
+
+    return this.http.post<MaintenanceTask>(
+      `${this.API_URL}/Maintenance`,
+      taskDto,
+      this.getHeaders()
+    ).pipe(
+      tap(newTask => {
+        this.maintenanceTasksSignal.update(items => [...items, newTask]);
+        this.toastService.success('Success', 'Maintenance task added successfully');
+      }),
+      catchError(error => {
+        console.error('Error adding maintenance task:', error);
+        this.toastService.error('Error', 'Failed to add maintenance task');
+        throw error;
+      })
+    );
+  }
+
+  public updateMaintenanceTask(id: string, updates: Partial<MaintenanceTask>): Observable<MaintenanceTask> {
+    return this.http.put<MaintenanceTask>(
+      `${this.API_URL}/Maintenance/${id}`,
+      updates,
+      this.getHeaders()
+    ).pipe(
+      tap(updatedTask => {
     this.maintenanceTasksSignal.update(items =>
-      items.map(item => item.id === id ? { ...item, ...updates } : item)
+          items.map(item => item.id === id ? updatedTask : item)
+        );
+        this.toastService.success('Success', 'Maintenance task updated successfully');
+      }),
+      catchError(error => {
+        console.error('Error updating maintenance task:', error);
+        this.toastService.error('Error', 'Failed to update maintenance task');
+        throw error;
+      })
     );
   }
 
-  public addAlert(alert: Alert): void {
-    this.alertsSignal.update(items => [...items, alert]);
+  public deleteMaintenanceTask(id: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.API_URL}/Maintenance/${id}`,
+      this.getHeaders()
+    ).pipe(
+      tap(() => {
+        this.maintenanceTasksSignal.update(items => items.filter(item => item.id !== id));
+        this.toastService.success('Success', 'Maintenance task deleted successfully');
+      }),
+      catchError(error => {
+        console.error('Error deleting maintenance task:', error);
+        this.toastService.error('Error', 'Failed to delete maintenance task');
+        throw error;
+      })
+    );
   }
 
-  public dismissAlert(id: string): void {
-    this.alertsSignal.update(items => items.filter(item => item.id !== id));
+  public completeMaintenanceTask(id: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.API_URL}/Maintenance/${id}/complete`,
+      {},
+      this.getHeaders()
+    ).pipe(
+      tap(() => {
+        this.toastService.success('Success', 'Maintenance task completed successfully');
+        this.loadMaintenanceTasks().subscribe();
+      }),
+      catchError(error => {
+        console.error('Error completing maintenance task:', error);
+        this.toastService.error('Error', 'Failed to complete maintenance task');
+        throw error;
+      })
+    );
   }
 
-  public addDocument(document: Document): void {
-    this.documentsSignal.update(items => [...items, document]);
+  // ===== DOCUMENTS API METHODS =====
+
+  public loadDocuments(): Observable<Document[]> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      console.error('No household ID available');
+      return of([]);
+    }
+
+    return this.http.get<Document[]>(
+      `${this.API_URL}/Documents/household/${householdId}`,
+      this.getHeaders()
+    ).pipe(
+      tap(documents => this.documentsSignal.set(documents)),
+      catchError(error => {
+        console.error('Error loading documents:', error);
+        this.toastService.error('Error', 'Failed to load documents');
+        return of([]);
+      })
+    );
   }
 
-  public updateDocument(id: string, updates: Partial<Document>): void {
+  public addDocument(document: Omit<Document, 'id'>): Observable<Document> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      this.toastService.error('Error', 'No household selected');
+      return of({} as Document);
+    }
+
+    const documentDto = { ...document, householdId };
+
+    return this.http.post<Document>(
+      `${this.API_URL}/Documents`,
+      documentDto,
+      this.getHeaders()
+    ).pipe(
+      tap(newDocument => {
+        this.documentsSignal.update(items => [...items, newDocument]);
+        this.toastService.success('Success', 'Document added successfully');
+      }),
+      catchError(error => {
+        console.error('Error adding document:', error);
+        this.toastService.error('Error', 'Failed to add document');
+        throw error;
+      })
+    );
+  }
+
+  public updateDocument(id: string, updates: Partial<Document>): Observable<Document> {
+    return this.http.put<Document>(
+      `${this.API_URL}/Documents/${id}`,
+      updates,
+      this.getHeaders()
+    ).pipe(
+      tap(updatedDocument => {
     this.documentsSignal.update(items =>
-      items.map(item => item.id === id ? { ...item, ...updates } : item)
+          items.map(item => item.id === id ? updatedDocument : item)
+        );
+        this.toastService.success('Success', 'Document updated successfully');
+      }),
+      catchError(error => {
+        console.error('Error updating document:', error);
+        this.toastService.error('Error', 'Failed to update document');
+        throw error;
+      })
     );
   }
 
-  public deleteDocument(id: string): void {
+  public deleteDocument(id: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.API_URL}/Documents/${id}`,
+      this.getHeaders()
+    ).pipe(
+      tap(() => {
     this.documentsSignal.update(items => items.filter(item => item.id !== id));
-  }
-
-  public addInsurancePolicy(policy: Insurance): void {
-    this.insurancePoliciesSignal.update(items => [...items, policy]);
-  }
-
-  public updateInsurancePolicy(id: string, updates: Partial<Insurance>): void {
-    this.insurancePoliciesSignal.update(items =>
-      items.map(item => item.id === id ? { ...item, ...updates } : item)
+        this.toastService.success('Success', 'Document deleted successfully');
+      }),
+      catchError(error => {
+        console.error('Error deleting document:', error);
+        this.toastService.error('Error', 'Failed to delete document');
+        throw error;
+      })
     );
   }
 
-  public deleteInsurancePolicy(id: string): void {
-    this.insurancePoliciesSignal.update(items => items.filter(item => item.id !== id));
-  }
+  // ===== INSURANCE API METHODS =====
 
-  public addInventoryItem(item: InventoryItem): void {
-    this.inventoryItemsSignal.update(items => [...items, item]);
-  }
+  public loadInsurancePolicies(): Observable<Insurance[]> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      console.error('No household ID available');
+      return of([]);
+    }
 
-  public updateInventoryItem(id: string, updates: Partial<InventoryItem>): void {
-    this.inventoryItemsSignal.update(items =>
-      items.map(item => item.id === id ? { ...item, ...updates } : item)
+    return this.http.get<Insurance[]>(
+      `${this.API_URL}/Insurance/household/${householdId}`,
+      this.getHeaders()
+    ).pipe(
+      tap(policies => this.insurancePoliciesSignal.set(policies)),
+      catchError(error => {
+        console.error('Error loading insurance policies:', error);
+        this.toastService.error('Error', 'Failed to load insurance policies');
+        return of([]);
+      })
     );
   }
 
-  public deleteInventoryItem(id: string): void {
-    this.inventoryItemsSignal.update(items => items.filter(item => item.id !== id));
-  }
+  public addInsurancePolicy(policy: Omit<Insurance, 'id'>): Observable<Insurance> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      this.toastService.error('Error', 'No household selected');
+      return of({} as Insurance);
+    }
 
-  // ===== HEALTHCARE METHODS =====
+    const policyDto = { ...policy, householdId };
 
-  // Doctors
-  public addDoctor(doctor: Doctor): void {
-    this.doctorsSignal.update(items => [...items, doctor]);
-  }
-
-  public updateDoctor(id: string, updates: Partial<Doctor>): void {
-    this.doctorsSignal.update(items =>
-      items.map(item => item.id === id ? { ...item, ...updates } : item)
+    return this.http.post<Insurance>(
+      `${this.API_URL}/Insurance`,
+      policyDto,
+      this.getHeaders()
+    ).pipe(
+      tap(newPolicy => {
+        this.insurancePoliciesSignal.update(items => [...items, newPolicy]);
+        this.toastService.success('Success', 'Insurance policy added successfully');
+      }),
+      catchError(error => {
+        console.error('Error adding insurance policy:', error);
+        this.toastService.error('Error', 'Failed to add insurance policy');
+        throw error;
+      })
     );
   }
 
-  public deleteDoctor(id: string): void {
-    this.doctorsSignal.update(items => items.filter(item => item.id !== id));
+  public updateInsurancePolicy(id: string, updates: Partial<Insurance>): Observable<Insurance> {
+    return this.http.put<Insurance>(
+      `${this.API_URL}/Insurance/${id}`,
+      updates,
+      this.getHeaders()
+    ).pipe(
+      tap(updatedPolicy => {
+        this.insurancePoliciesSignal.update(items =>
+          items.map(item => item.id === id ? updatedPolicy : item)
+        );
+        this.toastService.success('Success', 'Insurance policy updated successfully');
+      }),
+      catchError(error => {
+        console.error('Error updating insurance policy:', error);
+        this.toastService.error('Error', 'Failed to update insurance policy');
+        throw error;
+      })
+    );
+  }
+
+  public deleteInsurancePolicy(id: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.API_URL}/Insurance/${id}`,
+      this.getHeaders()
+    ).pipe(
+      tap(() => {
+        this.insurancePoliciesSignal.update(items => items.filter(item => item.id !== id));
+        this.toastService.success('Success', 'Insurance policy deleted successfully');
+      }),
+      catchError(error => {
+        console.error('Error deleting insurance policy:', error);
+        this.toastService.error('Error', 'Failed to delete insurance policy');
+        throw error;
+      })
+    );
+  }
+
+  // ===== INVENTORY API METHODS =====
+
+  public loadInventoryItems(): Observable<InventoryItem[]> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      console.error('No household ID available');
+      return of([]);
+    }
+
+    return this.http.get<InventoryItem[]>(
+      `${this.API_URL}/Inventory/household/${householdId}`,
+      this.getHeaders()
+    ).pipe(
+      tap(items => this.inventoryItemsSignal.set(items)),
+      catchError(error => {
+        console.error('Error loading inventory items:', error);
+        this.toastService.error('Error', 'Failed to load inventory items');
+        return of([]);
+      })
+    );
+  }
+
+  public addInventoryItem(item: Omit<InventoryItem, 'id'>): Observable<InventoryItem> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      this.toastService.error('Error', 'No household selected');
+      return of({} as InventoryItem);
+    }
+
+    const itemDto = { ...item, householdId };
+
+    return this.http.post<InventoryItem>(
+      `${this.API_URL}/Inventory`,
+      itemDto,
+      this.getHeaders()
+    ).pipe(
+      tap(newItem => {
+        this.inventoryItemsSignal.update(items => [...items, newItem]);
+        this.toastService.success('Success', 'Inventory item added successfully');
+      }),
+      catchError(error => {
+        console.error('Error adding inventory item:', error);
+        this.toastService.error('Error', 'Failed to add inventory item');
+        throw error;
+      })
+    );
+  }
+
+  public updateInventoryItem(id: string, updates: Partial<InventoryItem>): Observable<InventoryItem> {
+    return this.http.put<InventoryItem>(
+      `${this.API_URL}/Inventory/${id}`,
+      updates,
+      this.getHeaders()
+    ).pipe(
+      tap(updatedItem => {
+        this.inventoryItemsSignal.update(items =>
+          items.map(item => item.id === id ? updatedItem : item)
+        );
+        this.toastService.success('Success', 'Inventory item updated successfully');
+      }),
+      catchError(error => {
+        console.error('Error updating inventory item:', error);
+        this.toastService.error('Error', 'Failed to update inventory item');
+        throw error;
+      })
+    );
+  }
+
+  public deleteInventoryItem(id: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.API_URL}/Inventory/${id}`,
+      this.getHeaders()
+    ).pipe(
+      tap(() => {
+        this.inventoryItemsSignal.update(items => items.filter(item => item.id !== id));
+        this.toastService.success('Success', 'Inventory item deleted successfully');
+      }),
+      catchError(error => {
+        console.error('Error deleting inventory item:', error);
+        this.toastService.error('Error', 'Failed to delete inventory item');
+        throw error;
+      })
+    );
+  }
+
+  // ===== HEALTHCARE API METHODS =====
+
+  // Healthcare Providers (Doctors)
+  public loadHealthcareProviders(): Observable<Doctor[]> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      console.error('No household ID available');
+      return of([]);
+    }
+
+    return this.http.get<Doctor[]>(
+      `${this.API_URL}/Healthcare/household/${householdId}/providers`,
+      this.getHeaders()
+    ).pipe(
+      tap(providers => this.doctorsSignal.set(providers)),
+      catchError(error => {
+        console.error('Error loading healthcare providers:', error);
+        this.toastService.error('Error', 'Failed to load healthcare providers');
+        return of([]);
+      })
+    );
+  }
+
+  // Load Doctors from API
+  public loadDoctors(): Observable<Doctor[]> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      this.toastService.error('Error', 'No household selected');
+      return of([]);
+    }
+
+    return this.http.get<Doctor[]>(
+      `${this.API_URL}/Healthcare/household/${householdId}/providers`,
+      this.getHeaders()
+    ).pipe(
+      tap(doctors => {
+        this.doctorsSignal.set(doctors);
+      }),
+      catchError(error => {
+        console.error('Error loading doctors:', error);
+        return of([]);
+      })
+    );
+  }
+
+  public addDoctor(doctor: Omit<Doctor, 'id'>): Observable<Doctor> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      this.toastService.error('Error', 'No household selected');
+      return of({} as Doctor);
+    }
+
+    const providerDto = { ...doctor, householdId };
+
+    return this.http.post<Doctor>(
+      `${this.API_URL}/Healthcare/providers`,
+      providerDto,
+      this.getHeaders()
+    ).pipe(
+      tap(newProvider => {
+        this.doctorsSignal.update(items => [...items, newProvider]);
+        this.toastService.success('Success', 'Healthcare provider added successfully');
+      }),
+      catchError(error => {
+        console.error('Error adding healthcare provider:', error);
+        this.toastService.error('Error', 'Failed to add healthcare provider');
+        throw error;
+      })
+    );
+  }
+
+  public updateDoctor(id: string, updates: Partial<Doctor>): Observable<Doctor> {
+    return this.http.put<Doctor>(
+      `${this.API_URL}/Healthcare/providers/${id}`,
+      updates,
+      this.getHeaders()
+    ).pipe(
+      tap(updatedProvider => {
+        this.doctorsSignal.update(items =>
+          items.map(item => item.id === id ? updatedProvider : item)
+        );
+        this.toastService.success('Success', 'Healthcare provider updated successfully');
+      }),
+      catchError(error => {
+        console.error('Error updating healthcare provider:', error);
+        this.toastService.error('Error', 'Failed to update healthcare provider');
+        throw error;
+      })
+    );
+  }
+
+  public deleteDoctor(id: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.API_URL}/Healthcare/providers/${id}`,
+      this.getHeaders()
+    ).pipe(
+      tap(() => {
+        this.doctorsSignal.update(items => items.filter(item => item.id !== id));
+        this.toastService.success('Success', 'Healthcare provider deleted successfully');
+      }),
+      catchError(error => {
+        console.error('Error deleting healthcare provider:', error);
+        this.toastService.error('Error', 'Failed to delete healthcare provider');
+        throw error;
+      })
+    );
   }
 
   // Appointments
-  public addAppointment(appointment: Appointment): void {
-    this.appointmentsSignal.update(items => [...items, appointment]);
-  }
+  public loadAppointments(): Observable<Appointment[]> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      console.error('No household ID available');
+      return of([]);
+    }
 
-  public updateAppointment(id: string, updates: Partial<Appointment>): void {
-    this.appointmentsSignal.update(items =>
-      items.map(item => item.id === id ? { ...item, ...updates } : item)
+    return this.http.get<Appointment[]>(
+      `${this.API_URL}/Appointments/household/${householdId}`,
+      this.getHeaders()
+    ).pipe(
+      tap(appointments => this.appointmentsSignal.set(appointments)),
+      catchError(error => {
+        console.error('Error loading appointments:', error);
+        this.toastService.error('Error', 'Failed to load appointments');
+        return of([]);
+      })
     );
   }
 
-  public deleteAppointment(id: string): void {
-    this.appointmentsSignal.update(items => items.filter(item => item.id !== id));
-  }
+  public addAppointment(appointment: Omit<Appointment, 'id'>): Observable<Appointment> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      this.toastService.error('Error', 'No household selected');
+      return of({} as Appointment);
+    }
 
-  // Prescriptions
-  public addPrescription(prescription: Prescription): void {
-    this.prescriptionsSignal.update(items => [...items, prescription]);
-  }
+    const appointmentDto = { ...appointment, householdId };
 
-  public updatePrescription(id: string, updates: Partial<Prescription>): void {
-    this.prescriptionsSignal.update(items =>
-      items.map(item => item.id === id ? { ...item, ...updates } : item)
+    return this.http.post<Appointment>(
+      `${this.API_URL}/Appointments`,
+      appointmentDto,
+      this.getHeaders()
+    ).pipe(
+      tap(newAppointment => {
+        this.appointmentsSignal.update(items => [...items, newAppointment]);
+        this.toastService.success('Success', 'Appointment scheduled successfully');
+      }),
+      catchError(error => {
+        console.error('Error scheduling appointment:', error);
+        this.toastService.error('Error', 'Failed to schedule appointment');
+        throw error;
+      })
     );
   }
 
-  public deletePrescription(id: string): void {
-    this.prescriptionsSignal.update(items => items.filter(item => item.id !== id));
+  public updateAppointment(id: string, updates: Partial<Appointment>): Observable<Appointment> {
+    return this.http.put<Appointment>(
+      `${this.API_URL}/Appointments/${id}`,
+      updates,
+      this.getHeaders()
+    ).pipe(
+      tap(updatedAppointment => {
+        this.appointmentsSignal.update(items =>
+          items.map(item => item.id === id ? updatedAppointment : item)
+        );
+        this.toastService.success('Success', 'Appointment updated successfully');
+      }),
+      catchError(error => {
+        console.error('Error updating appointment:', error);
+        this.toastService.error('Error', 'Failed to update appointment');
+        throw error;
+      })
+    );
   }
 
-  // Medical Records
+  public deleteAppointment(id: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.API_URL}/Appointments/${id}`,
+      this.getHeaders()
+    ).pipe(
+      tap(() => {
+        this.appointmentsSignal.update(items => items.filter(item => item.id !== id));
+        this.toastService.success('Success', 'Appointment cancelled successfully');
+      }),
+      catchError(error => {
+        console.error('Error cancelling appointment:', error);
+        this.toastService.error('Error', 'Failed to cancel appointment');
+        throw error;
+      })
+    );
+  }
+
+  public cancelAppointment(id: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.API_URL}/Appointments/${id}/cancel`,
+      {},
+      this.getHeaders()
+    ).pipe(
+      tap(() => {
+        this.toastService.success('Success', 'Appointment cancelled successfully');
+        this.loadAppointments().subscribe();
+      }),
+      catchError(error => {
+        console.error('Error cancelling appointment:', error);
+        this.toastService.error('Error', 'Failed to cancel appointment');
+        throw error;
+      })
+    );
+  }
+
+  public loadUpcomingAppointments(): Observable<Appointment[]> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) return of([]);
+
+    return this.http.get<Appointment[]>(
+      `${this.API_URL}/Appointments/household/${householdId}/upcoming`,
+      this.getHeaders()
+    ).pipe(
+      catchError(error => {
+        console.error('Error loading upcoming appointments:', error);
+        return of([]);
+      })
+    );
+  }
+
+  // Medications (Prescriptions)
+  public loadMedications(): Observable<Prescription[]> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      console.error('No household ID available');
+      return of([]);
+    }
+
+    return this.http.get<Prescription[]>(
+      `${this.API_URL}/Medications/household/${householdId}`,
+      this.getHeaders()
+    ).pipe(
+      tap(medications => this.prescriptionsSignal.set(medications)),
+      catchError(error => {
+        console.error('Error loading medications:', error);
+        this.toastService.error('Error', 'Failed to load medications');
+        return of([]);
+      })
+    );
+  }
+
+  // Load Prescriptions from API
+  public loadPrescriptions(): Observable<Prescription[]> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      this.toastService.error('Error', 'No household selected');
+      return of([]);
+    }
+
+    return this.http.get<Prescription[]>(
+      `${this.API_URL}/Healthcare/household/${householdId}/medications`,
+      this.getHeaders()
+    ).pipe(
+      tap(prescriptions => {
+        this.prescriptionsSignal.set(prescriptions);
+      }),
+      catchError(error => {
+        console.error('Error loading prescriptions:', error);
+        return of([]);
+      })
+    );
+  }
+
+  public addPrescription(prescription: Omit<Prescription, 'id'>): Observable<Prescription> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      this.toastService.error('Error', 'No household selected');
+      return of({} as Prescription);
+    }
+
+    const medicationDto = { ...prescription, householdId };
+
+    return this.http.post<Prescription>(
+      `${this.API_URL}/Medications`,
+      medicationDto,
+      this.getHeaders()
+    ).pipe(
+      tap(newMedication => {
+        this.prescriptionsSignal.update(items => [...items, newMedication]);
+        this.toastService.success('Success', 'Prescription added successfully');
+      }),
+      catchError(error => {
+        console.error('Error adding prescription:', error);
+        this.toastService.error('Error', 'Failed to add prescription');
+        throw error;
+      })
+    );
+  }
+
+  public updatePrescription(id: string, updates: Partial<Prescription>): Observable<Prescription> {
+    return this.http.put<Prescription>(
+      `${this.API_URL}/Medications/${id}`,
+      updates,
+      this.getHeaders()
+    ).pipe(
+      tap(updatedMedication => {
+        this.prescriptionsSignal.update(items =>
+          items.map(item => item.id === id ? updatedMedication : item)
+        );
+        this.toastService.success('Success', 'Prescription updated successfully');
+      }),
+      catchError(error => {
+        console.error('Error updating prescription:', error);
+        this.toastService.error('Error', 'Failed to update prescription');
+        throw error;
+      })
+    );
+  }
+
+  public deletePrescription(id: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.API_URL}/Medications/${id}`,
+      this.getHeaders()
+    ).pipe(
+      tap(() => {
+        this.prescriptionsSignal.update(items => items.filter(item => item.id !== id));
+        this.toastService.success('Success', 'Prescription deleted successfully');
+      }),
+      catchError(error => {
+        console.error('Error deleting prescription:', error);
+        this.toastService.error('Error', 'Failed to delete prescription');
+        throw error;
+      })
+    );
+  }
+
+  // Medical Records (Legacy - keeping local methods for now)
   public addMedicalRecord(record: MedicalRecord): void {
     this.medicalRecordsSignal.update(items => [...items, record]);
   }
@@ -874,6 +1601,179 @@ export class DataService {
 
   public deleteMedicalRecord(id: string): void {
     this.medicalRecordsSignal.update(items => items.filter(item => item.id !== id));
+  }
+
+  // ===== ALERTS API METHODS =====
+  
+  public loadAlerts(): Observable<Alert[]> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      console.error('No household ID available');
+      return of([]);
+    }
+
+    return this.http.get<Alert[]>(
+      `${this.API_URL}/Alerts/household/${householdId}`,
+      this.getHeaders()
+    ).pipe(
+      tap(alerts => this.alertsSignal.set(alerts)),
+      catchError(error => {
+        console.error('Error loading alerts:', error);
+        this.toastService.error('Error', 'Failed to load alerts');
+        return of([]);
+      })
+    );
+  }
+
+  public markAlertAsRead(id: string): Observable<Alert> {
+    return this.http.post<Alert>(
+      `${this.API_URL}/Alerts/${id}/mark-read`,
+      {},
+      this.getHeaders()
+    ).pipe(
+      tap(updatedAlert => {
+        this.alertsSignal.update(alerts =>
+          alerts.map(a => a.id === id ? updatedAlert : a)
+        );
+      }),
+      catchError(error => {
+        console.error('Error marking alert as read:', error);
+        this.toastService.error('Error', 'Failed to mark alert as read');
+        throw error;
+      })
+    );
+  }
+
+  public dismissAlert(id: string): Observable<Alert> {
+    return this.http.post<Alert>(
+      `${this.API_URL}/Alerts/${id}/dismiss`,
+      {},
+      this.getHeaders()
+    ).pipe(
+      tap(updatedAlert => {
+        this.alertsSignal.update(alerts =>
+          alerts.map(a => a.id === id ? updatedAlert : a)
+        );
+      }),
+      catchError(error => {
+        console.error('Error dismissing alert:', error);
+        this.toastService.error('Error', 'Failed to dismiss alert');
+        throw error;
+      })
+    );
+  }
+
+  public deleteAlert(id: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.API_URL}/Alerts/${id}`,
+      this.getHeaders()
+    ).pipe(
+      tap(() => {
+        this.alertsSignal.update(alerts => alerts.filter(a => a.id !== id));
+        this.toastService.success('Success', 'Alert deleted successfully');
+      }),
+      catchError(error => {
+        console.error('Error deleting alert:', error);
+        this.toastService.error('Error', 'Failed to delete alert');
+        throw error;
+      })
+    );
+  }
+
+  public markAllAlertsAsRead(): Observable<any> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      return of({ count: 0 });
+    }
+
+    return this.http.post<any>(
+      `${this.API_URL}/Alerts/household/${householdId}/mark-all-read`,
+      {},
+      this.getHeaders()
+    ).pipe(
+      tap(() => {
+        this.alertsSignal.update(alerts =>
+          alerts.map(a => ({ ...a, isRead: true, readAt: new Date() }))
+        );
+      }),
+      catchError(error => {
+        console.error('Error marking all alerts as read:', error);
+        this.toastService.error('Error', 'Failed to mark all alerts as read');
+        throw error;
+      })
+    );
+  }
+
+  public dismissAllAlerts(): Observable<any> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      return of({ count: 0 });
+    }
+
+    return this.http.post<any>(
+      `${this.API_URL}/Alerts/household/${householdId}/dismiss-all`,
+      {},
+      this.getHeaders()
+    ).pipe(
+      tap(() => {
+        this.alertsSignal.update(alerts =>
+          alerts.map(a => ({ ...a, isDismissed: true, dismissedAt: new Date() }))
+        );
+      }),
+      catchError(error => {
+        console.error('Error dismissing all alerts:', error);
+        this.toastService.error('Error', 'Failed to dismiss all alerts');
+        throw error;
+      })
+    );
+  }
+
+  public getUnreadAlerts(): Observable<Alert[]> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      return of([]);
+    }
+
+    return this.http.get<Alert[]>(
+      `${this.API_URL}/Alerts/household/${householdId}/unread`,
+      this.getHeaders()
+    ).pipe(
+      catchError(error => {
+        console.error('Error loading unread alerts:', error);
+        return of([]);
+      })
+    );
+  }
+
+  public getAlertStats(): Observable<AlertStats> {
+    const householdId = this.getHouseholdId();
+    if (!householdId) {
+      return of({
+        totalAlerts: 0,
+        unreadAlerts: 0,
+        criticalAlerts: 0,
+        highPriorityAlerts: 0,
+        alertsByCategory: {},
+        alertsBySeverity: {}
+      });
+    }
+
+    return this.http.get<AlertStats>(
+      `${this.API_URL}/Alerts/household/${householdId}/stats`,
+      this.getHeaders()
+    ).pipe(
+      catchError(error => {
+        console.error('Error loading alert stats:', error);
+        return of({
+          totalAlerts: 0,
+          unreadAlerts: 0,
+          criticalAlerts: 0,
+          highPriorityAlerts: 0,
+          alertsByCategory: {},
+          alertsBySeverity: {}
+        });
+      })
+    );
   }
 }
 

@@ -89,6 +89,8 @@ public partial class TheButlerDbContext : DbContext, IDbContext
 
     public virtual DbSet<HealthMetrics> HealthMetrics { get; set; }
 
+    public virtual DbSet<Alerts> Alerts { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Configure Postgres enums and extensions

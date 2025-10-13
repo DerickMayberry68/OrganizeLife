@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using TheButler.Infrastructure.Data;
 using TheButler.Infrastructure.Services;
+using TheButler.Api.Services;
 
 namespace TheButler.Api
 {
@@ -87,6 +88,15 @@ namespace TheButler.Api
 
             // Register HttpClient for API calls (e.g., to Supabase)
             builder.Services.AddHttpClient();
+
+            // Register Alert Generation Background Service
+            // Only enable in Development or if explicitly configured
+            var enableAlertGeneration = builder.Configuration.GetValue<bool>("AlertGeneration:Enabled", false);
+            if (builder.Environment.IsDevelopment() || enableAlertGeneration)
+            {
+                builder.Services.AddHostedService<AlertGenerationServiceV2>();
+                Console.WriteLine("✅ Alert Generation Background Service V2 enabled (direct database access)");
+            }
 
             // Configure CORS for Angular app
             builder.Services.AddCors(options =>
