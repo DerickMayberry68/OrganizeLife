@@ -177,6 +177,22 @@ export class SidebarComponent implements AfterViewChecked {
     }
   }
 
+  collapseAllMenus(): void {
+    // Collapse all expanded menu categories
+    this.menus.forEach(menu => {
+      if (menu.submenu && menu.state === 'expand') {
+        menu.state = 'collapse';
+      }
+    });
+  }
+
+  onMenuClick(menu: any): void {
+    // If Dashboard is clicked, or any direct navigation item (not a category), collapse all other menus
+    if (menu.url === '/dashboard' || (menu.url && !menu.submenu)) {
+      this.collapseAllMenus();
+    }
+  }
+
 	appSidebarSearch(e: any): void {
 	  var targetValue = e.target.value;
 	      targetValue = targetValue.toLowerCase();

@@ -83,7 +83,7 @@
         <a class="menu-link" *ngIf="menu.submenu" (mouseenter)="showAppSidebarFloatSubMenu(menu.submenu, $event)" (mouseleave)="hideAppSidebarFloatSubMenu()">
           <ng-container *ngTemplateOutlet="sidebarMenuNav; context: {menu: menu}"></ng-container>
         </a>
-        <a class="menu-link" *ngIf="!menu.submenu" [routerLink]="menu.url">
+        <a class="menu-link" *ngIf="!menu.submenu" [routerLink]="menu.url" (click)="onMenuClick(menu)">
           <ng-container *ngTemplateOutlet="sidebarMenuNav; context: {menu: menu}"></ng-container>
         </a>
 
@@ -93,7 +93,7 @@
             <a class="menu-link" *ngIf="menu1.submenu" (click)="(menu1.submenu) ? expandCollapseSubmenu(menu1, menu.submenu, rla1) : ''">
               <ng-template *ngTemplateOutlet="sidebarSubMenuNav; context: {menu: menu1}"></ng-template>
             </a>
-            <a class="menu-link" *ngIf="!menu1.submenu" [routerLink]="menu1.url">
+            <a class="menu-link" *ngIf="!menu1.submenu" [routerLink]="menu1.url" (click)="onMenuClick(menu1)">
               <ng-template *ngTemplateOutlet="sidebarSubMenuNav; context: {menu: menu1}"></ng-template>
             </a>
 
@@ -113,7 +113,7 @@
                     <a class="menu-link" *ngIf="menu3.submenu" (click)="(menu3.submenu) ? expandCollapseSubmenu(menu3, menu2.submenu, rla3) : ''">
                       <ng-template *ngTemplateOutlet="sidebarSubMenuNav; context: {menu: menu3}"></ng-template>
                     </a>
-                    <a class="menu-link" *ngIf="!menu3.submenu" [routerLink]="menu3.url">
+                    <a class="menu-link" *ngIf="!menu3.submenu" [routerLink]="menu3.url" (click)="onMenuClick(menu3)">
                       <ng-template *ngTemplateOutlet="sidebarSubMenuNav; context: {menu: menu3}"></ng-template>
                     </a>
                   </div>
