@@ -47,7 +47,7 @@
   }
 }
 
-// Card styling to match dashboard
+// Card styling
 .card {
   border-radius: 6px;
   overflow: hidden;
@@ -72,7 +72,32 @@
   background: white;
 }
 
-// Loading states
+// Empty State
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  color: #666;
+
+  &__icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    margin: 0 0 8px 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #2d3748;
+  }
+
+  p {
+    margin: 0 0 24px 0;
+    color: #718096;
+    font-size: 14px;
+  }
+}
+
+// Loading
 .loading-overlay {
   display: flex;
   flex-direction: column;
@@ -81,20 +106,6 @@
   padding: 40px 20px;
   text-align: center;
 
-  p {
-    margin-top: 15px;
-    color: #666;
-    font-size: 14px;
-  }
-}
-
-.chart-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 350px;
-  
   p {
     margin-top: 15px;
     color: #666;
@@ -117,141 +128,7 @@
   }
 }
 
-// Empty states with emoji and CTA
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-  color: #666;
-  min-height: 300px;
-
-  &__icon {
-    font-size: 64px;
-    margin-bottom: 20px;
-    opacity: 0.5;
-  }
-
-  h3 {
-    font-size: 20px;
-    font-weight: 600;
-    color: #242a30;
-    margin: 0 0 10px 0;
-  }
-
-  p {
-    font-size: 14px;
-    color: #666;
-    margin: 0 0 20px 0;
-    max-width: 400px;
-  }
-
-  .btn {
-    margin-top: 10px;
-  }
-}
-
-// Badge styles
-.badge {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: capitalize;
-
-  &--success {
-    background: rgba(50, 169, 50, 0.1);
-    color: #32a932;
-  }
-
-  &--warning {
-    background: rgba(245, 156, 26, 0.1);
-    color: #f59c1a;
-  }
-
-  &--error {
-    background: rgba(231, 76, 60, 0.1);
-    color: #e74c3c;
-  }
-
-  &--info {
-    background: rgba(73, 182, 214, 0.1);
-    color: #49b6d6;
-  }
-
-  &--default {
-    background: rgba(0, 0, 0, 0.05);
-    color: #666;
-  }
-}
-
-// Button styles
-.btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-
-  &--accent {
-    background: #d4af37;
-    color: #1a1a2e;
-
-    &:hover {
-      background: #dfc159;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(212, 175, 55, 0.3);
-    }
-  }
-
-  &--outline {
-    background: transparent;
-    border: 2px solid #d4af37;
-    color: #d4af37;
-
-    &:hover {
-      background: rgba(212, 175, 55, 0.1);
-    }
-  }
-
-  &--primary {
-    background: #49b6d6;
-    color: white;
-
-    &:hover {
-      background: #3a9bb8;
-    }
-  }
-}
-
-// Form styles
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-
-  label {
-    font-size: 13px;
-    font-weight: 600;
-    color: #242a30;
-  }
-}
-
-// Responsive design
+// Responsive
 @media (max-width: 768px) {
   .inventory__overview {
     grid-template-columns: 1fr;

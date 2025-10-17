@@ -1,7 +1,7 @@
 import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, ViewChild, OnInit, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { DataService } from '../../services/data.service';
+import { MaintenanceService } from '../../services/maintenance.service';
 import { ToastService } from '../../services/toast.service';
 import { StatCard } from '../../shared/stat-card/stat-card';
 import { GridModule, PageService, SortService, FilterService, GroupService } from '@syncfusion/ej2-angular-grids';
@@ -48,11 +48,11 @@ import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
 export class Maintenance implements OnInit {
   @ViewChild('taskDialog') taskDialog!: DialogComponent;
 
-  private readonly dataService = inject(DataService);
+  private readonly maintenanceService = inject(MaintenanceService);
   private readonly fb = inject(FormBuilder);
   private readonly toastService = inject(ToastService);
 
-  protected readonly tasks = this.dataService.maintenanceTasks;
+  protected readonly tasks = this.maintenanceService.maintenanceTasks;
   protected readonly isLoading = signal(false);
 
   // Computed values
@@ -223,7 +223,7 @@ export class Maintenance implements OnInit {
         frequency: formValue.frequency
       };
       
-      this.dataService.addMaintenanceTask(task).subscribe({
+      this.maintenanceService.addMaintenanceTask(task).subscribe({
         next: () => {
           this.taskDialog.hide();
           this.taskForm.reset({

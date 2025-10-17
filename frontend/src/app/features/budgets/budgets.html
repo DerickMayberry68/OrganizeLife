@@ -98,19 +98,21 @@
             <e-columns>
               <e-column field="name" headerText="Budget Name" width="180"></e-column>
               <e-column field="categoryName" headerText="Category" width="150"></e-column>
-              <e-column field="limitAmount" headerText="Limit Amount" width="140" [valueAccessor]="formatCurrency" textAlign="Right"></e-column>
+              <e-column field="limitAmount" headerText="Limit Amount" width="140" format="C2" textAlign="Right"></e-column>
               <e-column field="period" headerText="Period" width="120"></e-column>
               <e-column field="startDate" headerText="Start Date" width="140" type="date" format="yMd"></e-column>
               <e-column field="endDate" headerText="End Date" width="140" type="date" format="yMd"></e-column>
               <e-column field="isActive" headerText="Status" width="120"></e-column>
-              <e-column headerText="Actions" width="120" textAlign="Center">
+              <e-column headerText="Actions" width="120" textAlign="Center" [allowSorting]="false" [allowFiltering]="false">
                 <ng-template #template let-data>
-                  <button type="button" class="btn btn--sm btn--icon" (click)="openBudgetDialog(data)" title="Edit">
-                    ✏️
-                  </button>
-                  <button type="button" class="btn btn--sm btn--icon btn--danger" (click)="deleteBudget(data.id)" title="Delete">
-                    🗑️
-                  </button>
+                  <div class="action-buttons">
+                    <button class="btn btn-sm btn-outline-primary me-2" (click)="editBudget(data)">
+                      <i class="fa fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" (click)="deleteBudget(data)">
+                      <i class="fa fa-trash"></i>
+                    </button>
+                  </div>
                 </ng-template>
               </e-column>
             </e-columns>
@@ -137,13 +139,12 @@
           <label class="form-label" for="budgetName">
             🏷️ Budget Name
           </label>
-          <input
-            type="text"
-            class="form-control"
+          <ejs-textbox
             id="budgetName"
             formControlName="name"
             placeholder="e.g., Monthly Groceries"
-          />
+            cssClass="form-control">
+          </ejs-textbox>
         </div>
 
         <div class="form-group">

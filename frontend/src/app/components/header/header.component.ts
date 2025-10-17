@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AppSettings } from '../../services/app-settings.service';
 import { AuthService } from '../../services/auth.service';
-import { DataService } from '../../services/data.service';
+import { AlertService } from '../../services/alert.service';
 import { slideToggle } from '../../utils/slide-animations';
 
 @Component({
@@ -15,7 +15,7 @@ import { slideToggle } from '../../utils/slide-animations';
 })
 export class HeaderComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
-  private dataService = inject(DataService);
+  private alertService = inject(AlertService);
   
   @Input() appSidebarTwo: any;
 	@Output() appSidebarEndToggled = new EventEmitter<boolean>();
@@ -23,16 +23,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
 	@Output() appSidebarEndMobileToggled = new EventEmitter<boolean>();
 	
 	// Alerts
-	protected readonly alerts = this.dataService.alerts;
+	protected readonly alerts = this.alertService.alerts;
 	protected readonly recentAlerts = computed(() => 
     this.alerts()
       .filter(a => !a.isDismissed)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 5)
   );
-	protected readonly notificationCount = computed(() => 
-    this.alerts().filter(a => !a.isRead && !a.isDismissed).length
-  );
+	protected readonly notificationCount = this.alertService.unreadAlertsCount;
 	
 	// Get current user info
 	get currentUser() {
@@ -88,12 +86,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit(): void {
-    this.dataService.loadAlerts().subscribe();
+    this.alertService.loadAlerts().subscribe();
   }
 
 	markAlertAsRead(id: string, event: Event): void {
     event.stopPropagation();
-    this.dataService.markAlertAsRead(id).subscribe();
+    this.alertService.markAlertAsRead(id).subscribe();
   }
 
 	getSeverityIcon(severity: string): string {

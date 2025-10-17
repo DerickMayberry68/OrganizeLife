@@ -1,8 +1,9 @@
-import { Component, Input, Output, EventEmitter, ElementRef, HostListener, ViewChild, OnInit, AfterViewChecked, AfterViewInit, inject } 		 from '@angular/core';
+import { Component, Input, Output, EventEmitter, ElementRef, HostListener, ViewChild, OnInit, AfterViewChecked, AfterViewInit, inject, effect } 		 from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppMenuService } from '../../services/app-menus.service';
 import { AppSettings } from '../../services/app-settings.service';
 import { AuthService } from '../../services/auth.service';
+import { AlertService } from '../../services/alert.service';
 import { RouterModule } from '@angular/router';
 import { slideUp, slideToggle } from '../../utils/slide-animations';
 import { FloatSubMenuComponent } from '../float-sub-menu/float-sub-menu.component';
@@ -16,6 +17,8 @@ import { FloatSubMenuComponent } from '../float-sub-menu/float-sub-menu.componen
 
 export class SidebarComponent implements AfterViewChecked {
 	private authService = inject(AuthService);
+	private alertService = inject(AlertService);
+	private appMenuService = inject(AppMenuService);
 	menus: any[] = [];
 	
 	// Get current user info
@@ -350,7 +353,7 @@ export class SidebarComponent implements AfterViewChecked {
 		console.log(this.menus);
 	}
 
-  constructor(private eRef: ElementRef, public appSettings: AppSettings, private appMenuService: AppMenuService) {
+  constructor(private eRef: ElementRef, public appSettings: AppSettings) {
     if (window.innerWidth <= 767) {
       this.mobileMode = true;
       this.desktopMode = false;
@@ -358,5 +361,13 @@ export class SidebarComponent implements AfterViewChecked {
       this.mobileMode = false;
       this.desktopMode = true;
     }
+
+    // Update menus when alert count changes
+    effect(() => {
+      // Track the unread alerts count
+      this.alertService.unreadAlertsCount();
+      // Refresh menus to update badge
+      this.menus = this.appMenuService.getAppMenus();
+    });
   }
 }

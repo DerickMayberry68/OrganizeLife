@@ -1,7 +1,7 @@
 import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, ViewChild, OnInit, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { DataService } from '../../services/data.service';
+import { InventoryService } from '../../services/inventory.service';
 import { ToastService } from '../../services/toast.service';
 import { StatCard } from '../../shared/stat-card/stat-card';
 import { GridModule, PageService, SortService, FilterService, GroupService } from '@syncfusion/ej2-angular-grids';
@@ -46,11 +46,11 @@ import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
 export class Inventory implements OnInit {
   @ViewChild('itemDialog') itemDialog!: DialogComponent;
 
-  private readonly dataService = inject(DataService);
+  private readonly inventoryService = inject(InventoryService);
   private readonly fb = inject(FormBuilder);
   private readonly toastService = inject(ToastService);
 
-  protected readonly items = this.dataService.inventoryItems;
+  protected readonly items = this.inventoryService.inventoryItems;
   protected readonly isLoading = signal(false);
 
   // Computed values
@@ -178,7 +178,7 @@ export class Inventory implements OnInit {
         notes: formValue.notes || undefined
       };
       
-      this.dataService.addInventoryItem(item).subscribe({
+      this.inventoryService.addInventoryItem(item).subscribe({
         next: () => {
           this.itemDialog.hide();
           this.itemForm.reset({ purchaseDate: new Date(), purchasePrice: 0 });

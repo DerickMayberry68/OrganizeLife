@@ -72,88 +72,7 @@
   background: white;
 }
 
-// Loading states
-.loading-overlay {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  text-align: center;
-
-  p {
-    margin-top: 15px;
-    color: #666;
-    font-size: 14px;
-  }
-}
-
-.chart-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 350px;
-  
-  p {
-    margin-top: 15px;
-    color: #666;
-    font-size: 14px;
-  }
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(0, 0, 0, 0.1);
-  border-left-color: #d4af37;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-// Empty states with emoji and CTA
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-  color: #666;
-  min-height: 300px;
-
-  &__icon {
-    font-size: 64px;
-    margin-bottom: 20px;
-    opacity: 0.5;
-  }
-
-  h3 {
-    font-size: 20px;
-    font-weight: 600;
-    color: #242a30;
-    margin: 0 0 10px 0;
-  }
-
-  p {
-    font-size: 14px;
-    color: #666;
-    margin: 0 0 20px 0;
-    max-width: 400px;
-  }
-
-  .btn {
-    margin-top: 10px;
-  }
-}
-
-// Upcoming bills list
+// Upcoming Bills List
 .upcoming-bills-list {
   display: flex;
   flex-direction: column;
@@ -165,13 +84,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 15px;
-  background: rgba(212, 175, 55, 0.05);
-  border-radius: 6px;
-  border-left: 3px solid #d4af37;
-  transition: all 0.2s;
+  background: rgba(27, 118, 255, 0.05);
+  border-left: 3px solid #1b76ff;
+  border-radius: 4px;
+  transition: all 0.2s ease;
 
   &:hover {
-    background: rgba(212, 175, 55, 0.1);
+    background: rgba(27, 118, 255, 0.1);
     transform: translateX(4px);
   }
 
@@ -182,13 +101,13 @@
       margin: 0 0 4px 0;
       font-size: 14px;
       font-weight: 600;
-      color: #242a30;
+      color: #2d3748;
     }
   }
 
   &__category {
     font-size: 12px;
-    color: #666;
+    color: #718096;
     text-transform: capitalize;
   }
 
@@ -206,126 +125,85 @@
   }
 
   &__amount {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 700;
-    color: #242a30;
+    color: #1b76ff;
   }
 }
 
-// Badge styles
-.badge {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: capitalize;
+// Empty State
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  color: #666;
 
-  &--success {
-    background: rgba(50, 169, 50, 0.1);
-    color: #32a932;
+  &__icon {
+    font-size: 48px;
+    margin-bottom: 16px;
   }
 
-  &--warning {
-    background: rgba(245, 156, 26, 0.1);
-    color: #f59c1a;
+  h3 {
+    margin: 0 0 8px 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #2d3748;
   }
 
-  &--error {
-    background: rgba(231, 76, 60, 0.1);
-    color: #e74c3c;
+  p {
+    margin: 0 0 24px 0;
+    color: #718096;
+    font-size: 14px;
   }
+}
 
-  &--info {
-    background: rgba(73, 182, 214, 0.1);
-    color: #49b6d6;
+// Loading
+.loading-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+
+  p {
+    margin-top: 15px;
+    color: #666;
+    font-size: 14px;
   }
+}
 
-  &--default {
-    background: rgba(0, 0, 0, 0.05);
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #d4af37;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.chart-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  min-height: 350px;
+
+  p {
+    margin-top: 15px;
     color: #666;
   }
 }
 
-// Button styles
-.btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-
-  &--accent {
-    background: #d4af37;
-    color: #1a1a2e;
-
-    &:hover {
-      background: #dfc159;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(212, 175, 55, 0.3);
-    }
-  }
-
-  &--outline {
-    background: transparent;
-    border: 2px solid #d4af37;
-    color: #d4af37;
-
-    &:hover {
-      background: rgba(212, 175, 55, 0.1);
-    }
-  }
-
-  &--primary {
-    background: #49b6d6;
-    color: white;
-
-    &:hover {
-      background: #3a9bb8;
-    }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
-// Form styles
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-
-  label {
-    font-size: 13px;
-    font-weight: 600;
-    color: #242a30;
-  }
-}
-
-// Responsive design
+// Responsive
 @media (max-width: 768px) {
   .bills__overview {
     grid-template-columns: 1fr;
-  }
-
-  .upcoming-bill-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-
-    &__details {
-      align-items: flex-start;
-      width: 100%;
-      flex-direction: row;
-      justify-content: space-between;
-    }
   }
 }

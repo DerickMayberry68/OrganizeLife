@@ -1,0 +1,49 @@
+---
+description: Syncfusion component styling guidelines and best practices
+---
+
+# Syncfusion Component Styling Guidelines
+
+## Overview
+This project uses Syncfusion UI components with Tailwind CSS theme. Custom styling should be minimal and follow these guidelines.
+
+## Theme Configuration
+The Syncfusion Tailwind theme is configured in [angular.json](mdc:angular.json) with these key CSS files:
+- `node_modules/@syncfusion/ej2-angular-schedule/styles/tailwind.css`
+- `node_modules/@syncfusion/ej2-base/styles/tailwind.css`
+- `node_modules/@syncfusion/ej2-angular-base/styles/tailwind.css`
+
+## Styling Rules
+
+### 1. Use Default Syncfusion Styling
+- **ALWAYS** use the default Syncfusion Tailwind theme styling
+- **AVOID** custom CSS overrides for Syncfusion components
+- **NEVER** use `!important` declarations on Syncfusion components unless absolutely necessary
+
+### 2. Event Calendar Specific
+- The Event Calendar uses Syncfusion Schedule component
+- Default styling provides proper contrast and readability
+- Custom styling should only be applied to wrapper containers, not the calendar itself
+
+### 3. When Custom Styling is Needed
+If custom styling is absolutely required:
+- Apply styles to wrapper containers (`.widget__content`, `.card-content`)
+- Use CSS custom properties for theming
+- Follow the color palette defined in [color-palette.mdc](mdc:.cursor/rules/color-palette.mdc)
+
+### 4. File Organization
+- Syncfusion custom overrides go in [src/scss/_syncfusion-custom-theme.scss](mdc:src/scss/_syncfusion-custom-theme.scss)
+- Component-specific styling goes in individual component SCSS files
+- Dashboard styling goes in [src/app/features/dashboard/dashboard.scss](mdc:src/app/features/dashboard/dashboard.scss)
+
+## Common Mistakes to Avoid
+- Don't override Syncfusion's built-in color schemes
+- Don't use `::ng-deep` with Syncfusion components unless necessary
+- Don't apply custom styling to `.e-schedule`, `.e-calendar`, or other Syncfusion classes
+- Don't modify the angular.json Syncfusion CSS imports
+
+## Best Practices
+1. **Test with default styling first** - Syncfusion components are well-designed
+2. **Use wrapper styling** - Style containers around components, not the components themselves
+3. **Follow accessibility guidelines** - Syncfusion components include proper contrast ratios
+4. **Maintain consistency** - Use the same styling approach across all Syncfusion components

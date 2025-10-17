@@ -7,7 +7,7 @@
 @import 'functions';
 @import 'variables';
 @import 'variables-dark';
-@import 'bootstrap/scss/bootstrap';
+@import 'bootstrap-custom'; // Custom Bootstrap import (excludes forms - Syncfusion handles those)
 @import 'mixins';
 @import 'root';
 @import 'reboot';

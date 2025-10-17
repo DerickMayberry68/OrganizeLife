@@ -416,7 +416,7 @@ ngb-datepicker {
             min-height: initial;
 
             & .cal-day-number {
-              color: rgba(var(--#{$prefix}component-color-rgb), .5);
+              color: var(--#{$prefix}component-color);
               font-size: 12px;
               font-weight: $font-weight-bold;
               margin-right: 3px;

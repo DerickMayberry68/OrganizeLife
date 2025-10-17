@@ -1,0 +1,905 @@
+// ============================================================================
+// Syncfusion Custom Theme - Matching Login/Register Appearance
+// ============================================================================
+// This file overrides Syncfusion Tailwind theme to match the beautiful
+// Login/Register form styling throughout the entire application
+// ============================================================================
+
+// Global Syncfusion Component Styling
+::ng-deep {
+  
+  // ========================================
+  // TextBox Component
+  // ========================================
+  .e-textbox {
+    .e-input-group {
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      background-color: white;
+      transition: all 0.3s ease;
+      
+      .e-input {
+        background-color: white;
+        color: #2d3748;
+        border: none;
+        padding: 12px 16px;
+        font-size: 15px;
+        border-radius: 8px;
+        
+        &::placeholder {
+          color: #a0aec0;
+        }
+        
+        &:focus {
+          background-color: white;
+          border: none;
+          box-shadow: none;
+        }
+      }
+      
+      &:focus-within {
+        border-color: #1b76ff;
+        box-shadow: 0 0 0 3px rgba(27, 118, 255, 0.1);
+      }
+      
+      &.e-disabled {
+        background-color: #f7fafc;
+        cursor: not-allowed;
+        
+        .e-input {
+          background-color: #f7fafc;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+
+  // ========================================
+  // DropDownList Component
+  // ========================================
+  .e-dropdownlist {
+    .e-input-group {
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      background-color: white;
+      transition: all 0.3s ease;
+      
+      .e-input {
+        background-color: white;
+        color: #2d3748;
+        border: none;
+        padding: 12px 16px;
+        font-size: 15px;
+        border-radius: 8px;
+        
+        &::placeholder {
+          color: #a0aec0;
+        }
+        
+        &:focus {
+          background-color: white;
+          border: none;
+          box-shadow: none;
+        }
+      }
+      
+      .e-input-group-icon {
+        background-color: white;
+        border: none;
+        color: #4a5568;
+      }
+      
+      &:focus-within {
+        border-color: #1b76ff;
+        box-shadow: 0 0 0 3px rgba(27, 118, 255, 0.1);
+      }
+      
+      &.e-disabled {
+        background-color: #f7fafc;
+        cursor: not-allowed;
+        
+        .e-input {
+          background-color: #f7fafc;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+
+  // ========================================
+  // NumericTextBox Component
+  // ========================================
+  .e-numerictextbox {
+    .e-input-group {
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      background-color: white;
+      transition: all 0.3s ease;
+      
+      .e-input {
+        background-color: white;
+        color: #2d3748;
+        border: none;
+        padding: 12px 16px;
+        font-size: 15px;
+        border-radius: 8px;
+        
+        &::placeholder {
+          color: #a0aec0;
+        }
+        
+        &:focus {
+          background-color: white;
+          border: none;
+          box-shadow: none;
+        }
+      }
+      
+      .e-input-group-icon {
+        background-color: white;
+        border: none;
+        color: #4a5568;
+        
+        &:hover {
+          background-color: #f7fafc;
+        }
+      }
+      
+      &:focus-within {
+        border-color: #1b76ff;
+        box-shadow: 0 0 0 3px rgba(27, 118, 255, 0.1);
+      }
+      
+      &.e-disabled {
+        background-color: #f7fafc;
+        cursor: not-allowed;
+        
+        .e-input {
+          background-color: #f7fafc;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+
+  // ========================================
+  // DatePicker Component
+  // ========================================
+  .e-datepicker {
+    .e-input-group {
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      background-color: white;
+      transition: all 0.3s ease;
+      
+      .e-input {
+        background-color: white;
+        color: #2d3748;
+        border: none;
+        padding: 12px 16px;
+        font-size: 15px;
+        border-radius: 8px;
+        
+        &::placeholder {
+          color: #a0aec0;
+        }
+        
+        &:focus {
+          background-color: white;
+          border: none;
+          box-shadow: none;
+        }
+      }
+      
+      .e-input-group-icon {
+        background-color: white;
+        border: none;
+        color: #4a5568;
+        
+        &:hover {
+          background-color: #f7fafc;
+        }
+      }
+      
+      &:focus-within {
+        border-color: #1b76ff;
+        box-shadow: 0 0 0 3px rgba(27, 118, 255, 0.1);
+      }
+      
+      &.e-disabled {
+        background-color: #f7fafc;
+        cursor: not-allowed;
+        
+        .e-input {
+          background-color: #f7fafc;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+
+  // ========================================
+  // CheckBox Component
+  // ========================================
+  .e-checkbox {
+    .e-checkbox-wrapper {
+      .e-checkbox-frame {
+        border: 2px solid #e2e8f0;
+        border-radius: 4px;
+        background-color: white;
+        transition: all 0.2s ease;
+      }
+      
+      .e-checkbox-label {
+        color: #4a5568;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      
+      &:hover .e-checkbox-frame {
+        border-color: #1b76ff;
+      }
+      
+      &.e-checked .e-checkbox-frame {
+        background-color: #1b76ff;
+        border-color: #1b76ff;
+      }
+    }
+  }
+
+  // ========================================
+  // ComboBox Component (Healthcare)
+  // ========================================
+  .e-combobox {
+    .e-input-group {
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      background-color: white;
+      transition: all 0.3s ease;
+      
+      .e-input {
+        background-color: white;
+        color: #2d3748;
+        border: none;
+        padding: 12px 16px;
+        font-size: 15px;
+        border-radius: 8px;
+        
+        &::placeholder {
+          color: #a0aec0;
+        }
+      }
+      
+      .e-input-group-icon {
+        background-color: white;
+        border: none;
+        color: #4a5568;
+      }
+      
+      &:focus-within {
+        border-color: #1b76ff;
+        box-shadow: 0 0 0 3px rgba(27, 118, 255, 0.1);
+      }
+    }
+  }
+
+  // ========================================
+  // Dialog Component Styling
+  // ========================================
+  .e-dialog {
+    border-radius: 8px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important;
+
+    // Dialog header - match AppBar color but lighter for contrast
+    .e-dlg-header-content {
+      background: #2d353c !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+      padding: 16px 20px !important;
+      border-radius: 8px 8px 0 0 !important;
+
+      .e-dlg-header {
+        color: white !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+      }
+
+      .e-icon-dlg-close {
+        color: rgba(255, 255, 255, 0.8) !important;
+        
+        &:hover {
+          color: white !important;
+          background: rgba(255, 255, 255, 0.1) !important;
+        }
+      }
+    }
+
+    // Dialog content - light background to match login forms
+    .e-dlg-content {
+      background: #f7fafc !important;
+      color: #2d3748 !important;
+      padding: 24px !important;
+    }
+
+    // Dialog footer
+    .e-footer-content {
+      background: #f7fafc !important;
+      border-top: 1px solid #e2e8f0 !important;
+      padding: 16px 20px !important;
+      border-radius: 0 0 8px 8px !important;
+
+      .e-btn {
+        border-radius: 6px;
+        padding: 10px 20px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+
+        &.e-primary {
+          background: linear-gradient(135deg, #1b76ff 0%, #6b5ce7 100%);
+          border: none;
+          color: white;
+          box-shadow: 0 2px 8px rgba(27, 118, 255, 0.3);
+
+          &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(27, 118, 255, 0.4);
+          }
+        }
+
+        &:not(.e-primary) {
+          background: white;
+          border: 2px solid #e2e8f0;
+          color: #4a5568;
+
+          &:hover {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+          }
+        }
+      }
+    }
+  }
+
+  // ========================================
+  // Dropdown Popup Styling
+  // ========================================
+  .e-ddl.e-popup {
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: white;
+
+    .e-list-item {
+      color: #2d3748;
+      padding: 10px 16px;
+      transition: background 0.2s ease;
+
+      &:hover {
+        background: #f7fafc;
+      }
+
+      &.e-active {
+        background: rgba(27, 118, 255, 0.1);
+        color: #1b76ff;
+      }
+    }
+  }
+
+  // ========================================
+  // Calendar Popup Styling (DatePicker)
+  // ========================================
+  .e-calendar {
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: white;
+
+    .e-header {
+      background: #f7fafc;
+      color: #2d3748;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .e-content {
+      background: white;
+
+      td {
+        color: #2d3748;
+
+        &.e-selected {
+          background: #1b76ff;
+          color: white;
+        }
+
+        &:hover:not(.e-selected) {
+          background: #f7fafc;
+        }
+
+        &.e-today {
+          border-color: #1b76ff;
+        }
+      }
+    }
+  }
+
+
+  // ========================================
+  // Form Label Styling
+  // ========================================
+  .form-label {
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 14px;
+    margin-bottom: 8px;
+    display: block;
+
+    i {
+      color: #1b76ff;
+      margin-right: 8px;
+    }
+  }
+
+  // ========================================
+  // Dialog Form Wrapper
+  // ========================================
+  .dialog-form {
+    .form-label {
+      font-weight: 600;
+      color: #4a5568;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .row {
+      margin-left: -8px;
+      margin-right: -8px;
+
+      [class*='col-'] {
+        padding-left: 8px;
+        padding-right: 8px;
+      }
+    }
+
+    .mb-3 {
+      margin-bottom: 1rem;
+    }
+  }
+
+  // ========================================
+  // Global Grid Text Override - MAXIMUM SPECIFICITY
+  // ========================================
+  // Force ALL grid text to be dark and visible with maximum specificity
+  .e-grid,
+  .e-grid *,
+  .e-grid.e-grid,
+  .e-grid.e-grid *,
+  div.e-grid,
+  div.e-grid * {
+    color: #2d3748 !important;
+    
+    // Override any potential white text from themes
+    .e-rowcell,
+    .e-cellvalue,
+    .e-templatecell,
+    .e-gridcontent,
+    .e-gridcontent *,
+    .e-rowcell *,
+    .e-cellvalue *,
+    .e-templatecell * {
+      color: #2d3748 !important;
+    }
+  }
+
+  // Ultra-specific overrides for stubborn white text
+  .e-grid .e-rowcell,
+  .e-grid .e-rowcell *,
+  .e-grid .e-rowcell span,
+  .e-grid .e-rowcell div,
+  .e-grid .e-rowcell td,
+  .e-grid .e-rowcell th {
+    color: #2d3748 !important;
+    background-color: transparent !important;
+  }
+
+  // ========================================
+  // Grid Component Styling
+  // ========================================
+  .e-grid {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+
+    // Grid header
+    .e-gridheader {
+      background: #f7fafc;
+      border-bottom: 2px solid #e2e8f0;
+
+      .e-headercell {
+        background: #f7fafc;
+        color: #2d3748;
+        font-weight: 600;
+        font-size: 14px;
+        padding: 12px 16px;
+        border-right: 1px solid #e2e8f0;
+
+        &:last-child {
+          border-right: none;
+        }
+      }
+    }
+
+    // Grid content
+    .e-gridcontent {
+      background: white;
+
+      .e-row {
+        border-bottom: 1px solid #f1f5f9;
+
+        &:hover {
+          background: #f7fafc;
+        }
+
+        &.e-altrow {
+          background: #fafbfc;
+        }
+
+        .e-rowcell {
+          color: #2d3748 !important;
+          font-size: 14px;
+          padding: 12px 16px;
+          border-right: 1px solid #f1f5f9;
+
+          &:last-child {
+            border-right: none;
+          }
+
+          // Force ALL text content to be dark and visible
+          *,
+          span,
+          div,
+          p,
+          td,
+          th,
+          .e-cellvalue,
+          .e-templatecell {
+            color: #2d3748 !important;
+            background-color: transparent !important;
+          }
+
+          // Ensure all grid cells are readable regardless of field type
+          &[aria-describedby],
+          &[data-colindex],
+          &[role="gridcell"] {
+            color: #2d3748 !important;
+            font-weight: 500;
+            
+            // Override any white text
+            * {
+              color: #2d3748 !important;
+            }
+          }
+
+          // Specific field targeting for common column types
+          &[aria-describedby*="category"],
+          &[aria-describedby*="Category"],
+          &[aria-describedby*="name"],
+          &[aria-describedby*="Name"],
+          &[aria-describedby*="type"],
+          &[aria-describedby*="Type"],
+          &[aria-describedby*="period"],
+          &[aria-describedby*="Period"],
+          &[aria-describedby*="status"],
+          &[aria-describedby*="Status"],
+          &[aria-describedby*="description"],
+          &[aria-describedby*="Description"],
+          &[aria-describedby*="institution"],
+          &[aria-describedby*="Institution"],
+          &[aria-describedby*="account"],
+          &[aria-describedby*="Account"],
+          &[aria-describedby*="service"],
+          &[aria-describedby*="Service"],
+          &[aria-describedby*="provider"],
+          &[aria-describedby*="Provider"],
+          &[aria-describedby*="merchant"],
+          &[aria-describedby*="Merchant"] {
+            color: #2d3748 !important;
+            font-weight: 500;
+          }
+        }
+      }
+    }
+
+    // Grid toolbar
+    .e-toolbar {
+      background: #f7fafc;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 8px 16px;
+
+      .e-toolbar-item {
+        .e-btn {
+          background: white;
+          border: 1px solid #e2e8f0;
+          color: #4a5568;
+          border-radius: 6px;
+          padding: 8px 12px;
+          font-size: 13px;
+          transition: all 0.2s ease;
+
+          &:hover {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+          }
+
+          &.e-primary {
+            background: #1b76ff;
+            border-color: #1b76ff;
+            color: white;
+
+            &:hover {
+              background: #1565e0;
+              border-color: #1565e0;
+            }
+          }
+        }
+      }
+    }
+
+    // Grid pager
+    .e-pager {
+      background: #f7fafc;
+      border-top: 1px solid #e2e8f0;
+      padding: 12px 16px;
+
+      .e-pagercontainer {
+        .e-prevpagedisabled,
+        .e-nextpagedisabled,
+        .e-firstpagedisabled,
+        .e-lastpagedisabled {
+          color: #a0aec0;
+        }
+
+        .e-prevpage,
+        .e-nextpage,
+        .e-firstpage,
+        .e-lastpage,
+        .e-numericitem {
+          color: #4a5568;
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 4px;
+          margin: 0 2px;
+          padding: 6px 10px;
+          transition: all 0.2s ease;
+
+          &:hover:not(.e-active) {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+          }
+
+          &.e-active {
+            background: #1b76ff;
+            border-color: #1b76ff;
+            color: white;
+          }
+        }
+      }
+    }
+  }
+
+  // ========================================
+  // Additional Grid Text Overrides
+  // ========================================
+  // Catch any remaining white text issues
+  .e-grid .e-content,
+  .e-grid .e-content *,
+  .e-grid .e-table,
+  .e-grid .e-table *,
+  .e-grid tbody,
+  .e-grid tbody *,
+  .e-grid td,
+  .e-grid td *,
+  .e-grid th,
+  .e-grid th * {
+    color: #2d3748 !important;
+  }
+
+  // Override any Syncfusion theme text colors
+  .e-grid .e-text-content,
+  .e-grid .e-text-content *,
+  .e-grid .e-cell-text,
+  .e-grid .e-cell-text * {
+    color: #2d3748 !important;
+  }
+
+  // Ensure action buttons and other interactive elements are visible
+  .e-grid .action-buttons,
+  .e-grid .action-buttons *,
+  .e-grid .btn,
+  .e-grid .btn * {
+    color: inherit !important;
+  }
+
+  // Override any potential white text in grid cells
+  .e-grid .e-rowcell.e-cellselection,
+  .e-grid .e-rowcell.e-cellselection *,
+  .e-grid .e-rowcell.e-selection,
+  .e-grid .e-rowcell.e-selection * {
+    color: #2d3748 !important;
+  }
+
+  // NUCLEAR OPTION - Override EVERYTHING in ALL grids across the entire app
+  .e-grid,
+  .e-grid *,
+  .e-grid.e-grid,
+  .e-grid.e-grid *,
+  div.e-grid,
+  div.e-grid *,
+  .e-grid[class*="e-grid"],
+  .e-grid[class*="e-grid"] * {
+    
+    // Force ALL text to be dark gray - MAXIMUM SPECIFICITY
+    color: #2d3748 !important;
+    
+    // Override every possible element that could contain text
+    span,
+    div,
+    p,
+    td,
+    th,
+    .e-rowcell,
+    .e-rowcell *,
+    .e-cellvalue,
+    .e-cellvalue *,
+    .e-templatecell,
+    .e-templatecell *,
+    .e-text-content,
+    .e-text-content *,
+    .e-cell-text,
+    .e-cell-text *,
+    .e-gridcontent,
+    .e-gridcontent *,
+    .e-table,
+    .e-table *,
+    tbody,
+    tbody *,
+    tr,
+    tr *,
+    td,
+    td *,
+    th,
+    th * {
+      color: #2d3748 !important;
+      background-color: transparent !important;
+    }
+    
+    // Override ALL possible theme classes and states
+    .e-altrow,
+    .e-altrow *,
+    .e-hover,
+    .e-hover *,
+    .e-selected,
+    .e-selected *,
+    .e-cellselection,
+    .e-cellselection *,
+    .e-selection,
+    .e-selection *,
+    .e-active,
+    .e-active *,
+    .e-focus,
+    .e-focus *,
+    .e-edited,
+    .e-edited *,
+    .e-editing,
+    .e-editing * {
+      color: #2d3748 !important;
+    }
+    
+    // Override any Syncfusion theme-specific classes
+    .e-grid.e-tailwind,
+    .e-grid.e-tailwind *,
+    .e-grid.e-material,
+    .e-grid.e-material *,
+    .e-grid.e-bootstrap,
+    .e-grid.e-bootstrap *,
+    .e-grid.e-fabric,
+    .e-grid.e-fabric * {
+      color: #2d3748 !important;
+    }
+  }
+
+  // ADDITIONAL GLOBAL OVERRIDES - Target every possible grid scenario
+  // This ensures NO white text can slip through
+  .e-grid {
+    // Override any inline styles that might be applied
+    .e-rowcell[style*="color"],
+    .e-rowcell[style*="color"] *,
+    .e-cellvalue[style*="color"],
+    .e-cellvalue[style*="color"] * {
+      color: #2d3748 !important;
+    }
+    
+    // Target specific column types that commonly have white text
+    .e-rowcell[aria-describedby*="name"],
+    .e-rowcell[aria-describedby*="Name"],
+    .e-rowcell[aria-describedby*="type"],
+    .e-rowcell[aria-describedby*="Type"],
+    .e-rowcell[aria-describedby*="category"],
+    .e-rowcell[aria-describedby*="Category"],
+    .e-rowcell[aria-describedby*="description"],
+    .e-rowcell[aria-describedby*="Description"],
+    .e-rowcell[aria-describedby*="status"],
+    .e-rowcell[aria-describedby*="Status"],
+    .e-rowcell[aria-describedby*="institution"],
+    .e-rowcell[aria-describedby*="Institution"],
+    .e-rowcell[aria-describedby*="account"],
+    .e-rowcell[aria-describedby*="Account"],
+    .e-rowcell[aria-describedby*="service"],
+    .e-rowcell[aria-describedby*="Service"],
+    .e-rowcell[aria-describedby*="provider"],
+    .e-rowcell[aria-describedby*="Provider"],
+    .e-rowcell[aria-describedby*="merchant"],
+    .e-rowcell[aria-describedby*="Merchant"],
+    .e-rowcell[aria-describedby*="period"],
+    .e-rowcell[aria-describedby*="Period"],
+    .e-rowcell[aria-describedby*="cycle"],
+    .e-rowcell[aria-describedby*="Cycle"] {
+      color: #2d3748 !important;
+      
+      * {
+        color: #2d3748 !important;
+      }
+    }
+  }
+}
+
+// FINAL NUCLEAR OPTION - Global override for ALL grids across the entire application
+// This is the last resort to ensure NO white text exists anywhere in ANY grid
+.e-grid,
+.e-grid *,
+.e-grid.e-grid,
+.e-grid.e-grid *,
+div.e-grid,
+div.e-grid *,
+[class*="e-grid"],
+[class*="e-grid"] * {
+  color: #2d3748 !important;
+  
+  // Override ANY element that might have text
+  * {
+    color: #2d3748 !important;
+  }
+  
+  // Specific overrides for stubborn elements
+  .e-rowcell,
+  .e-rowcell *,
+  .e-cellvalue,
+  .e-cellvalue *,
+  .e-templatecell,
+  .e-templatecell *,
+  .e-text-content,
+  .e-text-content *,
+  .e-cell-text,
+  .e-cell-text *,
+  .e-gridcontent,
+  .e-gridcontent *,
+  .e-table,
+  .e-table *,
+  tbody,
+  tbody *,
+  tr,
+  tr *,
+  td,
+  td *,
+  th,
+  th *,
+  span,
+  span *,
+  div,
+  div *,
+  p,
+  p * {
+    color: #2d3748 !important;
+    background-color: transparent !important;
+  }
+}
+

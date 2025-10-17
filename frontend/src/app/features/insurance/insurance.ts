@@ -1,7 +1,7 @@
 import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, ViewChild, OnInit, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { DataService } from '../../services/data.service';
+import { InsuranceService } from '../../services/insurance.service';
 import { ToastService } from '../../services/toast.service';
 import { StatCard } from '../../shared/stat-card/stat-card';
 import { GridModule, PageService, SortService, FilterService, GroupService } from '@syncfusion/ej2-angular-grids';
@@ -46,11 +46,11 @@ import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
 export class Insurance implements OnInit {
   @ViewChild('policyDialog') policyDialog!: DialogComponent;
 
-  private readonly dataService = inject(DataService);
+  private readonly insuranceService = inject(InsuranceService);
   private readonly fb = inject(FormBuilder);
   private readonly toastService = inject(ToastService);
 
-  protected readonly policies = this.dataService.insurancePolicies;
+  protected readonly policies = this.insuranceService.insurancePolicies;
   protected readonly isLoading = signal(false);
 
   // Computed values
@@ -187,7 +187,7 @@ export class Insurance implements OnInit {
         deductible: formValue.deductible || undefined
       };
       
-      this.dataService.addInsurancePolicy(policy).subscribe({
+      this.insuranceService.addInsurancePolicy(policy).subscribe({
         next: () => {
           this.policyDialog.hide();
           this.policyForm.reset({

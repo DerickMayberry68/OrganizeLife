@@ -4,7 +4,7 @@
       <!-- Logo/Header -->
       <div class="register-header">
         <div class="logo">
-          <i class="fas fa-user-plus fa-3x text-primary"></i>
+          <img src="TheButlerLogo.png" alt="The Butler Logo" style="height: 80px; width: auto;">
         </div>
         <h2 class="register-title">Create Your Account</h2>
         <p class="register-subtitle">Start managing your household today</p>
@@ -25,33 +25,29 @@
             <label for="firstName" class="form-label">
               <i class="fas fa-user me-2"></i>First Name
             </label>
-            <input 
-              type="text" 
-              id="firstName" 
+            <ejs-textbox
+              id="firstName"
               name="firstName"
-              class="form-control" 
+              type="text"
               placeholder="John"
               [(ngModel)]="firstName"
-              [disabled]="isLoading"
-              required
-              autocomplete="given-name"
-            />
+              [enabled]="!isLoading"
+              cssClass="form-control">
+            </ejs-textbox>
           </div>
           <div class="col-md-6 mb-3">
             <label for="lastName" class="form-label">
               <i class="fas fa-user me-2"></i>Last Name
             </label>
-            <input 
-              type="text" 
-              id="lastName" 
+            <ejs-textbox
+              id="lastName"
               name="lastName"
-              class="form-control" 
+              type="text"
               placeholder="Doe"
               [(ngModel)]="lastName"
-              [disabled]="isLoading"
-              required
-              autocomplete="family-name"
-            />
+              [enabled]="!isLoading"
+              cssClass="form-control">
+            </ejs-textbox>
           </div>
         </div>
 
@@ -60,18 +56,15 @@
           <label for="email" class="form-label">
             <i class="fas fa-envelope me-2"></i>Email Address
           </label>
-          <input 
-            type="email" 
-            id="email" 
+          <ejs-textbox
+            id="email"
             name="email"
-            class="form-control" 
+            type="email"
             placeholder="john.doe@example.com"
             [(ngModel)]="email"
-            [disabled]="isLoading"
-            required
-            email
-            autocomplete="email"
-          />
+            [enabled]="!isLoading"
+            cssClass="form-control">
+          </ejs-textbox>
         </div>
 
         <!-- Household Name -->
@@ -79,16 +72,15 @@
           <label for="householdName" class="form-label">
             <i class="fas fa-home me-2"></i>Household Name
           </label>
-          <input 
-            type="text" 
-            id="householdName" 
+          <ejs-textbox
+            id="householdName"
             name="householdName"
-            class="form-control" 
+            type="text"
             placeholder="The Doe Family"
             [(ngModel)]="householdName"
-            [disabled]="isLoading"
-            required
-          />
+            [enabled]="!isLoading"
+            cssClass="form-control">
+          </ejs-textbox>
           <small class="form-text text-muted">
             You can invite family members later
           </small>
@@ -100,43 +92,35 @@
             <label for="password" class="form-label">
               <i class="fas fa-lock me-2"></i>Password
             </label>
-            <input 
-              type="password" 
-              id="password" 
+            <ejs-textbox
+              id="password"
               name="password"
-              class="form-control" 
+              type="password"
               placeholder="Min. 6 characters"
               [(ngModel)]="password"
-              [disabled]="isLoading"
-              required
-              minlength="6"
-              autocomplete="new-password"
-            />
+              [enabled]="!isLoading"
+              cssClass="form-control">
+            </ejs-textbox>
           </div>
           <div class="col-md-6 mb-3">
             <label for="confirmPassword" class="form-label">
               <i class="fas fa-lock me-2"></i>Confirm Password
             </label>
-            <input 
-              type="password" 
-              id="confirmPassword" 
+            <ejs-textbox
+              id="confirmPassword"
               name="confirmPassword"
-              class="form-control" 
+              type="password"
               placeholder="Re-enter password"
               [(ngModel)]="confirmPassword"
-              [disabled]="isLoading"
-              required
-              autocomplete="new-password"
-            />
+              [enabled]="!isLoading"
+              cssClass="form-control">
+            </ejs-textbox>
           </div>
         </div>
 
         <!-- Terms & Conditions -->
         <div class="form-check mb-4">
-          <input type="checkbox" class="form-check-input" id="terms" required>
-          <label class="form-check-label" for="terms">
-            I agree to the <a href="#" class="text-primary">Terms & Conditions</a>
-          </label>
+          <ejs-checkbox id="terms" label="I agree to the Terms & Conditions" required></ejs-checkbox>
         </div>
 
         <!-- Submit Button -->

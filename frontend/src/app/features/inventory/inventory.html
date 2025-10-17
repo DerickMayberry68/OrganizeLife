@@ -117,7 +117,7 @@
               <e-column field="category" headerText="Category" width="120"></e-column>
               <e-column field="location" headerText="Location" width="120"></e-column>
               <e-column field="purchaseDate" headerText="Purchase Date" width="140" [format]="formatDate"></e-column>
-              <e-column field="purchasePrice" headerText="Purchase Price" width="140" textAlign="Right" [format]="formatCurrency"></e-column>
+              <e-column field="purchasePrice" headerText="Purchase Price" width="140" textAlign="Right" format="C2"></e-column>
             </e-columns>
           </ejs-grid>
         } @else {
@@ -149,25 +149,23 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="itemName" class="form-label">Item Name *</label>
-            <input 
-              type="text"
+            <ejs-textbox
               id="itemName"
               formControlName="name"
-              class="form-control"
-              placeholder="Enter item name">
+              placeholder="Enter item name"
+              cssClass="form-control">
+            </ejs-textbox>
           </div>
 
           <div class="col-md-6 mb-3">
             <label for="itemCategory" class="form-label">Category *</label>
-            <select 
+            <ejs-dropdownlist
               id="itemCategory"
-              formControlName="category" 
-              class="form-control">
-              <option value="">Select category</option>
-              @for (category of categories; track category) {
-                <option [value]="category">{{ category }}</option>
-              }
-            </select>
+              formControlName="category"
+              [dataSource]="categories"
+              placeholder="Select category"
+              cssClass="form-control">
+            </ejs-dropdownlist>
           </div>
         </div>
 
@@ -175,23 +173,25 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="purchaseDate" class="form-label">Purchase Date *</label>
-            <input 
-              type="date"
+            <ejs-datepicker
               id="purchaseDate"
               formControlName="purchaseDate"
-              class="form-control">
+              placeholder="Select purchase date"
+              cssClass="form-control">
+            </ejs-datepicker>
           </div>
 
           <div class="col-md-6 mb-3">
             <label for="purchasePrice" class="form-label">Purchase Price *</label>
-            <input 
-              type="number"
+            <ejs-numerictextbox
               id="purchasePrice"
               formControlName="purchasePrice"
-              class="form-control"
-              step="10"
-              min="0"
-              placeholder="0.00">
+              [format]="'C2'"
+              [min]="0"
+              [step]="10"
+              placeholder="0.00"
+              cssClass="form-control">
+            </ejs-numerictextbox>
           </div>
         </div>
 
@@ -199,26 +199,24 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="itemLocation" class="form-label">Location *</label>
-            <select 
+            <ejs-dropdownlist
               id="itemLocation"
-              formControlName="location" 
-              class="form-control">
-              <option value="">Select location</option>
-              @for (location of locations; track location) {
-                <option [value]="location">{{ location }}</option>
-              }
-            </select>
+              formControlName="location"
+              [dataSource]="locations"
+              placeholder="Select location"
+              cssClass="form-control">
+            </ejs-dropdownlist>
           </div>
 
           <div class="col-md-6 mb-3">
             <label for="itemNotes" class="form-label">Notes</label>
-            <textarea 
+            <ejs-textbox
               id="itemNotes"
               formControlName="notes"
-              class="form-control"
-              rows="2"
-              placeholder="Additional notes...">
-            </textarea>
+              [multiline]="true"
+              placeholder="Additional notes..."
+              cssClass="form-control">
+            </ejs-textbox>
           </div>
         </div>
       </form>

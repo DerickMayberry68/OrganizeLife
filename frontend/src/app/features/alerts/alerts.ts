@@ -1,7 +1,7 @@
 import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, ViewChild, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { DataService } from '../../services/data.service';
+import { AlertService } from '../../services/alert.service';
 import { ToastService } from '../../services/toast.service';
 import { StatCard } from '../../shared/stat-card/stat-card';
 import { GridModule, PageService, SortService, FilterService, ToolbarService } from '@syncfusion/ej2-angular-grids';
@@ -26,11 +26,11 @@ import type { Alert, AlertCategory, AlertSeverity } from '../../models/alert.mod
   styleUrl: './alerts.scss'
 })
 export class Alerts implements OnInit {
-  private readonly dataService = inject(DataService);
+  private readonly alertService = inject(AlertService);
   private readonly toastService = inject(ToastService);
   private readonly router = inject(Router);
 
-  protected readonly alerts = this.dataService.alerts;
+  protected readonly alerts = this.alertService.alerts;
   protected readonly isLoading = signal(true);
   protected readonly selectedCategory = signal<string>('All');
   protected readonly selectedSeverity = signal<string>('All');
@@ -78,7 +78,7 @@ export class Alerts implements OnInit {
   }
 
   private loadAlerts(): void {
-    this.dataService.loadAlerts().subscribe({
+    this.alertService.loadAlerts().subscribe({
       next: () => {
         this.isLoading.set(false);
       },
@@ -99,23 +99,25 @@ export class Alerts implements OnInit {
   protected markAsRead(alert: Alert): void {
     if (alert.isRead) return;
     
-    this.dataService.markAlertAsRead(alert.id).subscribe({
+    this.alertService.markAlertAsRead(alert.id).subscribe({
       next: () => {
         this.toastService.success('Success', 'Alert marked as read');
       },
       error: (error) => {
         console.error('Error marking alert as read:', error);
+        this.toastService.error('Error', 'Failed to mark alert as read');
       }
     });
   }
 
   protected dismissAlert(id: string): void {
-    this.dataService.dismissAlert(id).subscribe({
+    this.alertService.dismissAlert(id).subscribe({
       next: () => {
         this.toastService.success('Success', 'Alert dismissed');
       },
       error: (error) => {
         console.error('Error dismissing alert:', error);
+        this.toastService.error('Error', 'Failed to dismiss alert');
       }
     });
   }
@@ -133,7 +135,7 @@ export class Alerts implements OnInit {
         cancelButtonText: 'Cancel'
       }).then((result) => {
         if (result.isConfirmed) {
-          this.dataService.deleteAlert(id).subscribe({
+          this.alertService.deleteAlert(id).subscribe({
             next: () => {
               this.toastService.success('Success', 'Alert deleted successfully');
             },
@@ -166,7 +168,7 @@ export class Alerts implements OnInit {
         cancelButtonText: 'Cancel'
       }).then((result) => {
         if (result.isConfirmed) {
-          this.dataService.markAllAlertsAsRead().subscribe({
+          this.alertService.markAllAlertsAsRead().subscribe({
             next: () => {
               this.toastService.success('Success', 'All alerts marked as read');
             },
@@ -199,7 +201,7 @@ export class Alerts implements OnInit {
         cancelButtonText: 'Cancel'
       }).then((result) => {
         if (result.isConfirmed) {
-          this.dataService.dismissAllAlerts().subscribe({
+          this.alertService.dismissAllAlerts().subscribe({
             next: () => {
               this.toastService.success('Success', 'All alerts dismissed');
             },

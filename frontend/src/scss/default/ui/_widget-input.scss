@@ -15,15 +15,7 @@
 		padding: $spacer * .4 0;
 		flex: 1;
 		
-		& .form-control {
-			border-color: var(--#{$prefix}light);
-			background: var(--#{$prefix}light);
-			border-radius: $border-radius * 10;
-			
-			&:focus {
-				box-shadow: none;
-			}
-		}
+		// Form control styling removed - handled by Syncfusion Tailwind theme
 	}
 	& .widget-input-divider {
 		width: rem(1px);

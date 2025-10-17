@@ -1,11 +1,16 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { AlertService } from './alert.service';
 
 @Injectable({
   providedIn: 'root'
 })
 
 export class AppMenuService {
+	private alertService = inject(AlertService);
+
 	getAppMenus() {
+		const unreadCount = this.alertService.unreadAlertsCount();
+		
 		return [
 			// Dashboard - Always visible at top
 			{
@@ -86,7 +91,7 @@ export class AppMenuService {
 				'icon': 'fa fa-bell',
 				'title': 'Alerts',
 				'url': '/alerts',
-				'badge': '0' // Can be dynamically updated
+				'badge': unreadCount.toString() // Dynamic count, always shown
 			}
 		];
 	}

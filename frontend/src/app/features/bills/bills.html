@@ -142,7 +142,7 @@
             <e-columns>
               <e-column field="name" headerText="Bill Name" width="150"></e-column>
               <e-column field="category" headerText="Category" width="120"></e-column>
-              <e-column field="amount" headerText="Amount" width="120" textAlign="Right" [format]="formatCurrency"></e-column>
+              <e-column field="amount" headerText="Amount" width="120" textAlign="Right" format="C2"></e-column>
               <e-column field="dueDate" headerText="Due Date" width="140" [format]="formatDate"></e-column>
               <e-column field="status" headerText="Status" width="120"></e-column>
               <e-column field="frequency" headerText="Frequency" width="120"></e-column>
@@ -178,24 +178,25 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="billName" class="form-label">Bill Name *</label>
-            <input 
-              type="text"
+            <ejs-textbox
               id="billName"
               formControlName="name"
-              class="form-control"
-              placeholder="Enter bill name">
+              placeholder="Enter bill name"
+              cssClass="form-control">
+            </ejs-textbox>
           </div>
 
           <div class="col-md-6 mb-3">
             <label for="amount" class="form-label">Amount *</label>
-            <input 
-              type="number"
+            <ejs-numerictextbox
               id="amount"
               formControlName="amount"
-              class="form-control"
-              step="0.01"
-              min="0"
-              placeholder="0.00">
+              [format]="'C2'"
+              [min]="0"
+              [step]="0.01"
+              placeholder="0.00"
+              cssClass="form-control">
+            </ejs-numerictextbox>
           </div>
         </div>
 
@@ -203,24 +204,23 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="category" class="form-label">Category *</label>
-            <select 
+            <ejs-dropdownlist
               id="category"
-              formControlName="category" 
-              class="form-control">
-              <option value="">Select category</option>
-              @for (category of categories; track category) {
-                <option [value]="category">{{ category }}</option>
-              }
-            </select>
+              formControlName="category"
+              [dataSource]="categories"
+              placeholder="Select category"
+              cssClass="form-control">
+            </ejs-dropdownlist>
           </div>
 
           <div class="col-md-6 mb-3">
             <label for="dueDate" class="form-label">Due Date *</label>
-            <input 
-              type="date"
+            <ejs-datepicker
               id="dueDate"
               formControlName="dueDate"
-              class="form-control">
+              placeholder="Select due date"
+              cssClass="form-control">
+            </ejs-datepicker>
           </div>
         </div>
 
@@ -228,52 +228,45 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="frequency" class="form-label">Frequency</label>
-            <select 
+            <ejs-dropdownlist
               id="frequency"
-              formControlName="frequency" 
-              class="form-control">
-              <option value="">Select frequency</option>
-              @for (freq of frequencies; track freq) {
-                <option [value]="freq">{{ freq }}</option>
-              }
-            </select>
+              formControlName="frequency"
+              [dataSource]="frequencies"
+              placeholder="Select frequency"
+              cssClass="form-control">
+            </ejs-dropdownlist>
           </div>
 
           <div class="col-md-6 mb-3">
             <label for="reminderDays" class="form-label">Reminder (days before)</label>
-            <input 
-              type="number"
+            <ejs-numerictextbox
               id="reminderDays"
               formControlName="reminderDays"
-              class="form-control"
-              min="0"
-              step="1"
-              placeholder="3">
+              [format]="'n0'"
+              [min]="0"
+              [step]="1"
+              placeholder="3"
+              cssClass="form-control">
+            </ejs-numerictextbox>
           </div>
         </div>
 
         <!-- Checkboxes (Full Width) -->
         <div class="row">
           <div class="col-12">
-            <div class="form-check">
-              <input 
-                type="checkbox"
+            <div class="form-check mb-2">
+              <ejs-checkbox
                 id="isRecurring"
                 formControlName="isRecurring"
-                class="form-check-input">
-              <label class="form-check-label" for="isRecurring">
-                Recurring Bill
-              </label>
+                label="Recurring Bill">
+              </ejs-checkbox>
             </div>
-            <div class="form-check" style="padding-top: 8px;">
-              <input 
-                type="checkbox"
+            <div class="form-check">
+              <ejs-checkbox
                 id="autoPayEnabled"
                 formControlName="autoPayEnabled"
-                class="form-check-input">
-              <label class="form-check-label" for="autoPayEnabled">
-                Enable Auto-Pay
-              </label>
+                label="Enable Auto-Pay">
+              </ejs-checkbox>
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DataService } from '../../services/data.service';
+import { FinancialService } from '../../services/financial.service';
 import { StatCard } from '../../shared/stat-card/stat-card';
 import { GridModule, PageService, SortService, FilterService } from '@syncfusion/ej2-angular-grids';
 import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
@@ -19,7 +19,7 @@ import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
   styleUrl: './payments.scss'
 })
 export class Payments implements OnInit {
-  private readonly dataService = inject(DataService);
+  private readonly financialService = inject(FinancialService);
 
   protected readonly payments = signal<any[]>([]);
   protected readonly isLoading = signal(true);
@@ -37,8 +37,12 @@ export class Payments implements OnInit {
   protected readonly toolbar = ['Search'];
 
   ngOnInit(): void {
-    this.dataService.loadPayments().subscribe({
-      next: (payments) => {
+    // Payments are tracked through transactions in the financial service
+    // Load transactions to display payment history
+    this.financialService.loadTransactions().subscribe({
+      next: (transactions) => {
+        // Filter to show only expense transactions as payments
+        const payments = transactions.filter(t => t.type === 'expense');
         this.payments.set(payments);
         this.isLoading.set(false);
       },

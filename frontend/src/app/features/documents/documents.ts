@@ -1,7 +1,7 @@
 import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, ViewChild, OnInit, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { DataService } from '../../services/data.service';
+import { DocumentService } from '../../services/document.service';
 import { ToastService } from '../../services/toast.service';
 import { StatCard } from '../../shared/stat-card/stat-card';
 import { GridModule, PageService, SortService, FilterService, GroupService } from '@syncfusion/ej2-angular-grids';
@@ -48,11 +48,11 @@ import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
 export class Documents implements OnInit {
   @ViewChild('documentDialog') documentDialog!: DialogComponent;
 
-  private readonly dataService = inject(DataService);
+  private readonly documentService = inject(DocumentService);
   private readonly fb = inject(FormBuilder);
   private readonly toastService = inject(ToastService);
 
-  protected readonly documents = this.dataService.documents;
+  protected readonly documents = this.documentService.documents;
   protected readonly isLoading = signal(false);
 
   // Computed values
@@ -181,7 +181,7 @@ export class Documents implements OnInit {
         url: '#'
       };
       
-      this.dataService.addDocument(document).subscribe({
+      this.documentService.addDocument(document).subscribe({
         next: () => {
           this.documentDialog.hide();
           this.documentForm.reset({ isImportant: false });

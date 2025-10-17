@@ -281,56 +281,48 @@
       <div class="row">
         <div class="col-md-6 mb-3">
           <label class="form-label">Name *</label>
-          <input type="text" class="form-control" [(ngModel)]="doctorForm().name" />
+          <ejs-textbox cssClass="form-control" [(ngModel)]="doctorForm().name"></ejs-textbox>
         </div>
         <div class="col-md-6 mb-3">
           <label class="form-label">Type *</label>
-          <select class="form-control" [(ngModel)]="doctorForm().type">
-            @for (type of doctorTypes; track type) {
-              <option [value]="type">{{ formatDoctorType(type) }}</option>
-            }
-          </select>
+          <ejs-dropdownlist cssClass="form-control" [dataSource]="doctorTypes" [(ngModel)]="doctorForm().type"></ejs-dropdownlist>
         </div>
       </div>
 
       <div class="row">
         <div class="col-md-6 mb-3">
           <label class="form-label">Phone *</label>
-          <input type="tel" class="form-control" [(ngModel)]="doctorForm().phone" />
+          <ejs-textbox cssClass="form-control" [(ngModel)]="doctorForm().phone"></ejs-textbox>
         </div>
         <div class="col-md-6 mb-3">
           <label class="form-label">Email</label>
-          <input type="email" class="form-control" [(ngModel)]="doctorForm().email" />
+          <ejs-textbox type="email" cssClass="form-control" [(ngModel)]="doctorForm().email"></ejs-textbox>
         </div>
       </div>
 
       <div class="mb-3">
         <label class="form-label">Specialty</label>
-        <input type="text" class="form-control" [(ngModel)]="doctorForm().specialty" />
+        <ejs-textbox cssClass="form-control" [(ngModel)]="doctorForm().specialty"></ejs-textbox>
       </div>
 
       <div class="mb-3">
         <label class="form-label">Address *</label>
-        <input type="text" class="form-control" [(ngModel)]="doctorForm().address" />
+        <ejs-textbox cssClass="form-control" [(ngModel)]="doctorForm().address"></ejs-textbox>
       </div>
 
       <div class="mb-3">
         <label class="form-label">Office Hours</label>
-        <input type="text" class="form-control" [(ngModel)]="doctorForm().officeHours" 
-               placeholder="e.g., Mon-Fri 9AM-5PM" />
+        <ejs-textbox cssClass="form-control" [(ngModel)]="doctorForm().officeHours" 
+               placeholder="e.g., Mon-Fri 9AM-5PM"></ejs-textbox>
       </div>
 
       <div class="mb-3">
         <div class="form-check">
-          <input 
-            type="checkbox" 
-            class="form-check-input" 
+          <ejs-checkbox
             id="isPrimaryDoctor" 
-            [(ngModel)]="doctorForm().isPrimary" 
-          />
-          <label class="form-check-label" for="isPrimaryDoctor">
-            ⭐ Mark as Primary Healthcare Provider
-          </label>
+            [(ngModel)]="doctorForm().isPrimary"
+            label="⭐ Mark as Primary Healthcare Provider">
+          </ejs-checkbox>
           <small class="form-text text-muted d-block">
             Your primary provider will appear first in prescription dropdowns
           </small>
@@ -339,7 +331,7 @@
 
       <div class="mb-3">
         <label class="form-label">Notes</label>
-        <textarea class="form-control" [(ngModel)]="doctorForm().notes" rows="3"></textarea>
+        <ejs-textbox cssClass="form-control" [(ngModel)]="doctorForm().notes" [multiline]="true"></ejs-textbox>
       </div>
     </div>
   </ng-template>
@@ -363,57 +355,49 @@
       <div class="row">
         <div class="col-md-6 mb-3">
           <label class="form-label">Doctor *</label>
-          <input type="text" class="form-control" [(ngModel)]="appointmentForm().doctorName" />
+          <ejs-textbox cssClass="form-control" [(ngModel)]="appointmentForm().doctorName"></ejs-textbox>
         </div>
         <div class="col-md-6 mb-3">
           <label class="form-label">Type *</label>
-          <select class="form-control" [(ngModel)]="appointmentForm().type">
-            @for (type of appointmentTypes; track type) {
-              <option [value]="type">{{ formatDoctorType(type) }}</option>
-            }
-          </select>
+          <ejs-dropdownlist cssClass="form-control" [dataSource]="appointmentTypes" [(ngModel)]="appointmentForm().type"></ejs-dropdownlist>
         </div>
       </div>
 
       <div class="row">
         <div class="col-md-6 mb-3">
           <label class="form-label">Date *</label>
-          <input type="date" class="form-control" [(ngModel)]="appointmentForm().date" />
+          <ejs-datepicker cssClass="form-control" [(ngModel)]="appointmentForm().date"></ejs-datepicker>
         </div>
         <div class="col-md-6 mb-3">
           <label class="form-label">Time *</label>
-          <input type="time" class="form-control" [(ngModel)]="appointmentForm().time" />
+          <ejs-textbox type="time" cssClass="form-control" [(ngModel)]="appointmentForm().time"></ejs-textbox>
         </div>
       </div>
 
       <div class="row">
         <div class="col-md-6 mb-3">
           <label class="form-label">Duration (minutes)</label>
-          <input type="number" class="form-control" [(ngModel)]="appointmentForm().duration" />
+          <ejs-numerictextbox cssClass="form-control" [format]="'n0'" [(ngModel)]="appointmentForm().duration"></ejs-numerictextbox>
         </div>
         <div class="col-md-6 mb-3">
           <label class="form-label">Status</label>
-          <select class="form-control" [(ngModel)]="appointmentForm().status">
-            @for (status of appointmentStatuses; track status) {
-              <option [value]="status">{{ formatDoctorType(status) }}</option>
-            }
-          </select>
+          <ejs-dropdownlist cssClass="form-control" [dataSource]="appointmentStatuses" [(ngModel)]="appointmentForm().status"></ejs-dropdownlist>
         </div>
       </div>
 
       <div class="mb-3">
         <label class="form-label">Reason for Visit *</label>
-        <input type="text" class="form-control" [(ngModel)]="appointmentForm().reason" />
+        <ejs-textbox cssClass="form-control" [(ngModel)]="appointmentForm().reason"></ejs-textbox>
       </div>
 
       <div class="mb-3">
         <label class="form-label">Location *</label>
-        <input type="text" class="form-control" [(ngModel)]="appointmentForm().location" />
+        <ejs-textbox cssClass="form-control" [(ngModel)]="appointmentForm().location"></ejs-textbox>
       </div>
 
       <div class="mb-3">
         <label class="form-label">Notes</label>
-        <textarea class="form-control" [(ngModel)]="appointmentForm().notes" rows="3"></textarea>
+        <ejs-textbox cssClass="form-control" [(ngModel)]="appointmentForm().notes" [multiline]="true"></ejs-textbox>
       </div>
     </div>
   </ng-template>
@@ -436,19 +420,19 @@
     <div class="dialog-form">
       <div class="mb-3">
         <label class="form-label">Medication Name *</label>
-        <input type="text" class="form-control" [(ngModel)]="prescriptionForm().medicationName" />
+        <ejs-textbox cssClass="form-control" [(ngModel)]="prescriptionForm().medicationName"></ejs-textbox>
       </div>
 
       <div class="row">
         <div class="col-md-6 mb-3">
           <label class="form-label">Dosage *</label>
-          <input type="text" class="form-control" [(ngModel)]="prescriptionForm().dosage" 
-                 placeholder="e.g., 10mg" />
+          <ejs-textbox cssClass="form-control" [(ngModel)]="prescriptionForm().dosage" 
+                 placeholder="e.g., 10mg"></ejs-textbox>
         </div>
         <div class="col-md-6 mb-3">
           <label class="form-label">Frequency *</label>
-          <input type="text" class="form-control" [(ngModel)]="prescriptionForm().frequency" 
-                 placeholder="e.g., Twice daily" />
+          <ejs-textbox cssClass="form-control" [(ngModel)]="prescriptionForm().frequency" 
+                 placeholder="e.g., Twice daily"></ejs-textbox>
         </div>
       </div>
 
@@ -472,40 +456,36 @@
         </div>
         <div class="col-md-6 mb-3">
           <label class="form-label">🏥 Pharmacy *</label>
-          <input type="text" class="form-control" [(ngModel)]="prescriptionForm().pharmacy" />
+          <ejs-textbox cssClass="form-control" [(ngModel)]="prescriptionForm().pharmacy"></ejs-textbox>
         </div>
       </div>
 
       <div class="row">
         <div class="col-md-6 mb-3">
           <label class="form-label">Prescribed Date *</label>
-          <input type="date" class="form-control" [(ngModel)]="prescriptionForm().prescribedDate" />
+          <ejs-datepicker cssClass="form-control" [(ngModel)]="prescriptionForm().prescribedDate"></ejs-datepicker>
         </div>
         <div class="col-md-6 mb-3">
           <label class="form-label">Refills Remaining</label>
-          <input type="number" class="form-control" [(ngModel)]="prescriptionForm().refillsRemaining" />
+          <ejs-numerictextbox cssClass="form-control" [format]="'n0'" [(ngModel)]="prescriptionForm().refillsRemaining"></ejs-numerictextbox>
         </div>
       </div>
 
       <div class="mb-3">
         <label class="form-label">Instructions *</label>
-        <textarea class="form-control" [(ngModel)]="prescriptionForm().instructions" rows="2" 
-                  placeholder="e.g., Take with food"></textarea>
+        <ejs-textbox cssClass="form-control" [(ngModel)]="prescriptionForm().instructions" [multiline]="true" 
+                  placeholder="e.g., Take with food"></ejs-textbox>
       </div>
 
       <div class="row">
         <div class="col-md-6 mb-3">
           <div class="form-check">
-            <input type="checkbox" class="form-check-input" id="isActive" 
-                   [(ngModel)]="prescriptionForm().isActive" />
-            <label class="form-check-label" for="isActive">Active Prescription</label>
+            <ejs-checkbox id="isActive" [(ngModel)]="prescriptionForm().isActive" label="Active Prescription"></ejs-checkbox>
           </div>
         </div>
         <div class="col-md-6 mb-3">
           <div class="form-check">
-            <input type="checkbox" class="form-check-input" id="reminderEnabled" 
-                   [(ngModel)]="prescriptionForm().reminderEnabled" />
-            <label class="form-check-label" for="reminderEnabled">Enable Refill Reminders</label>
+            <ejs-checkbox id="reminderEnabled" [(ngModel)]="prescriptionForm().reminderEnabled" label="Enable Refill Reminders"></ejs-checkbox>
           </div>
         </div>
       </div>

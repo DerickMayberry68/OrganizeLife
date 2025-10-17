@@ -545,52 +545,7 @@
     display: block;
   }
 
-  .form-control {
-    background: #242a30;
-    border: 1px solid var(--bs-border-color, #3a4149);
-    color: var(--bs-body-color, #b6c2c9);
-    padding: 0.75rem;
-    border-radius: 6px;
-    width: 100%;
-    transition: border-color 0.2s, box-shadow 0.2s;
-
-    &:focus {
-      border-color: #1b76ff;
-      box-shadow: 0 0 0 3px rgba(27, 118, 255, 0.1);
-      outline: none;
-    }
-  }
-
-  .form-check {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-
-    &-input {
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-
-      &:checked {
-        background-color: #1b76ff;
-        border-color: #1b76ff;
-      }
-    }
-
-    &-label {
-      color: var(--bs-body-color, #b6c2c9);
-      cursor: pointer;
-      margin-bottom: 0;
-    }
-  }
-
-  select.form-control {
-    cursor: pointer;
-  }
-
-  textarea.form-control {
-    resize: vertical;
-  }
+  // All form control styling removed - handled by Syncfusion Tailwind theme in angular.json
 }
 
 // Responsive Design

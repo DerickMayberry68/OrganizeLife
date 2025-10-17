@@ -106,42 +106,7 @@
 				max-width: $login-v1-container-width;
 				margin: 0 auto;
 				
-				& .form-control {
-					border-color: transparent;
-					background: $gray-700;
-					color: $white;
-					
-					&::placeholder {
-						color: $gray-500;
-					}
-				}
-				& .form-floating {
-					& .form-control {
-						&::placeholder {
-							color: transparent;
-						}
-						&:focus {
-							box-shadow: none;
-							
-							& + label {
-								color: inherit;
-								padding-top: rem(5px);
-								
-								&:after {
-									background: none;
-								}
-							}
-						}
-					}
-				}
-				& .form-check-input {
-					background-color: $gray-700;
-					border-color: transparent;
-					
-					&:checked {
-						background-color: var(--#{$prefix}app-theme);
-					}
-				}
+				// Form control styling removed - handled by Syncfusion Tailwind theme
 			}
 		}
 	}
@@ -223,16 +188,7 @@
 		}
 	}
 	& .login-content {
-		& .form-control {
-			&:focus {
-				box-shadow: 0 0 0 5px rgba($white, .35);
-			}
-		}
-		& .form-check-input {
-			&:checked {
-				background-color: var(--#{$prefix}app-theme);
-			}
-		}
+		// Form control styling removed - handled by Syncfusion Tailwind theme
 	}
 }
 .login.login-with-news-feed,

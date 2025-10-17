@@ -47,6 +47,7 @@ app-breadcrumb {
   }
 
   &__calendar-widget {
+    margin-bottom: 20px;
     grid-column: 1;
 
     @media (max-width: 1200px) {
@@ -349,93 +350,6 @@ app-breadcrumb {
   display: inline-block;
 }
 
-// Syncfusion Schedule custom styling
-::ng-deep .custom-schedule {
-  border-radius: 6px;
-  overflow: hidden;
-
-  // Header styling
-  .e-schedule-toolbar {
-    background: #2d353c !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-
-    .e-toolbar-items {
-      .e-toolbar-item {
-        .e-tbar-btn {
-          color: white !important;
-
-          &:hover {
-            background: rgba(255, 255, 255, 0.1) !important;
-          }
-        }
-
-        &.e-active .e-tbar-btn {
-          background: #1b76ff !important;
-        }
-      }
-    }
-
-    .e-date-range {
-      color: white !important;
-    }
-  }
-
-  // Calendar header (days of week)
-  .e-header-cells {
-    background: #f8f9fa !important;
-    font-weight: 600 !important;
-    color: #2d353c !important;
-  }
-
-  // Today cell highlight
-  .e-current-day {
-    background: rgba(27, 118, 255, 0.05) !important;
-  }
-
-  // Event styling
-  .e-appointment {
-    border-radius: 4px !important;
-    border: none !important;
-    font-weight: 500 !important;
-    padding: 4px 8px !important;
-  }
-
-  // Month view cells
-  .e-work-cells {
-    &:hover {
-      background: rgba(27, 118, 255, 0.05) !important;
-    }
-  }
-
-  // Other month dates
-  .e-other-month {
-    opacity: 0.4 !important;
-  }
-
-  // Quick popup styling
-  .e-quick-popup-wrapper {
-    .e-popup-header {
-      background: #2d353c !important;
-      color: white !important;
-    }
-
-    .e-event-popup {
-      .e-popup-content {
-        color: #2d353c !important;
-      }
-    }
-  }
-
-  // Navigation buttons
-  .e-navigate {
-    background: transparent !important;
-    color: white !important;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.1) !important;
-    }
-  }
-}
 
 .quick-links {
   display: flex;
@@ -477,8 +391,5 @@ app-breadcrumb {
     grid-template-columns: 1fr;
   }
 
-  ::ng-deep .custom-schedule {
-    height: 500px !important;
-  }
 }
 

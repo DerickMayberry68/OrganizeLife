@@ -148,7 +148,7 @@
               <e-column field="priority" headerText="Priority" width="100"></e-column>
               <e-column field="status" headerText="Status" width="120"></e-column>
               <e-column field="dueDate" headerText="Due Date" width="140" [format]="formatDate"></e-column>
-              <e-column field="estimatedCost" headerText="Est. Cost" width="120" textAlign="Right" [format]="formatCurrency"></e-column>
+              <e-column field="estimatedCost" headerText="Est. Cost" width="120" textAlign="Right" format="C2"></e-column>
               <e-column field="isRecurring" headerText="Recurring" width="100" type="boolean"></e-column>
             </e-columns>
           </ejs-grid>
@@ -181,25 +181,23 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="taskTitle" class="form-label">Task Title *</label>
-            <input 
-              type="text"
+            <ejs-textbox
               id="taskTitle"
               formControlName="title"
-              class="form-control"
-              placeholder="Enter task title">
+              placeholder="Enter task title"
+              cssClass="form-control">
+            </ejs-textbox>
           </div>
 
           <div class="col-md-6 mb-3">
             <label for="category" class="form-label">Category *</label>
-            <select 
+            <ejs-dropdownlist
               id="category"
-              formControlName="category" 
-              class="form-control">
-              <option value="">Select category</option>
-              @for (category of categories; track category) {
-                <option [value]="category">{{ category }}</option>
-              }
-            </select>
+              formControlName="category"
+              [dataSource]="categories"
+              placeholder="Select category"
+              cssClass="form-control">
+            </ejs-dropdownlist>
           </div>
         </div>
 
@@ -207,24 +205,23 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="priority" class="form-label">Priority *</label>
-            <select 
+            <ejs-dropdownlist
               id="priority"
-              formControlName="priority" 
-              class="form-control">
-              <option value="">Select priority</option>
-              @for (priority of priorities; track priority) {
-                <option [value]="priority">{{ priority }}</option>
-              }
-            </select>
+              formControlName="priority"
+              [dataSource]="priorities"
+              placeholder="Select priority"
+              cssClass="form-control">
+            </ejs-dropdownlist>
           </div>
 
           <div class="col-md-6 mb-3">
             <label for="dueDate" class="form-label">Due Date *</label>
-            <input 
-              type="date"
+            <ejs-datepicker
               id="dueDate"
               formControlName="dueDate"
-              class="form-control">
+              placeholder="Select due date"
+              cssClass="form-control">
+            </ejs-datepicker>
           </div>
         </div>
 
@@ -232,27 +229,26 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="estimatedCost" class="form-label">Estimated Cost</label>
-            <input 
-              type="number"
+            <ejs-numerictextbox
               id="estimatedCost"
               formControlName="estimatedCost"
-              class="form-control"
-              step="10"
-              min="0"
-              placeholder="0.00">
+              [format]="'C2'"
+              [min]="0"
+              [step]="10"
+              placeholder="0.00"
+              cssClass="form-control">
+            </ejs-numerictextbox>
           </div>
 
           <div class="col-md-6 mb-3">
             <label for="frequency" class="form-label">Frequency</label>
-            <select 
+            <ejs-dropdownlist
               id="frequency"
-              formControlName="frequency" 
-              class="form-control">
-              <option value="">Select frequency</option>
-              @for (freq of frequencies; track freq) {
-                <option [value]="freq">{{ freq }}</option>
-              }
-            </select>
+              formControlName="frequency"
+              [dataSource]="frequencies"
+              placeholder="Select frequency"
+              cssClass="form-control">
+            </ejs-dropdownlist>
           </div>
         </div>
 
@@ -260,13 +256,13 @@
         <div class="row">
           <div class="col-12 mb-3">
             <label for="notes" class="form-label">Notes</label>
-            <textarea 
+            <ejs-textbox
               id="notes"
               formControlName="notes"
-              class="form-control"
-              rows="3"
-              placeholder="Additional notes...">
-            </textarea>
+              [multiline]="true"
+              placeholder="Additional notes..."
+              cssClass="form-control">
+            </ejs-textbox>
           </div>
         </div>
 
@@ -274,14 +270,11 @@
         <div class="row">
           <div class="col-12">
             <div class="form-check">
-              <input 
-                type="checkbox"
+              <ejs-checkbox
                 id="isRecurring"
                 formControlName="isRecurring"
-                class="form-check-input">
-              <label class="form-check-label" for="isRecurring">
-                Recurring Task
-              </label>
+                label="Recurring Task">
+              </ejs-checkbox>
             </div>
           </div>
         </div>

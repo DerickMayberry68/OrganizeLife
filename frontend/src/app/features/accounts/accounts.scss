@@ -7,6 +7,8 @@
     margin-top: 20px;
   }
 
+  // All Syncfusion styling removed - handled by Tailwind theme in angular.json
+
   &__section {
     margin-bottom: 20px;
 
@@ -259,6 +261,44 @@
     font-size: 13px;
     font-weight: 600;
     color: #242a30;
+  }
+}
+
+// Action buttons styling
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+
+  .btn {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    border: 1px solid;
+    transition: all 0.2s ease;
+
+    &.btn-outline-primary {
+      color: var(--bs-app-theme);
+      border-color: var(--bs-app-theme);
+      background: transparent;
+
+      &:hover {
+        background: var(--bs-app-theme);
+        color: white;
+      }
+    }
+
+    &.btn-outline-danger {
+      color: #dc3545;
+      border-color: #dc3545;
+      background: transparent;
+
+      &:hover {
+        background: #dc3545;
+        color: white;
+      }
+    }
   }
 }
 

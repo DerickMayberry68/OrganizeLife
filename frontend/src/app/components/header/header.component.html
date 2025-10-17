@@ -9,7 +9,10 @@
         <span class="icon-bar"></span>
       </button>
     }
-    <a href="/" class="navbar-brand"><span class="navbar-logo"></span> The &nbsp;<b>Butler</b></a>
+    <a href="/" class="navbar-brand">
+      <img src="TheButlerLogo.png" alt="The Butler" class="navbar-logo-img" style="height: 35px; margin-right: 10px;">
+      The &nbsp;<b>Butler</b>
+    </a>
     @if (this.appSettings.appTopMenu && !this.appSettings.appSidebarNone) {
       <button type="button" class="navbar-mobile-toggler" (click)="toggleAppTopMenuMobile()">
         <span class="fa-stack fa-lg text-inverse">

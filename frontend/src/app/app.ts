@@ -1,10 +1,11 @@
-import { Component, HostListener, Renderer2, OnInit } from '@angular/core';
+import { Component, HostListener, Renderer2, OnInit, ViewChild, inject } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { Router, NavigationEnd, NavigationStart, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AppVariablesService } from './services/app-variables.service';
 import { AppSettings } from './services/app-settings.service';
+import { ToastService } from './services/toast.service';
 
 // Import all components
 import { HeaderComponent } from './components/header/header.component';
@@ -12,16 +13,20 @@ import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { SidebarRightComponent } from './components/sidebar-right/sidebar-right.component';
 import { TopMenuComponent } from './components/top-menu/top-menu.component';
 import { ThemePanelComponent } from './components/theme-panel/theme-panel.component';
+import { ToastComponent, ToastModule } from '@syncfusion/ej2-angular-notifications';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrls: ['./app.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule, HeaderComponent, SidebarComponent, SidebarRightComponent, TopMenuComponent, ThemePanelComponent]
+  imports: [CommonModule, RouterModule, HeaderComponent, SidebarComponent, SidebarRightComponent, TopMenuComponent, ThemePanelComponent, ToastModule]
 })
 
 export class AppComponent implements OnInit {
+  @ViewChild('toast') toastComponent!: ToastComponent;
+  private toastService = inject(ToastService);
+
   constructor(private titleService: Title, private router: Router, private renderer: Renderer2, public appSettings: AppSettings, private appVariablesService: AppVariablesService) {
     this.appVariables = this.appVariablesService.getAppVariables();
     
@@ -41,6 +46,14 @@ export class AppComponent implements OnInit {
 	appVariables: any;
 
   ngOnInit() {
+    // Initialize toast service with the component reference
+    // This happens after view init, so we use setTimeout
+    setTimeout(() => {
+      if (this.toastComponent) {
+        this.toastService.setToastInstance(this.toastComponent);
+      }
+    });
+
     // page settings
     if (this.appSettings.appDarkMode) {
 			this.onAppDarkModeChanged(true);

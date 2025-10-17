@@ -2,12 +2,14 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { TextBoxModule } from '@syncfusion/ej2-angular-inputs';
+import { CheckBoxModule } from '@syncfusion/ej2-angular-buttons';
 import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, TextBoxModule, CheckBoxModule],
   templateUrl: './register.html',
   styleUrls: ['./register.scss']
 })

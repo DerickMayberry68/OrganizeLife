@@ -1,0 +1,77 @@
+---
+description: Dashboard component structure and Event Calendar implementation
+---
+
+# Dashboard Component Guidelines
+
+## Overview
+The dashboard is the main landing page featuring widgets, statistics, and an Event Calendar using Syncfusion Schedule component.
+
+## File Structure
+- Component: [src/app/features/dashboard/dashboard.html](mdc:src/app/features/dashboard/dashboard.html)
+- Styles: [src/app/features/dashboard/dashboard.scss](mdc:src/app/features/dashboard/dashboard.scss)
+- Configuration: [angular.json](mdc:angular.json) - Syncfusion CSS imports
+
+## Event Calendar Implementation
+
+### Syncfusion Schedule Component
+- Uses Syncfusion Schedule with Tailwind theme
+- **NO custom styling** should be applied to the calendar itself
+- Default Syncfusion styling provides proper contrast and readability
+- Calendar is wrapped in a `.widget` container for consistent layout
+
+### Widget Structure
+```html
+<div class="widget card">
+  <div class="widget__header">
+    <h3 class="widget__title">Event Calendar</h3>
+    <div class="widget__legend">
+      <!-- Legend items -->
+    </div>
+  </div>
+  <div class="widget__content">
+    <!-- Syncfusion Schedule component -->
+  </div>
+</div>
+```
+
+## Layout Guidelines
+
+### Grid System
+- Main grid: 2fr 1fr (calendar + sidebar)
+- Responsive: Single column on mobile
+- Gap: 15px between grid items
+
+### Widget Styling
+- Header: Dark background (`#2d353c`) with white text
+- Content: White background with padding
+- Border radius: 6px
+- Box shadow: Subtle elevation
+
+## Best Practices
+
+### 1. Event Calendar
+- **DO NOT** apply custom CSS to Syncfusion Schedule
+- Use wrapper styling for layout and positioning
+- Let Syncfusion handle all calendar-specific styling
+
+### 2. Widget Consistency
+- All widgets follow the same header/content pattern
+- Use consistent spacing and typography
+- Maintain visual hierarchy
+
+### 3. Responsive Design
+- Mobile-first approach
+- Stack widgets vertically on small screens
+- Adjust grid layouts for different breakpoints
+
+### 4. Performance
+- Lazy load calendar data
+- Use OnPush change detection where possible
+- Optimize widget rendering
+
+## Common Mistakes to Avoid
+- Don't override Syncfusion Schedule styles
+- Don't use `!important` on calendar elements
+- Don't break the widget layout pattern
+- Don't forget mobile responsiveness

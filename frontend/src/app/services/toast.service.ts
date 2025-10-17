@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 export interface ToastConfig {
   title: string;
   content: string;
-  cssClass?: 'toast-success' | 'toast-error' | 'toast-warning' | 'toast-info';
+  cssClass?: 'e-toast-success' | 'e-toast-error' | 'e-toast-warning' | 'e-toast-info';
   icon?: string;
 }
 
@@ -22,11 +22,11 @@ export class ToastService {
       this.toastObj.show({
         title: config.title,
         content: config.content,
-        cssClass: config.cssClass || 'toast-info',
+        cssClass: config.cssClass || 'e-toast-info',
         icon: config.icon || 'ℹ️',
         timeOut: 4000,
         showCloseButton: true,
-        position: { X: 'Right', Y: 'Top' }
+        position: { X: 'Right', Y: 'Bottom' }
       });
     }
   }
@@ -35,7 +35,7 @@ export class ToastService {
     this.show({
       title,
       content,
-      cssClass: 'toast-success',
+      cssClass: 'e-toast-success',
       icon: '✓'
     });
   }
@@ -44,7 +44,7 @@ export class ToastService {
     this.show({
       title,
       content,
-      cssClass: 'toast-error',
+      cssClass: 'e-toast-error',
       icon: '✕'
     });
   }
@@ -53,7 +53,7 @@ export class ToastService {
     this.show({
       title,
       content,
-      cssClass: 'toast-warning',
+      cssClass: 'e-toast-warning',
       icon: '⚠'
     });
   }
@@ -62,7 +62,7 @@ export class ToastService {
     this.show({
       title,
       content,
-      cssClass: 'toast-info',
+      cssClass: 'e-toast-info',
       icon: 'ℹ'
     });
   }

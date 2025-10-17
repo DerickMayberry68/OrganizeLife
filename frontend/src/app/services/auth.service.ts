@@ -247,5 +247,15 @@ export class AuthService {
       'Content-Type': 'application/json'
     });
   }
+
+  /**
+   * Update current user data in localStorage
+   */
+  updateCurrentUser(updatedUser: CurrentUser): void {
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+      localStorage.setItem('userData', JSON.stringify(updatedUser));
+    }
+  }
 }
 

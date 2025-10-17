@@ -1,7 +1,7 @@
 import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, ViewChild, OnInit, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { DataService } from '../../services/data.service';
+import { FinancialService } from '../../services/financial.service';
 import { ToastService } from '../../services/toast.service';
 import { StatCard } from '../../shared/stat-card/stat-card';
 import { GridModule, PageService, SortService, FilterService, ToolbarService } from '@syncfusion/ej2-angular-grids';
@@ -49,12 +49,12 @@ import type { Budget, CreateBudgetDto } from '../../models/financial.model';
 export class Budgets implements OnInit {
   @ViewChild('budgetDialog') budgetDialog!: DialogComponent;
 
-  private readonly dataService = inject(DataService);
+  private readonly financialService = inject(FinancialService);
   private readonly fb = inject(FormBuilder);
   private readonly toastService = inject(ToastService);
 
-  protected readonly budgets = this.dataService.budgets;
-  protected readonly categories = this.dataService.categories;
+  protected readonly budgets = this.financialService.budgets;
+  protected readonly categories = this.financialService.categories;
   protected readonly isLoading = signal(false);
   protected readonly editMode = signal(false);
   protected readonly selectedBudget = signal<Budget | null>(null);
@@ -156,8 +156,8 @@ export class Budgets implements OnInit {
   }
 
   ngOnInit(): void {
-    this.dataService.loadBudgets().subscribe();
-    this.dataService.loadCategories().subscribe();
+    this.financialService.loadBudgets().subscribe();
+    this.financialService.loadCategories().subscribe();
     setTimeout(() => {
       this.isLoading.set(false);
     });
@@ -203,7 +203,7 @@ export class Budgets implements OnInit {
           isActive: formValue.isActive
         };
 
-        this.dataService.updateBudget(this.selectedBudget()!.id, updates).subscribe({
+        this.financialService.updateBudget(this.selectedBudget()!.id, updates).subscribe({
           next: () => {
             this.budgetDialog.hide();
             this.budgetForm.reset();
@@ -224,7 +224,7 @@ export class Budgets implements OnInit {
           isActive: formValue.isActive !== undefined ? formValue.isActive : true
         };
 
-        this.dataService.addBudget(budgetDto).subscribe({
+        this.financialService.addBudget(budgetDto).subscribe({
           next: () => {
             this.budgetDialog.hide();
             this.budgetForm.reset({
@@ -242,26 +242,30 @@ export class Budgets implements OnInit {
     }
   }
 
-  protected deleteBudget(id: string): void {
+  protected editBudget(budget: Budget): void {
+    this.openBudgetDialog(budget);
+  }
+
+  protected deleteBudget(budget: Budget): void {
     import('sweetalert2').then(Swal => {
       Swal.default.fire({
         title: 'Delete Budget',
-        text: 'Are you sure you want to delete this budget?',
+        text: `Are you sure you want to delete the budget "${budget.name}"?`,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#ff5757',
-        cancelButtonColor: '#6c757d',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
         confirmButtonText: 'Yes, delete it!',
         cancelButtonText: 'Cancel'
       }).then((result) => {
         if (result.isConfirmed) {
-          this.dataService.deleteBudget(id).subscribe({
+          this.financialService.deleteBudget(budget.id).subscribe({
             next: () => {
-              this.toastService.success('Success', 'Budget deleted successfully');
+              this.toastService.success('Budget Deleted', `Budget "${budget.name}" deleted successfully`);
             },
             error: (error) => {
               console.error('Error deleting budget:', error);
-              this.toastService.error('Error', 'Failed to delete budget');
+              this.toastService.error('Deletion Failed', 'Failed to delete budget');
             }
           });
         }

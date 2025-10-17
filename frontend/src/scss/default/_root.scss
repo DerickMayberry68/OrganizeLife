@@ -4,6 +4,8 @@
 	--#{$prefix}app-theme-rgb:       #{to-rgb($theme)};
 	--#{$prefix}app-theme-color:     #{$theme-color};
 	--#{$prefix}app-theme-color-rgb: #{to-rgb($theme-color)};
+	--#{$prefix}app-text-dark:       #2d3748;
+	--#{$prefix}app-text-dark-rgb:   45, 55, 72;
 	
 	--#{$prefix}app-theme-hover: #{shade-color($theme, 25%)};
 	--#{$prefix}app-theme-hover-border-color: #{shade-color($theme, 25%)};
@@ -131,6 +133,8 @@
 		--#{$prefix}dark-rgb:   #{to-rgb($gray-100)};
 		--#{$prefix}light:      #{$gray-900};
 		--#{$prefix}light-rgb:  #{to-rgb($gray-900)};
+		--#{$prefix}app-text-dark:       #{$gray-100};
+		--#{$prefix}app-text-dark-rgb:   #{to-rgb($gray-100)};
 	
 		--#{$prefix}border-color:                 #{$border-color-dark};
 	

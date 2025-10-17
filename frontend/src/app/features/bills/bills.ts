@@ -1,7 +1,7 @@
 import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, ViewChild, OnInit, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { DataService } from '../../services/data.service';
+import { BillService } from '../../services/bill.service';
 import { ToastService } from '../../services/toast.service';
 import { StatCard } from '../../shared/stat-card/stat-card';
 import { GridModule, PageService, SortService, FilterService, GroupService } from '@syncfusion/ej2-angular-grids';
@@ -48,11 +48,11 @@ import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
 export class Bills implements OnInit {
   @ViewChild('billDialog') billDialog!: DialogComponent;
 
-  private readonly dataService = inject(DataService);
+  private readonly billService = inject(BillService);
   private readonly fb = inject(FormBuilder);
   private readonly toastService = inject(ToastService);
 
-  protected readonly bills = this.dataService.bills;
+  protected readonly bills = this.billService.bills;
   protected readonly isLoading = signal(false);
 
   // Computed values
@@ -200,7 +200,7 @@ export class Bills implements OnInit {
         autoPayEnabled: formValue.autoPayEnabled,
         reminderDays: formValue.reminderDays
       };
-      this.dataService.addBill(bill).subscribe({
+      this.billService.addBill(bill).subscribe({
         next: () => {
           this.billDialog.hide();
           const todayStr = new Date().toISOString().split('T')[0];

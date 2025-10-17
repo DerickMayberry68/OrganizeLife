@@ -116,7 +116,7 @@
               <e-column field="provider" headerText="Provider" width="150"></e-column>
               <e-column field="type" headerText="Type" width="120"></e-column>
               <e-column field="policyNumber" headerText="Policy #" width="150"></e-column>
-              <e-column field="premium" headerText="Premium" width="120" textAlign="Right" [format]="formatCurrency"></e-column>
+              <e-column field="premium" headerText="Premium" width="120" textAlign="Right" format="C2"></e-column>
               <e-column field="billingFrequency" headerText="Frequency" width="120"></e-column>
               <e-column field="renewalDate" headerText="Renewal Date" width="140" [format]="formatDate"></e-column>
             </e-columns>
@@ -150,25 +150,23 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="provider" class="form-label">Insurance Provider *</label>
-            <input 
-              type="text"
+            <ejs-textbox
               id="provider"
               formControlName="provider"
-              class="form-control"
-              placeholder="e.g., State Farm, Geico">
+              placeholder="e.g., State Farm, Geico"
+              cssClass="form-control">
+            </ejs-textbox>
           </div>
 
           <div class="col-md-6 mb-3">
             <label for="insuranceType" class="form-label">Insurance Type *</label>
-            <select 
+            <ejs-dropdownlist
               id="insuranceType"
-              formControlName="type" 
-              class="form-control">
-              <option value="">Select type</option>
-              @for (type of insuranceTypes; track type) {
-                <option [value]="type">{{ type }}</option>
-              }
-            </select>
+              formControlName="type"
+              [dataSource]="insuranceTypes"
+              placeholder="Select type"
+              cssClass="form-control">
+            </ejs-dropdownlist>
           </div>
         </div>
 
@@ -176,24 +174,25 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="policyNumber" class="form-label">Policy Number *</label>
-            <input 
-              type="text"
+            <ejs-textbox
               id="policyNumber"
               formControlName="policyNumber"
-              class="form-control"
-              placeholder="Enter policy number">
+              placeholder="Enter policy number"
+              cssClass="form-control">
+            </ejs-textbox>
           </div>
 
           <div class="col-md-6 mb-3">
             <label for="premium" class="form-label">Premium Amount *</label>
-            <input 
-              type="number"
+            <ejs-numerictextbox
               id="premium"
               formControlName="premium"
-              class="form-control"
-              step="10"
-              min="0"
-              placeholder="0.00">
+              [format]="'C2'"
+              [min]="0"
+              [step]="10"
+              placeholder="0.00"
+              cssClass="form-control">
+            </ejs-numerictextbox>
           </div>
         </div>
 
@@ -201,27 +200,26 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="billingFrequency" class="form-label">Billing Frequency *</label>
-            <select 
+            <ejs-dropdownlist
               id="billingFrequency"
-              formControlName="billingFrequency" 
-              class="form-control">
-              <option value="">Select frequency</option>
-              @for (freq of billingFrequencies; track freq) {
-                <option [value]="freq">{{ freq }}</option>
-              }
-            </select>
+              formControlName="billingFrequency"
+              [dataSource]="billingFrequencies"
+              placeholder="Select frequency"
+              cssClass="form-control">
+            </ejs-dropdownlist>
           </div>
 
           <div class="col-md-6 mb-3">
             <label for="deductible" class="form-label">Deductible</label>
-            <input 
-              type="number"
+            <ejs-numerictextbox
               id="deductible"
               formControlName="deductible"
-              class="form-control"
-              step="100"
-              min="0"
-              placeholder="0.00">
+              [format]="'C2'"
+              [min]="0"
+              [step]="100"
+              placeholder="0.00"
+              cssClass="form-control">
+            </ejs-numerictextbox>
           </div>
         </div>
 
@@ -229,20 +227,22 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="startDate" class="form-label">Start Date *</label>
-            <input 
-              type="date"
+            <ejs-datepicker
               id="startDate"
               formControlName="startDate"
-              class="form-control">
+              placeholder="Select start date"
+              cssClass="form-control">
+            </ejs-datepicker>
           </div>
 
           <div class="col-md-6 mb-3">
             <label for="renewalDate" class="form-label">Renewal Date *</label>
-            <input 
-              type="date"
+            <ejs-datepicker
               id="renewalDate"
               formControlName="renewalDate"
-              class="form-control">
+              placeholder="Select renewal date"
+              cssClass="form-control">
+            </ejs-datepicker>
           </div>
         </div>
 
@@ -250,13 +250,13 @@
         <div class="row">
           <div class="col-12 mb-3">
             <label for="coverage" class="form-label">Coverage Details *</label>
-            <textarea 
+            <ejs-textbox
               id="coverage"
               formControlName="coverage"
-              class="form-control"
-              rows="3"
-              placeholder="Describe coverage">
-            </textarea>
+              [multiline]="true"
+              placeholder="Describe coverage"
+              cssClass="form-control">
+            </ejs-textbox>
           </div>
         </div>
       </form>

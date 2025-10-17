@@ -1,7 +1,7 @@
 import { Component, inject, computed, CUSTOM_ELEMENTS_SCHEMA, ViewChild, OnInit, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { DataService } from '../../services/data.service';
+import { FinancialService } from '../../services/financial.service';
 import { ToastService } from '../../services/toast.service';
 import { StatCard } from '../../shared/stat-card/stat-card';
 import { GridModule, PageService, SortService, FilterService, GroupService } from '@syncfusion/ej2-angular-grids';
@@ -11,6 +11,7 @@ import { ButtonModule } from '@syncfusion/ej2-angular-buttons';
 import { DatePickerModule } from '@syncfusion/ej2-angular-calendars';
 import { TextBoxModule, NumericTextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import { DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
+import { CheckBoxModule } from '@syncfusion/ej2-angular-buttons';
 import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
 
 @Component({
@@ -27,6 +28,7 @@ import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
     TextBoxModule,
     NumericTextBoxModule,
     DropDownListModule,
+    CheckBoxModule,
     AppBarModule
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -47,15 +49,15 @@ export class Financial implements OnInit {
   @ViewChild('transactionDialog') transactionDialog!: DialogComponent;
   @ViewChild('budgetDialog') budgetDialog!: DialogComponent;
 
-  private readonly dataService = inject(DataService);
+  private readonly financialService = inject(FinancialService);
   private readonly fb = inject(FormBuilder);
   private readonly toastService = inject(ToastService);
 
-  protected readonly budgets = this.dataService.budgets;
-  protected readonly transactions = this.dataService.transactions;
-  protected readonly financialGoals = this.dataService.financialGoals;
-  protected readonly accounts = this.dataService.accounts;
-  protected readonly categories = this.dataService.categories;
+  protected readonly budgets = this.financialService.budgets;
+  protected readonly transactions = this.financialService.transactions;
+  protected readonly financialGoals = this.financialService.financialGoals;
+  protected readonly accounts = this.financialService.accounts;
+  protected readonly categories = this.financialService.categories;
 
   protected readonly totalBudget = computed(() =>
     this.budgets().reduce((sum, b) => sum + b.limitAmount, 0)
@@ -200,12 +202,12 @@ export class Financial implements OnInit {
     
     // Load all financial data in parallel (using allSettled to allow some to fail)
     Promise.allSettled([
-      this.dataService.loadTransactions().toPromise(),
-      this.dataService.loadBudgets().toPromise(),
-      // this.dataService.loadFinancialGoals().toPromise(), // Endpoint not available yet
-      this.dataService.loadAccounts().toPromise(),
-      // this.dataService.loadSubscriptions().toPromise(), // Optional
-      this.dataService.loadCategories().toPromise()
+      this.financialService.loadTransactions().toPromise(),
+      this.financialService.loadBudgets().toPromise(),
+      // this.financialService.loadFinancialGoals().toPromise(), // Endpoint not available yet
+      this.financialService.loadAccounts().toPromise(),
+      // this.financialService.loadSubscriptions().toPromise(), // Optional
+      this.financialService.loadCategories().toPromise()
     ])
       .then((results) => {
         // Log any failures
@@ -284,7 +286,7 @@ export class Financial implements OnInit {
       
       console.log('DTO being sent to service:', dto);
       
-      this.dataService.addTransaction(dto).subscribe({
+      this.financialService.addTransaction(dto).subscribe({
         next: () => {
           this.transactionDialog.hide();
           this.transactionForm.reset({ 
@@ -316,7 +318,7 @@ export class Financial implements OnInit {
         isActive: formValue.isActive !== undefined ? formValue.isActive : true
       };
       
-      this.dataService.addBudget(dto).subscribe({
+      this.financialService.addBudget(dto).subscribe({
         next: () => {
           this.budgetDialog.hide();
           this.budgetForm.reset({ 

@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, ViewChild, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DataService } from '../../services/data.service';
+import { HealthcareService } from '../../services/healthcare.service';
 import { 
   GridModule, 
   PageService, 
@@ -19,8 +19,10 @@ import {
   TabModule 
 } from '@syncfusion/ej2-angular-navigations';
 import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
-import { ComboBoxModule } from '@syncfusion/ej2-angular-dropdowns';
+import { ComboBoxModule, DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
 import { CheckBoxModule } from '@syncfusion/ej2-angular-buttons';
+import { TextBoxModule, NumericTextBoxModule } from '@syncfusion/ej2-angular-inputs';
+import { DatePickerModule } from '@syncfusion/ej2-angular-calendars';
 import { ToastService } from '../../services/toast.service';
 import type { 
   Doctor, 
@@ -42,7 +44,11 @@ import type {
     TabModule,
     AppBarModule,
     ComboBoxModule,
-    CheckBoxModule
+    DropDownListModule,
+    CheckBoxModule,
+    TextBoxModule,
+    NumericTextBoxModule,
+    DatePickerModule
   ],
   providers: [
     PageService,
@@ -56,14 +62,14 @@ import type {
   standalone: true
 })
 export class Healthcare implements OnInit {
-  private readonly dataService = inject(DataService);
+  private readonly healthcareService = inject(HealthcareService);
   private readonly toastService = inject(ToastService);
 
   ngOnInit(): void {
     // Load all healthcare data when component initializes
-    this.dataService.loadDoctors().subscribe();
-    this.dataService.loadAppointments().subscribe();
-    this.dataService.loadPrescriptions().subscribe();
+    this.healthcareService.loadDoctors().subscribe();
+    this.healthcareService.loadAppointments().subscribe();
+    this.healthcareService.loadPrescriptions().subscribe();
   }
 
   @ViewChild('doctorDialog') doctorDialog!: DialogComponent;
@@ -74,10 +80,17 @@ export class Healthcare implements OnInit {
   @ViewChild('prescriptionGrid') prescriptionGrid!: GridComponent;
 
   // Data signals
-  protected readonly doctors = this.dataService.doctors;
-  protected readonly appointments = this.dataService.appointments;
-  protected readonly prescriptions = this.dataService.prescriptions;
-  protected readonly healthcareStats = this.dataService.healthcareStats;
+  protected readonly doctors = this.healthcareService.doctors;
+  protected readonly appointments = this.healthcareService.appointments;
+  protected readonly prescriptions = this.healthcareService.prescriptions;
+  protected readonly healthcareStats = computed(() => ({
+    totalDoctors: this.doctors().length,
+    totalAppointments: this.appointments().length,
+    activePrescriptions: this.prescriptions().filter(p => p.isActive).length,
+    upcomingAppointments: this.appointments().filter(a => new Date(a.date) > new Date()).length,
+    prescriptionsNeedingRefill: this.prescriptions().filter(p => p.isActive && p.refillsRemaining === 0).length,
+    doctorsCount: this.doctors().length
+  }));
 
   // Filtered/computed data
   protected readonly upcomingAppointments = computed(() =>
@@ -174,7 +187,7 @@ export class Healthcare implements OnInit {
     const doctor = this.doctorForm() as Doctor;
     
     if (this.editMode()) {
-      this.dataService.updateDoctor(doctor.id, doctor).subscribe({
+      this.healthcareService.updateDoctor(doctor.id, doctor).subscribe({
         next: () => {
           this.doctorDialog.hide();
           this.doctorForm.set({});
@@ -185,7 +198,7 @@ export class Healthcare implements OnInit {
       });
     } else {
       const { id, ...doctorData } = doctor;
-      this.dataService.addDoctor(doctorData).subscribe({
+      this.healthcareService.addDoctor(doctorData).subscribe({
         next: () => {
           this.doctorDialog.hide();
           this.doctorForm.set({});
@@ -210,7 +223,7 @@ export class Healthcare implements OnInit {
         cancelButtonText: 'Cancel'
       }).then((result) => {
         if (result.isConfirmed) {
-          this.dataService.deleteDoctor(id).subscribe({
+          this.healthcareService.deleteDoctor(id).subscribe({
             next: () => {
               this.toastService.success('Success', 'Doctor deleted successfully');
             },
@@ -230,7 +243,7 @@ export class Healthcare implements OnInit {
       const currentPrimary = this.doctors().find(d => d.isPrimary);
       if (currentPrimary) {
         const updatedPrimary = { ...currentPrimary, isPrimary: false };
-        this.dataService.updateDoctor(currentPrimary.id, updatedPrimary).subscribe({
+        this.healthcareService.updateDoctor(currentPrimary.id, updatedPrimary).subscribe({
           error: (error) => {
             console.error('Error updating primary doctor:', error);
           }
@@ -240,7 +253,7 @@ export class Healthcare implements OnInit {
 
     // Toggle the current doctor's primary status
     const updatedDoctor = { ...doctor, isPrimary: !doctor.isPrimary };
-    this.dataService.updateDoctor(doctor.id, updatedDoctor).subscribe({
+    this.healthcareService.updateDoctor(doctor.id, updatedDoctor).subscribe({
       next: () => {
         this.toastService.success('Success', updatedDoctor.isPrimary ? 'Set as primary doctor' : 'Removed from primary');
       },
@@ -266,7 +279,7 @@ export class Healthcare implements OnInit {
     const appointment = this.appointmentForm() as Appointment;
     
     if (this.editMode()) {
-      this.dataService.updateAppointment(appointment.id, appointment).subscribe({
+      this.healthcareService.updateAppointment(appointment.id, appointment).subscribe({
         next: () => {
           this.appointmentDialog.hide();
           this.appointmentForm.set({});
@@ -277,7 +290,7 @@ export class Healthcare implements OnInit {
       });
     } else {
       const { id, ...appointmentData } = appointment;
-      this.dataService.addAppointment(appointmentData).subscribe({
+      this.healthcareService.addAppointment(appointmentData).subscribe({
         next: () => {
           this.appointmentDialog.hide();
           this.appointmentForm.set({});
@@ -302,7 +315,7 @@ export class Healthcare implements OnInit {
         cancelButtonText: 'Cancel'
       }).then((result) => {
         if (result.isConfirmed) {
-          this.dataService.deleteAppointment(id).subscribe({
+          this.healthcareService.deleteAppointment(id).subscribe({
             next: () => {
               this.toastService.success('Success', 'Appointment deleted successfully');
             },
@@ -331,7 +344,7 @@ export class Healthcare implements OnInit {
     const prescription = this.prescriptionForm() as Prescription;
     
     if (this.editMode()) {
-      this.dataService.updatePrescription(prescription.id, prescription).subscribe({
+      this.healthcareService.updatePrescription(prescription.id, prescription).subscribe({
         next: () => {
           this.prescriptionDialog.hide();
           this.prescriptionForm.set({});
@@ -342,7 +355,7 @@ export class Healthcare implements OnInit {
       });
     } else {
       const { id, ...prescriptionData } = prescription;
-      this.dataService.addPrescription(prescriptionData).subscribe({
+      this.healthcareService.addPrescription(prescriptionData).subscribe({
         next: () => {
           this.prescriptionDialog.hide();
           this.prescriptionForm.set({});
@@ -367,7 +380,7 @@ export class Healthcare implements OnInit {
         cancelButtonText: 'Cancel'
       }).then((result) => {
         if (result.isConfirmed) {
-          this.dataService.deletePrescription(id).subscribe({
+          this.healthcareService.deletePrescription(id).subscribe({
             next: () => {
               this.toastService.success('Success', 'Prescription deleted successfully');
             },

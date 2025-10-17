@@ -1,0 +1,79 @@
+---
+globs: *.scss,*.css
+---
+
+# SCSS and CSS Development Guidelines
+
+## File Structure
+- Global styles: [src/styles.scss](mdc:src/styles.scss)
+- Component styles: Individual `.scss` files in component directories
+- Theme system: [src/scss/_syncfusion-custom-theme.scss](mdc:src/scss/_syncfusion-custom-theme.scss)
+- Dashboard styles: [src/app/features/dashboard/dashboard.scss](mdc:src/app/features/dashboard/dashboard.scss)
+
+## Styling Rules
+
+### 1. Color Usage
+- **ALWAYS** use colors from the defined palette in [color-palette.mdc](mdc:.cursor/rules/color-palette.mdc)
+- **NEVER** hardcode colors - use SCSS variables or CSS custom properties
+- Primary theme color: `#1b76ff` (Blue)
+- Text colors: Use `var(--#{$prefix}component-color)` for consistency
+
+### 2. Component Styling
+- Use BEM methodology for class naming
+- Apply styles to wrapper containers, not third-party components
+- Use `::ng-deep` sparingly and only when necessary
+
+### 3. Responsive Design
+- Mobile-first approach
+- Use CSS Grid and Flexbox for layouts
+- Follow the 8px grid system for spacing
+
+### 4. Syncfusion Components
+- **DO NOT** override Syncfusion component styles
+- Use wrapper styling instead of direct component styling
+- Let Syncfusion's Tailwind theme handle component appearance
+
+### 5. Performance
+- Avoid deep nesting (max 3 levels)
+- Use efficient selectors
+- Minimize use of `!important`
+- Use CSS custom properties for theming
+
+## Common Patterns
+
+### Widget Styling
+```scss
+.widget {
+  &__header {
+    background: #2d353c;
+    color: white;
+  }
+  
+  &__content {
+    background: white;
+    padding: 20px;
+  }
+}
+```
+
+### Card Components
+```scss
+.card {
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+```
+
+### Responsive Grid
+```scss
+.dashboard__grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 15px;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr;
+  }
+}
+```

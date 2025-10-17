@@ -119,8 +119,20 @@
               <e-column field="name" headerText="Account Name" width="200"></e-column>
               <e-column field="type" headerText="Type" width="120"></e-column>
               <e-column field="institution" headerText="Institution" width="150"></e-column>
-              <e-column field="balance" headerText="Balance" width="150" textAlign="Right" [format]="formatCurrency"></e-column>
+              <e-column field="balance" headerText="Balance" width="150" textAlign="Right" format="C2"></e-column>
               <e-column field="lastUpdated" headerText="Last Updated" width="150" [format]="formatDate"></e-column>
+              <e-column headerText="Actions" width="120" textAlign="Center" [allowSorting]="false" [allowFiltering]="false">
+                <ng-template #template let-data>
+                  <div class="action-buttons">
+                    <button class="btn btn-sm btn-outline-primary me-2" (click)="editAccount(data)">
+                      <i class="fa fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" (click)="deleteAccount(data)">
+                      <i class="fa fa-trash"></i>
+                    </button>
+                  </div>
+                </ng-template>
+              </e-column>
             </e-columns>
           </ejs-grid>
         } @else {
@@ -157,9 +169,21 @@
             <e-columns>
               <e-column field="name" headerText="Service" width="180"></e-column>
               <e-column field="category" headerText="Category" width="120"></e-column>
-              <e-column field="amount" headerText="Amount" width="120" textAlign="Right" [format]="formatCurrency"></e-column>
+              <e-column field="amount" headerText="Amount" width="120" textAlign="Right" format="C2"></e-column>
               <e-column field="billingCycle" headerText="Billing Cycle" width="120"></e-column>
               <e-column field="nextBillingDate" headerText="Next Billing" width="140" [format]="formatDate"></e-column>
+              <e-column headerText="Actions" width="120" textAlign="Center" [allowSorting]="false" [allowFiltering]="false">
+                <ng-template #template let-data>
+                  <div class="action-buttons">
+                    <button class="btn btn-sm btn-outline-primary me-2" (click)="editSubscription(data)">
+                      <i class="fa fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" (click)="deleteSubscription(data)">
+                      <i class="fa fa-trash"></i>
+                    </button>
+                  </div>
+                </ng-template>
+              </e-column>
             </e-columns>
           </ejs-grid>
         } @else {
@@ -179,7 +203,7 @@
   <!-- Add Account Dialog -->
   <ejs-dialog
     #accountDialog
-    header="Add Financial Account"
+    [header]="editingAccountId ? 'Edit Financial Account' : 'Add Financial Account'"
     [width]="dialogWidth"
     [isModal]="true"
     [visible]="false"
@@ -191,25 +215,23 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="accountName" class="form-label">Account Name *</label>
-            <input 
-              type="text"
+            <ejs-textbox
               id="accountName"
               formControlName="name"
-              class="form-control"
-              placeholder="e.g., Chase Checking">
+              placeholder="e.g., Chase Checking"
+              cssClass="form-control">
+            </ejs-textbox>
           </div>
 
           <div class="col-md-6 mb-3">
             <label for="accountType" class="form-label">Account Type *</label>
-            <select 
+            <ejs-dropdownlist
               id="accountType"
-              formControlName="type" 
-              class="form-control">
-              <option value="">Select type</option>
-              @for (type of accountTypes; track type) {
-                <option [value]="type">{{ type }}</option>
-              }
-            </select>
+              formControlName="type"
+              [dataSource]="accountTypes"
+              placeholder="Select type"
+              cssClass="form-control">
+            </ejs-dropdownlist>
           </div>
         </div>
 
@@ -217,23 +239,25 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="institution" class="form-label">Institution *</label>
-            <input 
-              type="text"
+            <ejs-textbox
               id="institution"
               formControlName="institution"
-              class="form-control"
-              placeholder="Bank or institution name">
+              placeholder="Bank or institution name"
+              cssClass="form-control">
+            </ejs-textbox>
           </div>
 
           <div class="col-md-6 mb-3">
             <label for="balance" class="form-label">Current Balance *</label>
-            <input 
-              type="number"
+            <ejs-numerictextbox
               id="balance"
               formControlName="balance"
-              class="form-control"
-              step="100"
-              placeholder="0.00">
+              [format]="'C2'"
+              [min]="0"
+              [step]="0.01"
+              placeholder="0.00"
+              cssClass="form-control">
+            </ejs-numerictextbox>
           </div>
         </div>
       </form>
@@ -243,7 +267,7 @@
   <!-- Add Subscription Dialog -->
   <ejs-dialog
     #subscriptionDialog
-    header="Add Subscription"
+    [header]="editingSubscriptionId ? 'Edit Subscription' : 'Add Subscription'"
     [width]="dialogWidth"
     [isModal]="true"
     [visible]="false"
@@ -255,22 +279,24 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="subscriptionName" class="form-label">Subscription Name *</label>
-            <input 
-              type="text"
+            <ejs-textbox
               id="subscriptionName"
               formControlName="name"
-              class="form-control"
-              placeholder="e.g., Netflix, Spotify">
+              placeholder="e.g., Netflix, Spotify"
+              cssClass="form-control">
+            </ejs-textbox>
           </div>
 
           <div class="col-md-6 mb-3">
             <label for="subscriptionCategory" class="form-label">Category *</label>
-            <input 
-              type="text"
+            <ejs-dropdownlist
               id="subscriptionCategory"
               formControlName="category"
-              class="form-control"
-              placeholder="e.g., Entertainment, Productivity">
+              [dataSource]="categories()"
+              [fields]="{text: 'name', value: 'name'}"
+              placeholder="Select category"
+              cssClass="form-control">
+            </ejs-dropdownlist>
           </div>
         </div>
 
@@ -278,27 +304,27 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="subscriptionAmount" class="form-label">Amount *</label>
-            <input 
-              type="number"
+            <ejs-numerictextbox
               id="subscriptionAmount"
               formControlName="amount"
-              class="form-control"
-              step="1"
-              min="0"
-              placeholder="0.00">
+              [format]="'C2'"
+              [min]="0"
+              [step]="0.01"
+              placeholder="0.00"
+              cssClass="form-control">
+            </ejs-numerictextbox>
           </div>
 
           <div class="col-md-6 mb-3">
             <label for="billingCycle" class="form-label">Billing Cycle *</label>
-            <select 
+            <ejs-dropdownlist
               id="billingCycle"
-              formControlName="billingCycle" 
-              class="form-control">
-              <option value="">Select billing cycle</option>
-              @for (cycle of billingCycles; track cycle) {
-                <option [value]="cycle">{{ cycle }}</option>
-              }
-            </select>
+              formControlName="billingCycle"
+              [dataSource]="frequencies()"
+              [fields]="{text: 'name', value: 'name'}"
+              placeholder="Select billing cycle"
+              cssClass="form-control">
+            </ejs-dropdownlist>
           </div>
         </div>
 
@@ -306,11 +332,12 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="nextBillingDate" class="form-label">Next Billing Date *</label>
-            <input 
-              type="date"
+            <ejs-datepicker
               id="nextBillingDate"
               formControlName="nextBillingDate"
-              class="form-control">
+              placeholder="Select date"
+              cssClass="form-control">
+            </ejs-datepicker>
           </div>
         </div>
       </form>

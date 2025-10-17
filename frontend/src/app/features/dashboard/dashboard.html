@@ -40,96 +40,98 @@
       />
     </section>
 
-  <!-- Budget Chart -->
-  @if (budgetChartData().length > 0) {
-    <div class="dashboard__chart">
-      <div class="card">
-        <div class="card-header">
-          <h3>Budget Overview</h3>
+  <!-- Event Calendar Widget (Now Prominent) -->
+  <div class="dashboard__calendar-widget">
+    <div class="card">
+      <div class="widget__header">
+        <h2 class="widget__title">
+          <span class="widget__icon">📅</span>
+          Event Calendar
+        </h2>
+        <div class="widget__legend">
+          <span class="legend-item"><span class="legend-dot" style="background: #1b76ff;"></span> Bills</span>
+          <span class="legend-item"><span class="legend-dot" style="background: #ff5757;"></span> Urgent</span>
+          <span class="legend-item"><span class="legend-dot" style="background: #ff8c42;"></span> Maintenance</span>
+          <span class="legend-item"><span class="legend-dot" style="background: #6b5ce7;"></span> Insurance</span>
+          <span class="legend-item"><span class="legend-dot" style="background: #a05ce7;"></span> Healthcare</span>
         </div>
-          <div class="card-content">
-            <ejs-chart
-              style="display:block; width:100%;"
-              [primaryXAxis]="primaryXAxis"
-              [primaryYAxis]="primaryYAxis"
-              [title]="chartTitle"
-              [tooltip]="tooltip"
-              [height]="'300'"
-              [enableAnimation]="true">
-              <e-series-collection>
-                <e-series 
-                  [dataSource]="budgetChartData()" 
-                  type='Column' 
-                  xName='x' 
-                  yName='y' 
-                  name='Spent'
-                  [marker]="marker"
-                  fill='#d4af37'>
-                </e-series>
-              </e-series-collection>
-            </ejs-chart>
-          </div>
       </div>
-    </div>
-  } @else {
-    <div class="dashboard__chart">
-      <div class="card">
-        <div class="card-header">
-          <h3>Budget Overview</h3>
-        </div>
-        <div class="card-content">
+      
+      <div class="widget__content">
+        @if (calendarEvents().length > 0) {
+          <ejs-schedule
+            [selectedDate]="selectedDate"
+            [eventSettings]="eventSettings"
+            [views]="views"
+            [currentView]="'Month'"
+            (eventRendered)="onEventRendered($event)"
+            cssClass="custom-schedule"
+            height="600px"
+          >
+          </ejs-schedule>
+        } @else {
           <div class="widget__empty">
-            <p>📊 No budget data available.</p>
-            <p>Create budgets in the Financial section to see spending overview.</p>
-            <a [routerLink]="['/financial']" class="btn btn--outline">Go to Financial →</a>
+            <p>📅 No upcoming events</p>
+            <p>Bills, maintenance tasks, and insurance renewals will appear here.</p>
+            <div class="quick-links">
+              <a [routerLink]="['/bills']" class="btn btn--outline">Add Bill →</a>
+              <a [routerLink]="['/maintenance']" class="btn btn--outline">Add Task →</a>
+            </div>
           </div>
-        </div>
+        }
       </div>
     </div>
-  }
+  </div>
 
   <!-- Main Content Grid -->
   <div class="dashboard__grid">
-      <!-- Event Calendar Widget -->
-      <div class="card dashboard__calendar-widget">
-        <div class="widget__header">
-          <h2 class="widget__title">
-            <span class="widget__icon">📅</span>
-            Event Calendar
-          </h2>
-          <div class="widget__legend">
-            <span class="legend-item"><span class="legend-dot" style="background: #1b76ff;"></span> Bills</span>
-            <span class="legend-item"><span class="legend-dot" style="background: #ff5757;"></span> Urgent</span>
-            <span class="legend-item"><span class="legend-dot" style="background: #ff8c42;"></span> Maintenance</span>
-            <span class="legend-item"><span class="legend-dot" style="background: #6b5ce7;"></span> Insurance</span>
-            <span class="legend-item"><span class="legend-dot" style="background: #a05ce7;"></span> Healthcare</span>
+      <!-- Budget Chart -->
+      @if (budgetChartData().length > 0) {
+        <div class="dashboard__chart">
+          <div class="card">
+            <div class="card-header">
+              <h3>Budget Overview</h3>
+            </div>
+              <div class="card-content">
+                <ejs-chart
+                  style="display:block; width:100%;"
+                  [primaryXAxis]="primaryXAxis"
+                  [primaryYAxis]="primaryYAxis"
+                  [title]="chartTitle"
+                  [tooltip]="tooltip"
+                  [height]="'300'"
+                  [enableAnimation]="true">
+                  <e-series-collection>
+                    <e-series 
+                      [dataSource]="budgetChartData()" 
+                      type='Column' 
+                      xName='x' 
+                      yName='y' 
+                      name='Spent'
+                      [marker]="marker"
+                      fill='#d4af37'>
+                    </e-series>
+                  </e-series-collection>
+                </ejs-chart>
+              </div>
           </div>
         </div>
-        
-        <div class="widget__content">
-          @if (calendarEvents().length > 0) {
-            <ejs-schedule
-              [selectedDate]="selectedDate"
-              [eventSettings]="eventSettings"
-              [views]="views"
-              [currentView]="'Month'"
-              (eventRendered)="onEventRendered($event)"
-              cssClass="custom-schedule"
-              height="600px"
-            >
-            </ejs-schedule>
-          } @else {
-            <div class="widget__empty">
-              <p>📅 No upcoming events</p>
-              <p>Bills, maintenance tasks, and insurance renewals will appear here.</p>
-              <div class="quick-links">
-                <a [routerLink]="['/bills']" class="btn btn--outline">Add Bill →</a>
-                <a [routerLink]="['/maintenance']" class="btn btn--outline">Add Task →</a>
+      } @else {
+        <div class="dashboard__chart">
+          <div class="card">
+            <div class="card-header">
+              <h3>Budget Overview</h3>
+            </div>
+            <div class="card-content">
+              <div class="widget__empty">
+                <p>📊 No budget data available.</p>
+                <p>Create budgets in the Financial section to see spending overview.</p>
+                <a [routerLink]="['/financial']" class="btn btn--outline">Go to Financial →</a>
               </div>
             </div>
-          }
+          </div>
         </div>
-      </div>
+      }
 
       <!-- Quick Actions Widget -->
       <div class="card card--accent dashboard__quick-actions">

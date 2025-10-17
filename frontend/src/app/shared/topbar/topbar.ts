@@ -1,7 +1,7 @@
 import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
-import { DataService } from '../../services/data.service';
+import { AlertService } from '../../services/alert.service';
 
 @Component({
   selector: 'app-topbar',
@@ -10,7 +10,7 @@ import { DataService } from '../../services/data.service';
   styleUrl: './topbar.scss'
 })
 export class Topbar implements OnInit {
-  private readonly dataService = inject(DataService);
+  private readonly alertService = inject(AlertService);
   private readonly router = inject(Router);
   
   protected readonly isNotificationsOpen = signal(false);
@@ -24,7 +24,7 @@ export class Topbar implements OnInit {
   };
 
   // Get alerts from DataService
-  protected readonly alerts = this.dataService.alerts;
+  protected readonly alerts = this.alertService.alerts;
   
   // Computed values
   protected readonly recentAlerts = computed(() => 
@@ -40,7 +40,7 @@ export class Topbar implements OnInit {
 
   ngOnInit(): void {
     // Load alerts when component initializes
-    this.dataService.loadAlerts().subscribe();
+    this.alertService.loadAlerts().subscribe();
   }
 
   protected toggleNotifications(event?: Event): void {
@@ -67,7 +67,7 @@ export class Topbar implements OnInit {
 
   protected markAlertAsRead(id: string, event: Event): void {
     event.stopPropagation();
-    this.dataService.markAlertAsRead(id).subscribe();
+    this.alertService.markAlertAsRead(id).subscribe();
   }
 
   protected navigateToAlert(alert: any): void {

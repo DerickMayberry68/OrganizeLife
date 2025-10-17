@@ -1,6 +1,6 @@
 import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DataService } from '../../services/data.service';
+import { FinancialService } from '../../services/financial.service';
 import { StatCard } from '../../shared/stat-card/stat-card';
 import { GridModule, PageService, SortService, FilterService } from '@syncfusion/ej2-angular-grids';
 import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
@@ -19,9 +19,9 @@ import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
   styleUrl: './categories.scss'
 })
 export class Categories implements OnInit {
-  private readonly dataService = inject(DataService);
+  private readonly financialService = inject(FinancialService);
 
-  protected readonly categories = this.dataService.categories;
+  protected readonly categories = this.financialService.categories;
   protected readonly isLoading = signal(false);
 
   protected readonly totalCategories = computed(() => this.categories().length);
@@ -37,7 +37,7 @@ export class Categories implements OnInit {
   protected readonly toolbar = ['Search'];
 
   ngOnInit(): void {
-    this.dataService.loadCategories().subscribe();
+    this.financialService.loadCategories().subscribe();
     setTimeout(() => this.isLoading.set(false));
   }
 

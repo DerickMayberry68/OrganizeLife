@@ -150,25 +150,23 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="documentTitle" class="form-label">Document Title *</label>
-            <input 
-              type="text"
+            <ejs-textbox
               id="documentTitle"
               formControlName="title"
-              class="form-control"
-              placeholder="Enter document title">
+              placeholder="Enter document title"
+              cssClass="form-control">
+            </ejs-textbox>
           </div>
 
           <div class="col-md-6 mb-3">
             <label for="documentCategory" class="form-label">Category *</label>
-            <select 
+            <ejs-dropdownlist
               id="documentCategory"
-              formControlName="category" 
-              class="form-control">
-              <option value="">Select category</option>
-              @for (category of categories; track category) {
-                <option [value]="category">{{ category }}</option>
-              }
-            </select>
+              formControlName="category"
+              [dataSource]="categories"
+              placeholder="Select category"
+              cssClass="form-control">
+            </ejs-dropdownlist>
           </div>
         </div>
 
@@ -176,21 +174,22 @@
         <div class="row">
           <div class="col-md-6 mb-3">
             <label for="documentTags" class="form-label">Tags (comma separated)</label>
-            <input 
-              type="text"
+            <ejs-textbox
               id="documentTags"
               formControlName="tags"
-              class="form-control"
-              placeholder="e.g., important, tax, 2025">
+              placeholder="e.g., important, tax, 2025"
+              cssClass="form-control">
+            </ejs-textbox>
           </div>
 
           <div class="col-md-6 mb-3">
             <label for="expiryDate" class="form-label">Expiry Date (if applicable)</label>
-            <input 
-              type="date"
+            <ejs-datepicker
               id="expiryDate"
               formControlName="expiryDate"
-              class="form-control">
+              placeholder="Select expiry date"
+              cssClass="form-control">
+            </ejs-datepicker>
           </div>
         </div>
 
@@ -198,14 +197,11 @@
         <div class="row">
           <div class="col-12">
             <div class="form-check">
-              <input 
-                type="checkbox"
+              <ejs-checkbox
                 id="isImportant"
                 formControlName="isImportant"
-                class="form-check-input">
-              <label class="form-check-label" for="isImportant">
-                Mark as Important
-              </label>
+                label="Mark as Important">
+              </ejs-checkbox>
             </div>
           </div>
         </div>
