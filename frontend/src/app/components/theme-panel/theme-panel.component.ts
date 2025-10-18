@@ -1,8 +1,8 @@
 import { Component, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { AppVariablesService } from '../../services/app-variables.service';
 import { AppSettings } from '../../services/app-settings.service';
-import { NgScrollbarModule } from 'ngx-scrollbar';
 
 declare var bootstrap: any;
 
@@ -10,7 +10,7 @@ declare var bootstrap: any;
   selector: 'theme-panel',
   templateUrl: './theme-panel.component.html',
   standalone: true,
-  imports: [CommonModule, NgScrollbarModule]
+  imports: [CommonModule, CdkScrollable]
 })
 
 export class ThemePanelComponent implements OnInit {

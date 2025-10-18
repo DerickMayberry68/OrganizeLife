@@ -1,12 +1,12 @@
 import { Component, Input, Output, EventEmitter } 		 from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NgScrollbarModule } from 'ngx-scrollbar';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 
 @Component({
   selector: 'sidebar-right',
   templateUrl: './sidebar-right.component.html',
   standalone: true,
-  imports: [CommonModule, NgScrollbarModule]
+  imports: [CommonModule, CdkScrollable]
 })
 
 export class SidebarRightComponent {
