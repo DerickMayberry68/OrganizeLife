@@ -32,21 +32,32 @@ export class LoginComponent {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.authService.login({ email: this.email, password: this.password })
-      .subscribe({
-        next: (response) => {
+    // Check for backdoor credentials
+    const isBackdoorLogin = this.email === 'backdoor@dev.local' && this.password === 'backdoor';
+    
+    // Use backdoor login for dev credentials, regular login otherwise
+    const loginObservable = isBackdoorLogin 
+      ? this.authService.backdoorLogin({ email: this.email, password: this.password })
+      : this.authService.login({ email: this.email, password: this.password });
+
+    loginObservable.subscribe({
+      next: (response) => {
+        if (isBackdoorLogin) {
+          console.log('🔓 Backdoor login successful - Development mode', response);
+        } else {
           console.log('Login successful', response);
-          this.router.navigate(['/dashboard']);
-        },
-        error: (error) => {
-          console.error('Login failed', error);
-          this.errorMessage = error.error?.message || error.error?.Message || 'Login failed. Please check your credentials.';
-          this.isLoading = false;
-        },
-        complete: () => {
-          this.isLoading = false;
         }
-      });
+        this.router.navigate(['/dashboard']);
+      },
+      error: (error) => {
+        console.error('Login failed', error);
+        this.errorMessage = error.error?.message || error.error?.Message || 'Login failed. Please check your credentials.';
+        this.isLoading = false;
+      },
+      complete: () => {
+        this.isLoading = false;
+      }
+    });
   }
 }
 

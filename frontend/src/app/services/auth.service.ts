@@ -132,6 +132,75 @@ export class AuthService {
   }
 
   /**
+   * Backdoor login for development - bypasses backend authentication
+   * Use credentials: email="backdoor@dev.local" password="backdoor"
+   */
+  backdoorLogin(request: LoginRequest): Observable<LoginResponse> {
+    return new Observable<LoginResponse>(observer => {
+      // Create a mock JWT token (doesn't need to be valid, just parseable)
+      const mockToken = this.createMockToken();
+      
+      const mockResponse: LoginResponse = {
+        userId: 'dev-user-id',
+        email: request.email,
+        accessToken: mockToken,
+        tokenType: 'Bearer',
+        expiresIn: 86400, // 24 hours
+        refreshToken: 'mock-refresh-token',
+        households: [
+          {
+            householdId: 'dev-household-id',
+            householdName: 'Dev Household',
+            role: 'Admin',
+            joinedAt: new Date().toISOString()
+          }
+        ]
+      };
+
+      // Store the mock auth data
+      this.storeAuthData(
+        mockResponse.accessToken,
+        mockResponse.refreshToken,
+        {
+          userId: mockResponse.userId,
+          email: mockResponse.email,
+          firstName: 'Dev',
+          lastName: 'User',
+          households: mockResponse.households
+        }
+      );
+
+      // Emit the response and complete
+      observer.next(mockResponse);
+      observer.complete();
+    });
+  }
+
+  /**
+   * Create a mock JWT token for development purposes
+   */
+  private createMockToken(): string {
+    const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+    
+    // Token expires in 24 hours
+    const expirationTime = Math.floor(Date.now() / 1000) + 86400;
+    
+    const payload = btoa(JSON.stringify({
+      sub: 'dev-user-id',
+      email: 'backdoor@dev.local',
+      exp: expirationTime,
+      user_metadata: {
+        first_name: 'Dev',
+        last_name: 'User'
+      }
+    }));
+    
+    const signature = 'mock-signature';
+    
+    return `${header}.${payload}.${signature}`;
+  }
+
+  /**
    * Logout and clear storage
    */
   logout(): void {
