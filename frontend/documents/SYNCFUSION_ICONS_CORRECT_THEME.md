@@ -124,7 +124,7 @@ This gave us **Material-style icons** which don't match our Tailwind theme.
 
 ## 🎉 Perfect!
 
-**The Butler now has:**
+**HomeSynchronicity now has:**
 - ✅ **Beautiful form controls** (matching Login/Register)
 - ✅ **Correct Tailwind-style icons**
 - ✅ **Consistent visual theme**

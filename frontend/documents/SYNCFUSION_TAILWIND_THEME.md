@@ -8,7 +8,7 @@
 
 ## 📋 Overview
 
-The Butler application now uses **Syncfusion's Tailwind theme** for all UI components. This provides a modern, clean design that integrates seamlessly with our dark theme color system.
+HomeSynchronicity application now uses **Syncfusion's Tailwind theme** for all UI components. This provides a modern, clean design that integrates seamlessly with our dark theme color system.
 
 ---
 
@@ -198,7 +198,7 @@ Custom dark theme styling remains in `src/styles.scss`
 }
 ```
 
-These overrides ensure Syncfusion dialogs match The Butler's dark theme aesthetic.
+These overrides ensure Syncfusion dialogs match HomeSynchronicity's dark theme aesthetic.
 
 ---
 
@@ -390,7 +390,7 @@ These are used in `styles.scss` to override Syncfusion Tailwind defaults with ou
 
 ## 🎉 Result
 
-**The Butler now uses Syncfusion's Tailwind theme** with custom dark theme overrides for a modern, consistent UI across all 84 form controls in the application.
+**HomeSynchronicity now uses Syncfusion's Tailwind theme** with custom dark theme overrides for a modern, consistent UI across all 84 form controls in the application.
 
 All styling is centralized in:
 1. **`angular.json`** - Base Tailwind theme CSS

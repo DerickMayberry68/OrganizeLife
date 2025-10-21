@@ -1,4 +1,4 @@
-# 🛠️ Development Commands - The Butler
+# 🛠️ Development Commands - HomeSynchronicity
 
 Quick reference for common development tasks and commands.
 
@@ -265,7 +265,7 @@ ng build --stats-json
 npm install -g webpack-bundle-analyzer
 
 # Analyze
-webpack-bundle-analyzer dist/TheButler/stats.json
+webpack-bundle-analyzer dist/HomeSynchronicity/stats.json
 ```
 
 ### Production Build Stats
@@ -332,7 +332,7 @@ ng serve --configuration production
 # Create optimized production build
 ng build --configuration production
 
-# Output location: dist/TheButler/
+# Output location: dist/HomeSynchronicity/
 ```
 
 ### Preview Production Build Locally
@@ -341,7 +341,7 @@ ng build --configuration production
 npm install -g http-server
 
 # Serve production build
-cd dist/TheButler/browser
+cd dist/HomeSynchronicity/browser
 http-server -p 8080
 
 # Open: http://localhost:8080
@@ -528,7 +528,7 @@ If you encounter issues:
 
 <div align="center">
 
-**The Butler - Development Commands**
+**HomeSynchronicity - Development Commands**
 
 *Last updated: October 17, 2025*
 

@@ -1,8 +1,8 @@
-# TheButler - Color Admin Clone
+# HomeSynchronicity - Color Admin Clone
 
 ## Overview
 
-TheButler has been completely redesigned to match the professional look and feel of [Color Admin v5.4.3](https://seantheme.com/color-admin), while maintaining the sophisticated butler aesthetic.
+HomeSynchronicity has been completely redesigned to match the professional look and feel of [Color Admin v5.4.3](https://seantheme.com/color-admin), while maintaining the sophisticated butler aesthetic.
 
 ## Design Cloned From
 
@@ -38,7 +38,7 @@ Matches Color Admin's header layout:
 - **Shadow**: Subtle drop shadow
 - **Components**:
   1. **Brand Section** (left, 250px):
-     - Butler icon + "TheButler" name
+     - Butler icon + "HomeSynchronicity" name
      - Dark background matching sidebar
   
   2. **Search Bar** (center):
@@ -179,12 +179,12 @@ src/app/shared/
 
 ## Butler Theme Differences
 
-While matching Color Admin's structure, TheButler maintains its identity:
+While matching Color Admin's structure, HomeSynchronicity maintains its identity:
 
 - **Gold Accents** instead of blue (#d4af37 vs #348fe2)
 - **Butler Icon** (🎩) instead of generic logo
 - **Serif Headers** (Crimson Text) for elegance
-- **"TheButler" branding** instead of "Color Admin"
+- **"HomeSynchronicity" branding** instead of "Color Admin"
 - **Estate/Home management** context
 
 ## Files Modified
@@ -214,7 +214,7 @@ Navigate to **http://localhost:4200** to see:
    - Minify button at bottom
 
 2. **Top Header**:
-   - TheButler branding
+   - HomeSynchronicity branding
    - Search bar
    - Notification bell (click to see dropdown)
    - User avatar (click for profile menu)
@@ -232,7 +232,7 @@ Navigate to **http://localhost:4200** to see:
 
 ## Comparison
 
-| Feature | Color Admin | TheButler |
+| Feature | Color Admin | HomeSynchronicity |
 |---------|-------------|-----------|
 | Layout | ✓ Fixed sidebar + header | ✓ Identical |
 | Sidebar Width | 250px | ✓ 250px |
@@ -263,5 +263,5 @@ Based on Color Admin features available:
 
 ---
 
-**TheButler** - Color Admin design with Butler sophistication 🎩
+**HomeSynchronicity** - Color Admin design with Butler sophistication 🎩
 

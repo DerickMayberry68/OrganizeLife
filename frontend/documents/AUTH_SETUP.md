@@ -46,7 +46,7 @@ All protected routes will redirect to `/login` if the user is not authenticated.
 
 ### 1. Start the Angular App
 ```bash
-cd C:\Users\deric\source\repos\StudioXConsulting\Projects\TheButler
+cd C:\Users\deric\source\repos\StudioXConsulting\Projects\HomeSynchronicity
 npm start
 # or
 ng serve

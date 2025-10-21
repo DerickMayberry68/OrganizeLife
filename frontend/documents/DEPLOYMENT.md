@@ -1,4 +1,4 @@
-# The Butler - Deployment Guide 🚀
+# HomeSynchronicity - Deployment Guide 🚀
 
 ## 📋 Prerequisites
 
@@ -76,10 +76,10 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /app
 
 # Copy solution and project files
-COPY src/TheButler.Api/*.csproj ./src/TheButler.Api/
-COPY src/TheButler.Core/*.csproj ./src/TheButler.Core/
-COPY src/TheButler.Infrastructure/*.csproj ./src/TheButler.Infrastructure/
-COPY TheButlerApi.sln ./
+COPY src/HomeSynchronicity.Api/*.csproj ./src/HomeSynchronicity.Api/
+COPY src/HomeSynchronicity.Core/*.csproj ./src/HomeSynchronicity.Core/
+COPY src/HomeSynchronicity.Infrastructure/*.csproj ./src/HomeSynchronicity.Infrastructure/
+COPY HomeSynchronicityApi.sln ./
 
 # Restore dependencies
 RUN dotnet restore
@@ -88,7 +88,7 @@ RUN dotnet restore
 COPY . ./
 
 # Build
-RUN dotnet publish src/TheButler.Api/TheButler.Api.csproj -c Release -o out
+RUN dotnet publish src/HomeSynchronicity.Api/HomeSynchronicity.Api.csproj -c Release -o out
 
 # Runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:9.0
@@ -96,7 +96,7 @@ WORKDIR /app
 COPY --from=build /app/out .
 
 EXPOSE 8080
-ENTRYPOINT ["dotnet", "TheButler.Api.dll"]
+ENTRYPOINT ["dotnet", "HomeSynchronicity.Api.dll"]
 ```
 
 ### Step 4: Initialize Railway Project

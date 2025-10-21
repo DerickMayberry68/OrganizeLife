@@ -1,6 +1,6 @@
-# Screenshots Guide for The Butler
+# Screenshots Guide for HomeSynchronicity
 
-This directory contains marketing screenshots for The Butler application.
+This directory contains marketing screenshots for HomeSynchronicity application.
 
 ## Required Screenshots
 
@@ -57,7 +57,7 @@ To complete the marketing page, capture the following screenshots:
 ## How to Capture Screenshots
 
 ### Option 1: Browser Developer Tools (Recommended)
-1. Open The Butler in your browser
+1. Open HomeSynchronicity in your browser
 2. Press `F12` to open Developer Tools
 3. Press `Ctrl+Shift+M` (or `Cmd+Shift+M` on Mac) to toggle device toolbar
 4. Select device: "Responsive" or specific device

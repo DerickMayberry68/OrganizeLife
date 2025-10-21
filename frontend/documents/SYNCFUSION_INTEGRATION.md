@@ -2,7 +2,7 @@
 
 ## Overview
 
-TheButler application has been enhanced with **Syncfusion** professional UI components to provide a superior user experience with advanced features and stunning visualizations.
+HomeSynchronicity application has been enhanced with **Syncfusion** professional UI components to provide a superior user experience with advanced features and stunning visualizations.
 
 ## License
 
@@ -143,5 +143,5 @@ For Syncfusion-specific issues:
 
 ---
 
-**TheButler** - Professional home management powered by Syncfusion 🎩
+**HomeSynchronicity** - Professional home management powered by Syncfusion 🎩
 

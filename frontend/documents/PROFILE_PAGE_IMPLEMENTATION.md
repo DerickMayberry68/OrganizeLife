@@ -235,7 +235,7 @@ this.passwordForm = this.fb.group({
 
 ## 🎉 Success!
 
-**The Butler now has a complete user profile page with:**
+**HomeSynchronicity now has a complete user profile page with:**
 
 ✅ **Beautiful UI** matching the app theme  
 ✅ **Full functionality** for profile management  

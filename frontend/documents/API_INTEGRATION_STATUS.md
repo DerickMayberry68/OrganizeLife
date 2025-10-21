@@ -1,7 +1,7 @@
 # API Integration Status
 
 ## Overview
-This document tracks the status of API integrations across all modules in The Butler application.
+This document tracks the status of API integrations across all modules in HomeSynchronicity application.
 
 ## ✅ Fully Integrated Modules (Backend Available)
 

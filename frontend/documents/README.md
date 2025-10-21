@@ -1,4 +1,4 @@
-# The Butler 🎩
+# HomeSynchronicity 🎩
 
 A comprehensive household management application built with Angular and .NET Core.
 
@@ -35,7 +35,7 @@ A comprehensive household management application built with Angular and .NET Cor
 ## 📁 Project Structure
 
 ```
-TheButler/
+HomeSynchronicity/
 ├── frontend/                 # Angular Application
 │   ├── src/
 │   │   ├── app/
@@ -49,12 +49,12 @@ TheButler/
 │
 ├── backend/                  # .NET API
 │   ├── src/
-│   │   ├── TheButler.Api/           # Web API
-│   │   ├── TheButler.Core/          # Domain entities
-│   │   └── TheButler.Infrastructure/ # Data access & services
+│   │   ├── HomeSynchronicity.Api/           # Web API
+│   │   ├── HomeSynchronicity.Core/          # Domain entities
+│   │   └── HomeSynchronicity.Infrastructure/ # Data access & services
 │   ├── tests/
-│   │   └── TheButler.Tests/         # NUnit tests
-│   └── TheButlerApi.sln
+│   │   └── HomeSynchronicity.Tests/         # NUnit tests
+│   └── HomeSynchronicityApi.sln
 │
 └── README.md
 ```
@@ -81,7 +81,7 @@ The Angular app will run on `http://localhost:4200`
 ### Backend Setup
 
 ```bash
-cd backend/src/TheButler.Api
+cd backend/src/HomeSynchronicity.Api
 dotnet restore
 dotnet run
 ```
@@ -100,7 +100,7 @@ export const environment = {
 ```
 
 #### Backend Configuration
-Update `appsettings.json` in `TheButler.Api`:
+Update `appsettings.json` in `HomeSynchronicity.Api`:
 ```json
 {
   "ConnectionStrings": {

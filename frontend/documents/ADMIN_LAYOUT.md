@@ -1,8 +1,8 @@
-# TheButler - Admin Layout Documentation
+# HomeSynchronicity - Admin Layout Documentation
 
 ## Overview
 
-TheButler has been redesigned with a professional admin dashboard layout inspired by [Color Admin](https://seantheme.com/color-admin/admin/html/index_v3.html), featuring a left sidebar navigation and top bar with user information.
+HomeSynchronicity has been redesigned with a professional admin dashboard layout inspired by [Color Admin](https://seantheme.com/color-admin/admin/html/index_v3.html), featuring a left sidebar navigation and top bar with user information.
 
 ## Layout Structure
 
@@ -88,7 +88,7 @@ TheButler has been redesigned with a professional admin dashboard layout inspire
 - **Badges**: Error red, warning orange, success green
 
 ### Typography
-- **Brand**: Crimson Text (serif) for "TheButler"
+- **Brand**: Crimson Text (serif) for "HomeSynchronicity"
 - **UI Elements**: Inter (sans-serif)
 - **User Name**: Bold weights
 - **Roles**: Light secondary text
@@ -221,5 +221,5 @@ protected readonly navItems: NavItem[] = [
 
 ---
 
-**TheButler** - Professional Admin Dashboard 🎩
+**HomeSynchronicity** - Professional Admin Dashboard 🎩
 

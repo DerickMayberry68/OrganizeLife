@@ -74,7 +74,7 @@ Clicking "Log Out" in either location will:
 
 1. **Start the Angular App**:
    ```bash
-   cd C:\Users\deric\source\repos\StudioXConsulting\Projects\TheButler
+   cd C:\Users\deric\source\repos\StudioXConsulting\Projects\HomeSynchronicity
    ng serve
    ```
 

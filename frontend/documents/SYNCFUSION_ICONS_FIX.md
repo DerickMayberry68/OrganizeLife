@@ -118,7 +118,7 @@ This file contains the essential Syncfusion icon fonts.
 
 ## 🎉 Perfect!
 
-**The Butler now has:**
+**HomeSynchronicity now has:**
 - ✅ Beautiful form controls (matching Login/Register)
 - ✅ **All icons working correctly**
 - ✅ Professional, polished UI

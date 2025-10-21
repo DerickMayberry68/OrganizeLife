@@ -1,12 +1,12 @@
-# 📢 Marketing Materials - The Butler
+# 📢 Marketing Materials - HomeSynchronicity
 
-Complete marketing package for The Butler household management application.
+Complete marketing package for HomeSynchronicity household management application.
 
 ---
 
 ## 📁 What's Included
 
-This marketing package contains everything you need to promote The Butler:
+This marketing package contains everything you need to promote HomeSynchronicity:
 
 ### 1. **MARKETING.md** - Main Marketing Page
 Comprehensive marketing document featuring:
@@ -225,7 +225,7 @@ Red:            #ff5757
 - **Body**: Normal (400 weight)
 
 ### Logo
-- Location: `./public/TheButlerLogo.png`
+- Location: `./public/HomeSynchronicityLogo.png`
 - Favicon: `./public/the_butler_favicon_transparent.ico`
 
 ### Tone & Voice
@@ -257,20 +257,20 @@ Red:            #ff5757
 ### Messaging by Audience
 
 **For Families**:
-> "Keep your family organized with shared calendars, budgets, and documents. The Butler brings everyone together."
+> "Keep your family organized with shared calendars, budgets, and documents. HomeSynchronicity brings everyone together."
 
 **For Homeowners**:
-> "Track maintenance, warranties, and home expenses all in one place. Your home deserves The Butler."
+> "Track maintenance, warranties, and home expenses all in one place. Your home deserves HomeSynchronicity."
 
 **For Young Professionals**:
-> "Master household management from day one. The Butler makes adulting easier."
+> "Master household management from day one. HomeSynchronicity makes adulting easier."
 
 ---
 
 ## 💡 Content Ideas
 
 ### Blog Post Topics
-1. "10 Ways The Butler Saves You Time Every Week"
+1. "10 Ways HomeSynchronicity Saves You Time Every Week"
 2. "Never Miss a Bill Again: A Complete Guide"
 3. "The Ultimate Household Organization Checklist"
 4. "How to Create a Budget That Actually Works"
@@ -453,7 +453,7 @@ Consider partnering with:
 
 ## 🔄 Updating Marketing Materials
 
-As The Butler evolves:
+As HomeSynchronicity evolves:
 
 ### When to Update
 - New features launched
@@ -495,13 +495,13 @@ As The Butler evolves:
 
 ## 🌟 Final Thoughts
 
-Marketing The Butler is about communicating value:
+Marketing HomeSynchronicity is about communicating value:
 - **For busy families**: Peace of mind and organization
 - **For homeowners**: Control over their property
 - **For professionals**: Efficiency and automation
 - **For everyone**: A better way to manage household life
 
-Focus on benefits, show real results, and let The Butler's quality speak for itself.
+Focus on benefits, show real results, and let HomeSynchronicity's quality speak for itself.
 
 ---
 

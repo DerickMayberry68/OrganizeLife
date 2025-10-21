@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "TheButler": {
+    "HomeSynchronicity": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -73,10 +73,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "TheButler:build:production"
+              "buildTarget": "HomeSynchronicity:build:production"
             },
             "development": {
-              "buildTarget": "TheButler:build:development"
+              "buildTarget": "HomeSynchronicity:build:development"
             }
           },
           "defaultConfiguration": "development"

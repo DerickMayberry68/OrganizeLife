@@ -477,7 +477,7 @@ Rather than perfect components that take longer, we chose:
 
 Thank you for allowing me to work on this project! It's been a pleasure building these modules and seeing the application come together.
 
-**The Butler is almost complete and ready to help manage households!** 🏠
+**HomeSynchronicity is almost complete and ready to help manage households!** 🏠
 
 ---
 
