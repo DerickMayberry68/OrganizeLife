@@ -295,7 +295,7 @@
       top: 0;
       bottom: 0;
       width: 3px;
-      background: #1b76ff;
+      background: #108E91;
     }
 
     .notification-item__title {
@@ -339,7 +339,7 @@
     }
 
     &--info {
-      background: #1b76ff;
+      background: #108E91;
     }
 
     &--warning {
@@ -397,9 +397,9 @@
     flex-shrink: 0;
 
     &:hover {
-      background: #1b76ff;
+      background: #108E91;
       color: white;
-      border-color: #1b76ff;
+      border-color: #108E91;
       transform: scale(1.1);
     }
   }

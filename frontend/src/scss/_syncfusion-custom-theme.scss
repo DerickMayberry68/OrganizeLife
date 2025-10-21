@@ -38,7 +38,7 @@
       }
       
       &:focus-within {
-        border-color: #1b76ff;
+        border-color: #108E91;
         box-shadow: 0 0 0 3px rgba(27, 118, 255, 0.1);
       }
       
@@ -90,7 +90,7 @@
       }
       
       &:focus-within {
-        border-color: #1b76ff;
+        border-color: #108E91;
         box-shadow: 0 0 0 3px rgba(27, 118, 255, 0.1);
       }
       
@@ -146,7 +146,7 @@
       }
       
       &:focus-within {
-        border-color: #1b76ff;
+        border-color: #108E91;
         box-shadow: 0 0 0 3px rgba(27, 118, 255, 0.1);
       }
       
@@ -202,7 +202,7 @@
       }
       
       &:focus-within {
-        border-color: #1b76ff;
+        border-color: #108E91;
         box-shadow: 0 0 0 3px rgba(27, 118, 255, 0.1);
       }
       
@@ -237,12 +237,12 @@
       }
       
       &:hover .e-checkbox-frame {
-        border-color: #1b76ff;
+        border-color: #108E91;
       }
       
       &.e-checked .e-checkbox-frame {
-        background-color: #1b76ff;
-        border-color: #1b76ff;
+        background-color: #108E91;
+        border-color: #108E91;
       }
     }
   }
@@ -277,7 +277,7 @@
       }
       
       &:focus-within {
-        border-color: #1b76ff;
+        border-color: #108E91;
         box-shadow: 0 0 0 3px rgba(27, 118, 255, 0.1);
       }
     }
@@ -334,7 +334,7 @@
         transition: all 0.2s ease;
 
         &.e-primary {
-          background: linear-gradient(135deg, #1b76ff 0%, #6b5ce7 100%);
+          background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%);
           border: none;
           color: white;
           box-shadow: 0 2px 8px rgba(27, 118, 255, 0.3);
@@ -379,7 +379,7 @@
 
       &.e-active {
         background: rgba(27, 118, 255, 0.1);
-        color: #1b76ff;
+        color: #108E91;
       }
     }
   }
@@ -406,7 +406,7 @@
         color: #2d3748;
 
         &.e-selected {
-          background: #1b76ff;
+          background: #108E91;
           color: white;
         }
 
@@ -415,7 +415,7 @@
         }
 
         &.e-today {
-          border-color: #1b76ff;
+          border-color: #108E91;
         }
       }
     }
@@ -433,7 +433,7 @@
     display: block;
 
     i {
-      color: #1b76ff;
+      color: #108E91;
       margin-right: 8px;
     }
   }
@@ -631,8 +631,8 @@
           }
 
           &.e-primary {
-            background: #1b76ff;
-            border-color: #1b76ff;
+            background: #108E91;
+            border-color: #108E91;
             color: white;
 
             &:hover {
@@ -677,8 +677,8 @@
           }
 
           &.e-active {
-            background: #1b76ff;
-            border-color: #1b76ff;
+            background: #108E91;
+            border-color: #108E91;
             color: white;
           }
         }

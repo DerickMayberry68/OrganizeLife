@@ -1,3 +1,34 @@
+// Override theme navbar-brand styles
+::ng-deep .navbar-brand {
+  
+  img {
+    height: 45px !important;
+    width: auto !important;
+    max-height: 45px !important;
+    max-width: 100% !important;
+    object-fit: contain !important;
+    display: block !important;
+  }
+  
+  // Override the theme's navbar-logo styles that add backgrounds and borders
+  .navbar-logo {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 45px !important;
+    width: auto !important;
+    max-height: 45px !important;
+    transition: opacity 0.2s ease;
+    
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+}
+
 // Big Bell Icon Link
 .alert-bell-link {
   position: relative;

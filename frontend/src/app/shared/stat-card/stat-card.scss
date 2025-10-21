@@ -10,9 +10,9 @@
     transform: translateY(-2px);
   }
 
-  // Primary blue gradient (like "Total Visitors")
+  // Primary teal gradient (like "Total Visitors")
   &--primary {
-    background: linear-gradient(135deg, #1b76ff 0%, #4d94ff 100%);
+    background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%);
     
     .stat-card__title,
     .stat-card__value,
@@ -25,9 +25,9 @@
     }
   }
 
-  // Info cyan gradient (like "Bounce Rate")
+  // Info light teal gradient (like "Bounce Rate")
   &--info {
-    background: linear-gradient(135deg, #1bb8ff 0%, #4dcbff 100%);
+    background: linear-gradient(135deg, #33D4C3 0%, #5eddd0 100%);
     
     .stat-card__title,
     .stat-card__value,
