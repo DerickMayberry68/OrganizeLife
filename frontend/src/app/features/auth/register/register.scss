@@ -18,13 +18,16 @@
 .register-header {
   @extend .login-header;
 
-  .register-logo {
-    @extend .login-logo;
+  .register-logo {  
+    max-width: 100%;
+    height: auto;
+    max-height: 250px;
+    animation: bounceIn 0.8s ease-out;
   }
 }
 
 .register-form {
-  @extend .login-form;
+  @extend .login-form;a
 
   .form-text {
     font-size: 12px;
