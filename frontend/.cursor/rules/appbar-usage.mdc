@@ -1,0 +1,182 @@
+---
+description: AppBar component usage guidelines for feature pages
+globs: src/app/features/**/*.html,src/app/features/**/*.ts
+---
+
+# AppBar Component Usage
+
+## Overview
+Feature pages in HomeSynchronicity use the Syncfusion AppBar component for consistent page headers.
+
+## When to Use AppBar
+Use AppBar on all major feature pages:
+- ✅ Dashboard, Accounts, Bills, Budgets
+- ✅ Profile, Settings
+- ✅ Healthcare, Insurance
+- ✅ Inventory, Maintenance, Documents
+- ✅ Financial overview pages
+
+## Implementation Pattern
+
+### Basic AppBar (Title Only)
+```html
+<ejs-appbar cssClass="custom-appbar">
+  <ng-template #content>
+    <div class="appbar-content">
+      <div class="appbar-title">
+        <h4 class="mb-0">🏦 Page Title</h4>
+        <small class="text-muted">Page description or subtitle</small>
+      </div>
+    </div>
+  </ng-template>
+</ejs-appbar>
+```
+
+### AppBar with Actions
+```html
+<ejs-appbar cssClass="custom-appbar">
+  <span class="appbar-title">🏦 Accounts Hub</span>
+  <div class="e-appbar-spacer"></div>
+  <button ejs-button cssClass="e-inherit" (click)="openDialog()">
+    + Add Account
+  </button>
+  <button ejs-button cssClass="e-inherit" (click)="openOtherDialog()">
+    + Add Item
+  </button>
+</ejs-appbar>
+```
+
+## Required Import
+```typescript
+import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
+
+@Component({
+  imports: [
+    // ... other imports
+    AppBarModule
+  ]
+})
+```
+
+## Styling
+
+### Global AppBar Styles
+AppBar should use the teal gradient theme:
+```scss
+::ng-deep .custom-appbar {
+  background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%);
+  color: white;
+  margin-bottom: 20px;
+
+  .appbar-content {
+    padding: 15px 20px;
+  }
+
+  .appbar-title {
+    h4 {
+      font-size: 18px;
+      font-weight: 600;
+      color: white;
+    }
+
+    small {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 13px;
+    }
+  }
+}
+```
+
+## Emoji Icons
+Use emoji icons for visual appeal and consistency:
+- 🏦 Accounts
+- 💰 Financial
+- 📊 Budgets
+- 📄 Bills
+- 🏥 Healthcare
+- 🏠 Home/Property
+- ⚙️ Settings
+- 👤 Profile
+- 📱 Inventory
+- 🔧 Maintenance
+- 📋 Documents
+
+## Layout Integration
+AppBar should be the first element in your page component:
+```html
+<div class="page-wrapper">
+  <!-- AppBar first -->
+  <ejs-appbar cssClass="custom-appbar">
+    <!-- ... -->
+  </ejs-appbar>
+
+  <!-- Then page content -->
+  <div class="page-content">
+    <!-- ... -->
+  </div>
+</div>
+```
+
+## Page Content Spacing
+Remove top padding from page wrapper when using AppBar:
+```scss
+.page-wrapper {
+  // No top padding - AppBar handles it
+}
+
+.page-content {
+  padding: 0 20px 20px 20px; // Only sides and bottom
+}
+```
+
+## Responsive Behavior
+AppBar automatically handles responsive behavior:
+- Full width on all screen sizes
+- Buttons stack on mobile if needed
+- Text truncates gracefully
+
+## Examples
+
+### Simple Profile Page
+See: [profile.html](mdc:src/app/features/profile/profile.html)
+```html
+<ejs-appbar cssClass="custom-appbar">
+  <ng-template #content>
+    <div class="appbar-content">
+      <div class="appbar-title">
+        <h4 class="mb-0">👤 Profile</h4>
+        <small class="text-muted">Manage your account information</small>
+      </div>
+    </div>
+  </ng-template>
+</ejs-appbar>
+```
+
+### Page with Actions
+See: [accounts.html](mdc:src/app/features/accounts/accounts.html)
+```html
+<ejs-appbar cssClass="custom-appbar">
+  <span class="appbar-title">🏦 Accounts Hub</span>
+  <div class="e-appbar-spacer"></div>
+  <button ejs-button cssClass="e-inherit" (click)="openAccountDialog()">
+    + Add Account
+  </button>
+  <button ejs-button cssClass="e-inherit" (click)="openSubscriptionDialog()">
+    + Add Subscription
+  </button>
+</ejs-appbar>
+```
+
+## Do's and Don'ts
+✅ **DO**:
+- Use `cssClass="custom-appbar"` for consistent styling
+- Use emoji icons for visual consistency
+- Include descriptive subtitles
+- Use `e-appbar-spacer` for button alignment
+- Use teal gradient background
+
+❌ **DON'T**:
+- Create custom headers instead of using AppBar
+- Hardcode colors (use SCSS variables/gradients)
+- Add padding around AppBar (it's full-width)
+- Use text-only titles without emoji icons

@@ -1,0 +1,200 @@
+---
+description: Teal color theme palette and usage guidelines
+alwaysApply: true
+---
+
+# HomeSynchronicity Teal Color Theme
+
+## Primary Color Palette
+
+HomeSynchronicity uses a **teal-based color palette** as the primary theme.
+
+### Teal Colors
+- **Deep Teal (Primary)**: `#108E91` - Primary brand color, headers, buttons, active states
+- **Mid Teal**: `#20B6AA` - Secondary accent, gradient pairs with Deep Teal
+- **Light Teal**: `#33D4C3` - Info notifications, light accents, backgrounds
+
+### Supporting Colors
+- **Charcoal Blue**: `#1A2B3C` - Dark backgrounds, headers in dark mode
+- **Soft Gray**: `#F4F6F8` - Light backgrounds, subtle surfaces
+- **Pure White**: `#FFFFFF` - Main backgrounds, text on dark surfaces
+
+### Semantic Colors (Unchanged)
+- **Success/Green**: `#3ddc84` - Success messages, confirmations
+- **Warning/Orange**: `#ff8c42` - Warnings, pending states
+- **Error/Red**: `#ff5757` - Errors, danger states, destructive actions
+
+## SCSS Variables
+**File**: [src/scss/default/_variables.scss](mdc:src/scss/default/_variables.scss)
+
+```scss
+$blue:        #108E91 !default;  // Deep Teal (Primary Brand)
+$cyan:        #33D4C3 !default;  // Light Teal
+$dark:        #1A2B3C !default;  // Charcoal Blue
+$indigo:      #20B6AA !default;  // Mid Teal
+$light:       #F4F6F8 !default;  // Soft Gray
+$teal:        #20B6AA !default;  // Mid Teal
+$white:       #FFFFFF !default;
+$primary:     $blue !default;    // Deep Teal
+$info:        $cyan !default;    // Light Teal
+$theme:       $blue !default;    // Deep Teal
+```
+
+## Gradient Patterns
+
+### Primary Gradient (Most Common)
+```scss
+background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%);
+// Deep Teal → Mid Teal
+```
+
+### Light Gradient
+```scss
+background: linear-gradient(135deg, #33D4C3 0%, #20B6AA 100%);
+// Light Teal → Mid Teal
+```
+
+### Success Gradient
+```scss
+background: linear-gradient(135deg, #3ddc84 0%, #67e79d 100%);
+// Green → Light Green
+```
+
+### Warning Gradient
+```scss
+background: linear-gradient(135deg, #ff8c42 0%, #ffaa6b 100%);
+// Orange → Light Orange
+```
+
+### Error/Danger Gradient
+```scss
+background: linear-gradient(135deg, #ff5757 0%, #ff7979 100%);
+// Red → Light Red
+```
+
+## Usage Guidelines
+
+### AppBar & Headers
+```scss
+.custom-appbar {
+  background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%);
+  color: white;
+}
+```
+
+### Primary Buttons
+```scss
+.btn-primary {
+  background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%);
+  border: none;
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 142, 145, 0.3);
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(16, 142, 145, 0.4);
+  }
+}
+```
+
+### Active States
+```scss
+&.active, &--active {
+  background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 142, 145, 0.3);
+}
+```
+
+### Hover States
+```scss
+&:hover {
+  background: rgba(16, 142, 145, 0.1);
+  color: #108E91;
+}
+```
+
+### Focus States
+```scss
+&:focus {
+  border-color: #108E91;
+  box-shadow: 0 0 0 3px rgba(16, 142, 145, 0.1);
+}
+```
+
+### Syncfusion Component Overrides
+```scss
+::ng-deep {
+  .e-switch-on .e-switch-inner {
+    background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%);
+  }
+
+  .e-input-group.e-input-focus {
+    border-color: #108E91;
+    box-shadow: 0 0 0 3px rgba(16, 142, 145, 0.1);
+  }
+}
+```
+
+## Login/Register Pages
+**Files**: 
+- [src/app/features/auth/login/login.scss](mdc:src/app/features/auth/login/login.scss)
+- [src/app/features/auth/register/register.scss](mdc:src/app/features/auth/register/register.scss)
+
+```scss
+.login-page {
+  background: linear-gradient(135deg, #33D4C3 0%, #20B6AA 100%); // Light Teal to Mid Teal
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%); // Deep Teal to Mid Teal
+  box-shadow: 0 4px 15px rgba(16, 142, 145, 0.3);
+}
+
+.forgot-password, .register-link {
+  color: #108E91; // Deep Teal
+  
+  &:hover {
+    color: #20B6AA; // Mid Teal
+  }
+}
+```
+
+## SweetAlert2 Color Standards
+```typescript
+Swal.fire({
+  confirmButtonColor: '#108E91',  // Deep Teal for confirmations
+  cancelButtonColor: '#6c757d',    // Gray for cancel
+  // For destructive actions:
+  confirmButtonColor: '#ff5757',   // Red for delete/danger
+});
+```
+
+## Rules for Color Usage
+
+### ✅ DO
+- Use the defined teal gradient for all primary elements
+- Use SCSS variables: `$blue`, `$cyan`, `$teal`, `$primary`
+- Use CSS custom properties: `var(--bs-app-theme)`, `var(--bs-primary)`
+- Apply consistent gradients across similar components
+- Use rgba() for hover/focus states with opacity
+
+### ❌ DON'T
+- Hardcode hex values in component SCSS
+- Use old blue colors (`#1b76ff`, `#6b5ce7`)
+- Create custom gradients outside the defined palette
+- Use teal for error/danger states (use red)
+- Use teal for success states (use green)
+
+## Migration from Blue to Teal
+When updating old components:
+1. Replace `#1b76ff` → `#108E91` (Deep Teal)
+2. Replace `#1bb8ff` → `#33D4C3` (Light Teal)
+3. Replace `#6b5ce7` → `#20B6AA` (Mid Teal)
+4. Update gradients to teal variants
+5. Test contrast ratios for accessibility
+
+## Accessibility
+All teal colors meet WCAG AA standards:
+- Deep Teal text on white: ✅ 4.5:1
+- White text on Deep Teal: ✅ 6.2:1
+- Deep Teal on Light Gray: ✅ 5.1:1

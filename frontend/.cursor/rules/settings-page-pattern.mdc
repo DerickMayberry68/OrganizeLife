@@ -1,0 +1,150 @@
+---
+description: Settings page structure and implementation patterns
+---
+
+# Settings Page Pattern
+
+## Overview
+The Settings page is a tabbed interface for managing user preferences, notifications, privacy, appearance, and advanced options.
+
+## Location & Access
+- **Component**: [src/app/features/settings/](mdc:src/app/features/settings/)
+- **Route**: `/settings` (protected by `authGuard`)
+- **Access Points**:
+  - User dropdown in header ([header.component.html](mdc:src/app/components/header/header.component.html))
+  - Admin profile section in sidebar ([sidebar.component.html](mdc:src/app/components/sidebar/sidebar.component.html))
+  - **NOT in main navigation menu**
+
+## Structure
+
+### Required Components
+```typescript
+import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
+import { ButtonModule, CheckBoxModule, SwitchModule } from '@syncfusion/ej2-angular-buttons';
+import { TextBoxModule } from '@syncfusion/ej2-angular-inputs';
+import { DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
+import { ReactiveFormsModule } from '@angular/forms';
+import Swal from 'sweetalert2';
+```
+
+### Template Pattern
+```html
+<div class="settings-page">
+  <!-- AppBar Header -->
+  <ejs-appbar cssClass="custom-appbar">
+    <ng-template #content>
+      <div class="appbar-content">
+        <div class="appbar-title">
+          <h4 class="mb-0">⚙️ Settings</h4>
+          <small class="text-muted">Subtitle here</small>
+        </div>
+      </div>
+    </ng-template>
+  </ejs-appbar>
+
+  <!-- Settings Container -->
+  <div class="settings-container">
+    <!-- Settings Tabs (Sidebar) -->
+    <div class="settings-tabs">
+      <button class="settings-tabs__item" 
+              [class.settings-tabs__item--active]="activeTab() === 'tab1'">
+        <i class="fas fa-icon"></i>
+        <span>Tab Name</span>
+      </button>
+    </div>
+
+    <!-- Settings Content -->
+    <div class="settings-content">
+      <div class="settings-panel" *ngIf="activeTab() === 'tab1'">
+        <div class="settings-panel__header">
+          <h2><i class="fas fa-icon me-2"></i>Panel Title</h2>
+          <p>Panel description</p>
+        </div>
+        <form [formGroup]="form" class="settings-form">
+          <!-- Form content -->
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+## State Management
+Use Angular signals for reactive state:
+```typescript
+protected readonly isLoading = signal(false);
+protected readonly activeTab = signal<string>('general');
+```
+
+## Form Groups
+Settings are organized into separate FormGroups:
+- `generalForm` - Regional settings (timezone, language, date format, currency)
+- `notificationForm` - Email, push, SMS notifications
+- `privacyForm` - Privacy and security toggles
+- `appearanceForm` - Theme and display options
+
+## Confirmation Dialogs
+**ALWAYS use SweetAlert2** for destructive actions:
+```typescript
+Swal.fire({
+  title: 'Delete Account',
+  text: 'Are you sure? This action cannot be undone!',
+  icon: 'warning',
+  showCancelButton: true,
+  confirmButtonColor: '#ff5757',
+  cancelButtonColor: '#6c757d',
+  confirmButtonText: 'Yes, delete it!',
+  cancelButtonText: 'Cancel'
+}).then((result) => {
+  if (result.isConfirmed) {
+    // Perform action
+  }
+});
+```
+
+## Styling Guidelines
+- **AppBar**: Teal gradient `linear-gradient(135deg, #108E91 0%, #20B6AA 100%)`
+- **Active Tab**: Same teal gradient with white text
+- **Form Switches**: Syncfusion switches with teal active state
+- **Save Buttons**: Teal gradient with hover effects
+- **Danger Zone**: Red accents `#ff5757` for destructive actions
+
+## Responsive Design
+```scss
+.settings-container {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 20px;
+
+  @media (max-width: 992px) {
+    grid-template-columns: 1fr; // Stack on mobile
+  }
+}
+```
+
+## Animations
+Use CSS-based animations, NOT Angular animations:
+```scss
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.settings-panel {
+  animation: slideIn 0.3s ease-out;
+}
+```
+
+## Do's and Don'ts
+✅ **DO**:
+- Use Syncfusion components for form controls
+- Use SweetAlert2 for confirmations
+- Use CSS animations
+- Organize settings into logical tabs
+- Provide clear feedback via toast notifications
+
+❌ **DON'T**:
+- Use Angular animations (package not installed)
+- Add Settings to main navigation menu (belongs in user dropdown)
+- Hardcode colors (use SCSS variables)
+- Use native `alert()`, `confirm()`, or `prompt()`

@@ -86,13 +86,13 @@ export class AppMenuService {
 					}
 				]
 			},
-			// Alerts - Top level for quick access
-			{
-				'icon': 'fa fa-bell',
-				'title': 'Alerts',
-				'url': '/alerts',
-				'badge': unreadCount.toString() // Dynamic count, always shown
-			}
+		// Alerts - Top level for quick access
+		{
+			'icon': 'fa fa-bell',
+			'title': 'Alerts',
+			'url': '/alerts',
+			'badge': unreadCount.toString() // Dynamic count, always shown
+		}
 		];
 	}
 }

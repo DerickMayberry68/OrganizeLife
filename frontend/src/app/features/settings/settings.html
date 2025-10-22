@@ -1,0 +1,427 @@
+<div class="settings-page">
+  <!-- AppBar Header -->
+  <ejs-appbar cssClass="custom-appbar">
+    <ng-template #content>
+      <div class="appbar-content">
+        <div class="appbar-title">
+          <h4 class="mb-0">⚙️ Settings</h4>
+          <small class="text-muted">Manage your account preferences and configurations</small>
+        </div>
+      </div>
+    </ng-template>
+  </ejs-appbar>
+
+  <!-- Settings Container -->
+  <div class="settings-container">
+    <!-- Settings Tabs -->
+    <div class="settings-tabs">
+      <button 
+        class="settings-tabs__item"
+        [class.settings-tabs__item--active]="activeTab() === 'general'"
+        (click)="setActiveTab('general')">
+        <i class="fas fa-sliders-h"></i>
+        <span>General</span>
+      </button>
+      <button 
+        class="settings-tabs__item"
+        [class.settings-tabs__item--active]="activeTab() === 'notifications'"
+        (click)="setActiveTab('notifications')">
+        <i class="fas fa-bell"></i>
+        <span>Notifications</span>
+      </button>
+      <button 
+        class="settings-tabs__item"
+        [class.settings-tabs__item--active]="activeTab() === 'privacy'"
+        (click)="setActiveTab('privacy')">
+        <i class="fas fa-lock"></i>
+        <span>Privacy & Security</span>
+      </button>
+      <button 
+        class="settings-tabs__item"
+        [class.settings-tabs__item--active]="activeTab() === 'appearance'"
+        (click)="setActiveTab('appearance')">
+        <i class="fas fa-palette"></i>
+        <span>Appearance</span>
+      </button>
+      <button 
+        class="settings-tabs__item"
+        [class.settings-tabs__item--active]="activeTab() === 'advanced'"
+        (click)="setActiveTab('advanced')">
+        <i class="fas fa-tools"></i>
+        <span>Advanced</span>
+      </button>
+    </div>
+
+    <!-- Settings Content -->
+    <div class="settings-content">
+      
+      <!-- General Settings -->
+      <div class="settings-panel" *ngIf="activeTab() === 'general'">
+        <div class="settings-panel__header">
+          <h2><i class="fas fa-sliders-h me-2"></i>General Settings</h2>
+          <p>Configure basic application preferences</p>
+        </div>
+
+        <form [formGroup]="generalForm" class="settings-form">
+          <div class="form-section">
+            <h3 class="form-section__title">Regional Settings</h3>
+            
+            <div class="form-group">
+              <label for="timezone" class="form-label">
+                <i class="fas fa-clock me-2"></i>Time Zone
+              </label>
+              <ejs-dropdownlist
+                id="timezone"
+                formControlName="timezone"
+                [dataSource]="timezones"
+                [fields]="{ text: 'text', value: 'value' }"
+                placeholder="Select timezone"
+                cssClass="form-control">
+              </ejs-dropdownlist>
+            </div>
+
+            <div class="form-group">
+              <label for="language" class="form-label">
+                <i class="fas fa-language me-2"></i>Language
+              </label>
+              <ejs-dropdownlist
+                id="language"
+                formControlName="language"
+                [dataSource]="languages"
+                [fields]="{ text: 'text', value: 'value' }"
+                placeholder="Select language"
+                cssClass="form-control">
+              </ejs-dropdownlist>
+            </div>
+
+            <div class="form-group">
+              <label for="dateFormat" class="form-label">
+                <i class="fas fa-calendar me-2"></i>Date Format
+              </label>
+              <ejs-dropdownlist
+                id="dateFormat"
+                formControlName="dateFormat"
+                [dataSource]="dateFormats"
+                [fields]="{ text: 'text', value: 'value' }"
+                placeholder="Select date format"
+                cssClass="form-control">
+              </ejs-dropdownlist>
+            </div>
+
+            <div class="form-group">
+              <label for="currency" class="form-label">
+                <i class="fas fa-dollar-sign me-2"></i>Currency
+              </label>
+              <ejs-dropdownlist
+                id="currency"
+                formControlName="currency"
+                [dataSource]="currencies"
+                [fields]="{ text: 'text', value: 'value' }"
+                placeholder="Select currency"
+                cssClass="form-control">
+              </ejs-dropdownlist>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button 
+              type="button" 
+              class="btn btn-primary"
+              (click)="saveGeneralSettings()"
+              [disabled]="isLoading()">
+              <i class="fas fa-save me-2"></i>
+              <span *ngIf="!isLoading()">Save Changes</span>
+              <span *ngIf="isLoading()">Saving...</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Notification Settings -->
+      <div class="settings-panel" *ngIf="activeTab() === 'notifications'">
+        <div class="settings-panel__header">
+          <h2><i class="fas fa-bell me-2"></i>Notification Preferences</h2>
+          <p>Manage how you receive alerts and updates</p>
+        </div>
+
+        <form [formGroup]="notificationForm" class="settings-form">
+          <div class="form-section">
+            <h3 class="form-section__title">Email Notifications</h3>
+            
+            <div class="form-check-group">
+              <ejs-switch
+                formControlName="emailNotifications"
+                label="Enable email notifications">
+              </ejs-switch>
+            </div>
+
+            <div class="form-check-group">
+              <ejs-switch
+                formControlName="billReminders"
+                label="Bill payment reminders">
+              </ejs-switch>
+            </div>
+
+            <div class="form-check-group">
+              <ejs-switch
+                formControlName="budgetAlerts"
+                label="Budget threshold alerts">
+              </ejs-switch>
+            </div>
+
+            <div class="form-check-group">
+              <ejs-switch
+                formControlName="maintenanceReminders"
+                label="Maintenance task reminders">
+              </ejs-switch>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3 class="form-section__title">Alert Delivery Methods</h3>
+            
+            <div class="form-check-group">
+              <ejs-switch
+                formControlName="alertsEmail"
+                label="Email alerts">
+              </ejs-switch>
+            </div>
+
+            <div class="form-check-group">
+              <ejs-switch
+                formControlName="alertsPush"
+                label="Push notifications">
+              </ejs-switch>
+            </div>
+
+            <div class="form-check-group">
+              <ejs-switch
+                formControlName="alertsSMS"
+                label="SMS alerts (premium)">
+              </ejs-switch>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3 class="form-section__title">Reports & Digests</h3>
+            
+            <div class="form-check-group">
+              <ejs-switch
+                formControlName="weeklyDigest"
+                label="Weekly activity digest">
+              </ejs-switch>
+            </div>
+
+            <div class="form-check-group">
+              <ejs-switch
+                formControlName="monthlyReport"
+                label="Monthly financial report">
+              </ejs-switch>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button 
+              type="button" 
+              class="btn btn-primary"
+              (click)="saveNotificationSettings()"
+              [disabled]="isLoading()">
+              <i class="fas fa-save me-2"></i>
+              <span *ngIf="!isLoading()">Save Changes</span>
+              <span *ngIf="isLoading()">Saving...</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Privacy & Security Settings -->
+      <div class="settings-panel" *ngIf="activeTab() === 'privacy'">
+        <div class="settings-panel__header">
+          <h2><i class="fas fa-lock me-2"></i>Privacy & Security</h2>
+          <p>Control your data privacy and account security</p>
+        </div>
+
+        <form [formGroup]="privacyForm" class="settings-form">
+          <div class="form-section">
+            <h3 class="form-section__title">Profile Privacy</h3>
+            
+            <div class="form-check-group">
+              <ejs-switch
+                formControlName="profileVisibility"
+                label="Make profile visible to household members">
+              </ejs-switch>
+            </div>
+
+            <div class="form-check-group">
+              <ejs-switch
+                formControlName="showEmail"
+                label="Show email to household members">
+              </ejs-switch>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3 class="form-section__title">Data & Analytics</h3>
+            
+            <div class="form-check-group">
+              <ejs-switch
+                formControlName="shareAnalytics"
+                label="Share anonymous usage data to improve HomeSynchronicity">
+              </ejs-switch>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3 class="form-section__title">Account Security</h3>
+            
+            <div class="form-check-group">
+              <ejs-switch
+                formControlName="twoFactorAuth"
+                label="Enable two-factor authentication">
+              </ejs-switch>
+              <small class="form-text text-muted">
+                Add an extra layer of security to your account
+              </small>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button 
+              type="button" 
+              class="btn btn-primary"
+              (click)="savePrivacySettings()"
+              [disabled]="isLoading()">
+              <i class="fas fa-save me-2"></i>
+              <span *ngIf="!isLoading()">Save Changes</span>
+              <span *ngIf="isLoading()">Saving...</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Appearance Settings -->
+      <div class="settings-panel" *ngIf="activeTab() === 'appearance'">
+        <div class="settings-panel__header">
+          <h2><i class="fas fa-palette me-2"></i>Appearance</h2>
+          <p>Customize the look and feel of your application</p>
+        </div>
+
+        <form [formGroup]="appearanceForm" class="settings-form">
+          <div class="form-section">
+            <h3 class="form-section__title">Theme</h3>
+            
+            <div class="form-group">
+              <label for="theme" class="form-label">
+                <i class="fas fa-paint-brush me-2"></i>Color Theme
+              </label>
+              <ejs-dropdownlist
+                id="theme"
+                formControlName="theme"
+                [dataSource]="themes"
+                [fields]="{ text: 'text', value: 'value' }"
+                placeholder="Select theme"
+                cssClass="form-control">
+              </ejs-dropdownlist>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3 class="form-section__title">Display Options</h3>
+            
+            <div class="form-check-group">
+              <ejs-switch
+                formControlName="compactMode"
+                label="Compact mode (reduce spacing)">
+              </ejs-switch>
+            </div>
+
+            <div class="form-check-group">
+              <ejs-switch
+                formControlName="showSidebar"
+                label="Always show sidebar">
+              </ejs-switch>
+            </div>
+
+            <div class="form-check-group">
+              <ejs-switch
+                formControlName="animations"
+                label="Enable animations and transitions">
+              </ejs-switch>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button 
+              type="button" 
+              class="btn btn-primary"
+              (click)="saveAppearanceSettings()"
+              [disabled]="isLoading()">
+              <i class="fas fa-save me-2"></i>
+              <span *ngIf="!isLoading()">Save Changes</span>
+              <span *ngIf="isLoading()">Saving...</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Advanced Settings -->
+      <div class="settings-panel" *ngIf="activeTab() === 'advanced'">
+        <div class="settings-panel__header">
+          <h2><i class="fas fa-tools me-2"></i>Advanced</h2>
+          <p>Advanced options and data management</p>
+        </div>
+
+        <div class="settings-form">
+          <div class="form-section">
+            <h3 class="form-section__title">Data Management</h3>
+            
+            <div class="action-card">
+              <div class="action-card__content">
+                <i class="fas fa-download action-card__icon"></i>
+                <div>
+                  <h4>Export Data</h4>
+                  <p>Download all your household data in JSON format</p>
+                </div>
+              </div>
+              <button type="button" class="btn btn-outline-primary" (click)="exportData()">
+                <i class="fas fa-download me-2"></i>Export
+              </button>
+            </div>
+
+            <div class="action-card">
+              <div class="action-card__content">
+                <i class="fas fa-undo action-card__icon"></i>
+                <div>
+                  <h4>Reset Settings</h4>
+                  <p>Reset all settings to their default values</p>
+                </div>
+              </div>
+              <button type="button" class="btn btn-outline-warning" (click)="resetSettings()">
+                <i class="fas fa-undo me-2"></i>Reset
+              </button>
+            </div>
+          </div>
+
+          <div class="form-section form-section--danger">
+            <h3 class="form-section__title text-danger">Danger Zone</h3>
+            
+            <div class="action-card action-card--danger">
+              <div class="action-card__content">
+                <i class="fas fa-exclamation-triangle action-card__icon"></i>
+                <div>
+                  <h4>Delete Account</h4>
+                  <p>Permanently delete your account and all associated data. This action cannot be undone.</p>
+                </div>
+              </div>
+              <button type="button" class="btn btn-danger" (click)="deleteAccount()">
+                <i class="fas fa-trash-alt me-2"></i>Delete Account
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+

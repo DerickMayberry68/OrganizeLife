@@ -1,0 +1,191 @@
+---
+description: User menu and profile dropdown patterns
+---
+
+# User Menu & Profile Dropdown Pattern
+
+## Overview
+HomeSynchronicity has **two** user profile menus with identical functionality:
+1. Header dropdown (top-right corner)
+2. Sidebar admin section (collapsible profile area)
+
+## Location 1: Header User Dropdown
+**File**: [src/app/components/header/header.component.html](mdc:src/app/components/header/header.component.html)
+
+### Structure
+```html
+<div class="navbar-item navbar-user dropdown">
+  <a href="javascript:;" class="navbar-link dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown">
+    <div class="image image-icon bg-primary text-white fw-bold">
+      {{ userInitials }}
+    </div>
+    <span>
+      <span class="d-none d-md-inline">{{ userDisplayName }}</span>
+      <b class="caret"></b>
+    </span>
+  </a>
+  <div class="dropdown-menu dropdown-menu-end me-1">
+    <div class="dropdown-header">
+      <span class="d-block fw-bold">{{ userDisplayName }}</span>
+      <small class="text-muted">{{ currentUser?.email }}</small>
+    </div>
+    <div class="dropdown-divider"></div>
+    <a routerLink="/profile" class="dropdown-item">
+      <i class="fa fa-user-circle fa-fw me-2"></i>Edit Profile
+    </a>
+    <a routerLink="/settings" class="dropdown-item">
+      <i class="fa fa-cog fa-fw me-2"></i>Settings
+    </a>
+    <div class="dropdown-divider"></div>
+    <a href="javascript:;" class="dropdown-item text-danger" (click)="logout()">
+      <i class="fa fa-sign-out-alt fa-fw me-2"></i>Log Out
+    </a>
+  </div>
+</div>
+```
+
+## Location 2: Sidebar Admin Section
+**File**: [src/app/components/sidebar/sidebar.component.html](mdc:src/app/components/sidebar/sidebar.component.html)
+
+### Structure
+```html
+<div class="menu-item menu-profile">
+  <a href="javascript:;" class="menu-profile-link" (click)="toggleNavProfile($event)">
+    <div class="menu-profile-cover with-shadow"></div>
+    <div class="menu-profile-image menu-profile-image-icon bg-primary text-white fw-bold">
+      {{ userInitials }}
+    </div>
+    <div class="menu-profile-info">
+      <div class="d-flex align-items-center">
+        <div class="flex-grow-1">{{ userDisplayName }}</div>
+        <div class="menu-caret ms-auto"></div>
+      </div>
+      <small>{{ userRole }}</small>
+    </div>
+  </a>
+</div>
+
+<div id="appSidebarProfileMenu" class="collapse">
+  <div class="menu-item pt-5px">
+    <a routerLink="/profile" class="menu-link">
+      <div class="menu-icon"><i class="fa fa-user-circle"></i></div>
+      <div class="menu-text">Edit Profile</div>
+    </a>
+  </div>
+  <div class="menu-item">
+    <a routerLink="/settings" class="menu-link">
+      <div class="menu-icon"><i class="fa fa-cog"></i></div>
+      <div class="menu-text">Settings</div>
+    </a>
+  </div>
+  <div class="menu-item pb-5px">
+    <a href="javascript:;" class="menu-link text-danger" (click)="logout()">
+      <div class="menu-icon"><i class="fa fa-sign-out-alt"></i></div>
+      <div class="menu-text">Log Out</div>
+    </a>
+  </div>
+  <div class="menu-divider m-0"></div>
+</div>
+```
+
+## Menu Items Standard Order
+**ALWAYS use this order**:
+1. **Edit Profile** (`routerLink="/profile"`)
+2. **Settings** (`routerLink="/settings"`)
+3. **Divider**
+4. **Log Out** (with `text-danger` class)
+
+## Icon Standards
+- **Profile**: `fa-user-circle`
+- **Settings**: `fa-cog`
+- **Log Out**: `fa-sign-out-alt`
+
+## User Information Display
+Display in dropdown header:
+```html
+<div class="dropdown-header">
+  <span class="d-block fw-bold">{{ userDisplayName }}</span>
+  <small class="text-muted">{{ currentUser?.email }}</small>
+</div>
+```
+
+## Settings & Profile Link Requirements
+- ✅ **MUST use** `routerLink="/settings"` and `routerLink="/profile"`
+- ❌ **NEVER use** `href="javascript:;"` for these links
+- ✅ **MUST include** Font Awesome icons
+- ✅ **MUST include** `fa-fw` class for icon alignment
+
+## Where Settings Should NOT Appear
+❌ **Settings should NOT be in**:
+- Main navigation menu ([app-menus.service.ts](mdc:src/app/services/app-menus.service.ts))
+- Top menu bar
+- Footer
+- Standalone pages
+
+✅ **Settings ONLY appears in**:
+- User dropdown (header)
+- Admin profile section (sidebar)
+
+## Logout Functionality
+```typescript
+logout(): void {
+  // Clear authentication
+  this.authService.logout();
+  
+  // Redirect to login
+  this.router.navigate(['/login']);
+  
+  // Optional: Show confirmation
+  this.toastService.success('Logged Out', 'See you next time!');
+}
+```
+
+## Styling Guidelines
+
+### Header Dropdown
+```scss
+.navbar-user {
+  .dropdown-menu {
+    min-width: 220px;
+  }
+  
+  .dropdown-item {
+    &.text-danger {
+      color: #ff5757 !important;
+      
+      &:hover {
+        background: rgba(255, 87, 87, 0.1);
+      }
+    }
+  }
+}
+```
+
+### Sidebar Profile
+```scss
+.menu-profile {
+  background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%);
+  
+  .menu-link {
+    &.text-danger {
+      color: #ff5757;
+    }
+  }
+}
+```
+
+## Do's and Don'ts
+✅ **DO**:
+- Keep both menus in sync (same items, same order)
+- Use `routerLink` for navigation
+- Use Font Awesome icons with `fa-fw` class
+- Display user initials in avatar
+- Show email in dropdown header
+- Style logout as danger/warning
+
+❌ **DON'T**:
+- Add Settings to main navigation
+- Use `href="#"` or `href="javascript:;"` for Profile/Settings
+- Change the menu order
+- Remove user information from header
+- Skip icons on menu items
