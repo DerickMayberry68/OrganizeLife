@@ -31,3 +31,9 @@ Desktop.ini
 .AppleDouble
 .LSOverride
 
+# Ignore development config files
+appsettings.Development.json
+appsettings.Production.json
+# Ignore user secrets (if using Secret Manager)
+*.user
+
