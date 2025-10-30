@@ -1,4 +1,4 @@
-# TheButler API
+# OrganizeLife API
 
 A .NET 9 Web API for managing household tasks, bills, documents, and more. Built with Clean Architecture principles and integrated with Supabase PostgreSQL and Authentication.
 
