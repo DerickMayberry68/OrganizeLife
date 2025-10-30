@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, isDevMode } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject, tap } from 'rxjs';
 import { Router } from '@angular/router';
@@ -59,7 +59,9 @@ export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
   
-  private readonly API_URL = 'https://localhost:7157/api';
+  private readonly DEV_API_URL = 'https://localhost:7157/api';
+  private readonly PROD_API_URL = 'https://organizelife-acgmf4fzhxhfafa8.centralus-01.azurewebsites.net/api';
+  private readonly API_URL = isDevMode() ? this.DEV_API_URL : this.PROD_API_URL;
   private readonly TOKEN_KEY = 'butler_access_token';
   private readonly REFRESH_TOKEN_KEY = 'butler_refresh_token';
   private readonly USER_KEY = 'butler_user';

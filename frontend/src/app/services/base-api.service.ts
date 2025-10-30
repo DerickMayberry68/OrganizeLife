@@ -1,4 +1,4 @@
-import { inject } from '@angular/core';
+import { inject, isDevMode } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { signal, WritableSignal } from '@angular/core';
@@ -11,7 +11,9 @@ import { ToastService } from './toast.service';
 export abstract class BaseApiService {
   protected readonly http = inject(HttpClient);
   protected readonly toastService = inject(ToastService);
-  protected readonly API_URL = 'https://localhost:7157/api';
+  private readonly DEV_API_URL = 'https://localhost:7157/api';
+  private readonly PROD_API_URL = 'https://organizelife-acgmf4fzhxhfafa8.centralus-01.azurewebsites.net/api';
+  protected readonly API_URL = isDevMode() ? this.DEV_API_URL : this.PROD_API_URL;
 
   /**
    * Helper method to update a signal from API response
