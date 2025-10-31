@@ -256,6 +256,9 @@ public class SetupController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
     {
+
+        
+
         // Validate input
         if (string.IsNullOrWhiteSpace(dto.Email))
             return BadRequest(new { Message = "Email is required" });
@@ -265,6 +268,8 @@ public class SetupController : ControllerBase
 
         var supabaseUrl = _configuration["Supabase:Url"];
         var supabaseAnonKey = _configuration["Supabase:AnonKey"];
+        Console.WriteLine($"[DEBUG] Supabase AnonKey (first 10 chars): {supabaseAnonKey?.Substring(0, Math.Min(10, supabaseAnonKey.Length))}");
+        Console.WriteLine($"[DEBUG] Full key length: {supabaseAnonKey?.Length}");
 
         if (string.IsNullOrEmpty(supabaseUrl) || string.IsNullOrEmpty(supabaseAnonKey))
         {
