@@ -14,7 +14,9 @@ namespace TheButler.Api
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            // Add services to the container
+
+            builder.Configuration.AddEnvironmentVariables();
 
             // Configure PostgreSQL with Supabase
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
