@@ -403,5 +403,30 @@ public class SetupController : ControllerBase
             HasJwtSecret = hasJwtSecret
         });
     }
+
+    [HttpGet("debug-config")]
+    public IActionResult DebugConfig()
+    {
+        var url = _configuration["Supabase:Url"] ?? "NULL";
+        var anonKey = _configuration["Supabase:AnonKey"] ?? "NULL";
+        var jwtSecret = _configuration["Supabase:JwtSecret"] ?? "NULL";
+
+        return Ok(new
+        {
+            Environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"),
+            Supabase = new
+            {
+                Url = url,
+                AnonKey = anonKey.Length > 10 ? anonKey.Substring(0, 10) + "..." : anonKey,
+                AnonKey_Length = anonKey.Length,
+                JwtSecret = jwtSecret.Length > 10 ? jwtSecret.Substring(0, 10) + "..." : jwtSecret,
+                JwtSecret_Length = jwtSecret.Length
+            },
+            AllKeys = _configuration.AsEnumerable()
+                .Where(k => k.Key.Contains("SUPABASE", StringComparison.OrdinalIgnoreCase))
+                .Select(k => new { k.Key, Value = k.Value?.Length > 0 ? k.Value.Substring(0, Math.Min(10, k.Value.Length)) + "..." : "NULL" })
+                .ToList()
+        });
+    }
 }
 
