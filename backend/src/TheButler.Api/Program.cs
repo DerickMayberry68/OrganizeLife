@@ -18,6 +18,8 @@ namespace TheButler.Api
 
             builder.Configuration.AddEnvironmentVariables();
 
+            
+
             // Configure PostgreSQL with Supabase
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
             builder.Services.AddDbContext<TheButlerDbContext>(options =>
@@ -29,10 +31,25 @@ namespace TheButler.Api
                         errorCodesToAdd: null);
                 }));
 
+            // Map flat env vars to hierarchical keys
+            var supabaseUrl = builder.Configuration["SUPABASE_URL"]
+                              ?? throw new InvalidOperationException("SUPABASE_URL is missing");
+
+            var supabaseAnonKey = builder.Configuration["SUPABASE_ANON_KEY"]
+                                  ?? throw new InvalidOperationException("SUPABASE_ANON_KEY is missing");
+
+            var supabaseJwtSecret = builder.Configuration["SUPABASE_JWT_SECRET"]
+                                    ?? throw new InvalidOperationException("SUPABASE_JWT_SECRET is missing");
+
+            // Make available under Supabase:Key
+            builder.Configuration["Supabase:Url"] = supabaseUrl;
+            builder.Configuration["Supabase:AnonKey"] = supabaseAnonKey;
+            builder.Configuration["Supabase:JwtSecret"] = supabaseJwtSecret;
+
             // Configure Supabase Authentication
-            var supabaseJwtSecret = builder.Configuration["Supabase:JwtSecret"];
-            var supabaseUrl = builder.Configuration["Supabase:Url"];
-            
+            //var supabaseJwtSecret = builder.Configuration["Supabase:JwtSecret"];
+            //var supabaseUrl = builder.Configuration["Supabase:Url"];
+
             // Only configure authentication if Supabase credentials are provided
             if (!string.IsNullOrEmpty(supabaseJwtSecret) && 
                 !string.IsNullOrEmpty(supabaseUrl) &&
