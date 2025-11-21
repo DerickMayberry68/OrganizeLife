@@ -36,17 +36,22 @@ jobs:
       - name: Verify build output
         working-directory: ./frontend
         run: |
-          echo "Checking build output..."
-          ls -la dist/
-          if [ -d "dist/HomeSynchronicity" ]; then
-            ls -la dist/HomeSynchronicity/
+          echo "Checking build output structure..."
+          if [ -d "dist" ]; then
+            echo "dist directory found"
+            find dist -type d -maxdepth 3 | head -10
+          else
+            echo "ERROR: dist directory not found!"
+            exit 1
           fi
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: angular-app
-          path: frontend/dist/HomeSynchronicity/browser
+          path: |
+            frontend/dist/HomeSynchronicity/browser
+            frontend/dist/HomeSynchronicity
           if-no-files-found: error
 
   deploy:
@@ -61,7 +66,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: angular-app
-          path: .
+          path: deploy
+      
+      - name: List deployment files
+        run: |
+          echo "Deployment package contents:"
+          find deploy -type f | head -20
       
       - name: Login to Azure
         uses: azure/login@v2
