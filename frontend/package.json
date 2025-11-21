@@ -28,6 +28,7 @@
     "@angular/platform-browser": "^20.1.0",
     "@angular/router": "^20.1.0",
     "@fortawesome/fontawesome-free": "^7.1.0",
+    "@supabase/supabase-js": "^2.84.0",
     "@syncfusion/ej2-angular-buttons": "^31.1.21",
     "@syncfusion/ej2-angular-calendars": "^31.1.23",
     "@syncfusion/ej2-angular-charts": "^31.1.23",

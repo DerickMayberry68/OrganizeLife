@@ -1,12 +1,13 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { Observable, tap, catchError, of } from 'rxjs';
+import { Observable, tap, catchError, of, from, throwError } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { BaseApiService } from './base-api.service';
 import { AuthService } from './auth.service';
 import type { Document } from '../models/document.model';
 
 /**
  * Document Service
- * Handles document management operations
+ * Handles document management operations using Supabase
  */
 @Injectable({
   providedIn: 'root'
@@ -36,19 +37,6 @@ export class DocumentService extends BaseApiService {
     return this.authService.getDefaultHouseholdId();
   }
 
-  /**
-   * Get auth headers
-   */
-  private getHeaders() {
-    const headers = this.authService.getAuthHeaders();
-    if (!headers.has('Content-Type')) {
-      return {
-        headers: headers.set('Content-Type', 'application/json')
-      };
-    }
-    return { headers };
-  }
-
   // ===== DOCUMENTS =====
 
   public loadDocuments(): Observable<Document[]> {
@@ -58,11 +46,22 @@ export class DocumentService extends BaseApiService {
       return of([]);
     }
 
-    return this.http.get<Document[]>(
-      `${this.API_URL}/Documents/household/${householdId}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('documents')
+        .select('*')
+        .eq('household_id', householdId)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
     ).pipe(
-      tap(documents => this.documentsSignal.set(documents)),
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const documents = this.mapDocumentsFromSupabase(response.data || []);
+        this.documentsSignal.set(documents);
+        return documents;
+      }),
       catchError(error => {
         console.error('Error loading documents:', error);
         this.toastService.error('Error', 'Failed to load documents');
@@ -75,59 +74,125 @@ export class DocumentService extends BaseApiService {
     const householdId = this.getHouseholdId();
     if (!householdId) {
       this.toastService.error('Error', 'No household selected');
-      return of({} as Document);
+      return throwError(() => new Error('No household selected'));
     }
 
-    return this.http.post<Document>(
-      `${this.API_URL}/Documents`,
-      document,
-      this.getHeaders()
+    const documentData = {
+      household_id: householdId,
+      name: document.name,
+      type: document.type,
+      file_path: document.filePath,
+      file_size: document.fileSize,
+      mime_type: document.mimeType,
+      expiry_date: document.expiryDate ? (typeof document.expiryDate === 'string' ? document.expiryDate : document.expiryDate.toISOString().split('T')[0]) : null,
+      notes: document.notes || null
+    };
+
+    return from(
+      this.supabase
+        .from('documents')
+        .insert(documentData)
+        .select()
+        .single()
     ).pipe(
-      tap(newDocument => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const newDocument = this.mapDocumentFromSupabase(response.data);
         this.addToSignal(this.documentsSignal, newDocument);
         this.toastService.success('Success', 'Document added successfully');
+        return newDocument;
       }),
       catchError(error => {
         console.error('Error adding document:', error);
         this.toastService.error('Error', 'Failed to add document');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   public updateDocument(id: string, updates: Partial<Document>): Observable<Document> {
-    return this.http.put<Document>(
-      `${this.API_URL}/Documents/${id}`,
-      updates,
-      this.getHeaders()
+    const updateData: any = {};
+    
+    if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.category !== undefined) updateData.category = updates.category;
+    if (updates.fileType !== undefined) updateData.file_type = updates.fileType;
+    if (updates.fileSize !== undefined) updateData.file_size = updates.fileSize;
+    if (updates.tags !== undefined) updateData.tags = updates.tags;
+    if (updates.expiryDate !== undefined) {
+      updateData.expiry_date = updates.expiryDate 
+        ? (typeof updates.expiryDate === 'string' ? updates.expiryDate : updates.expiryDate.toISOString().split('T')[0])
+        : null;
+    }
+    if (updates.isImportant !== undefined) updateData.is_important = updates.isImportant;
+
+    return from(
+      this.supabase
+        .from('documents')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single()
     ).pipe(
-      tap(updatedDocument => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const updatedDocument = this.mapDocumentFromSupabase(response.data);
         this.updateInSignal(this.documentsSignal, updatedDocument);
         this.toastService.success('Success', 'Document updated successfully');
+        return updatedDocument;
       }),
       catchError(error => {
         console.error('Error updating document:', error);
         this.toastService.error('Error', 'Failed to update document');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   public deleteDocument(id: string): Observable<void> {
-    return this.http.delete<void>(
-      `${this.API_URL}/Documents/${id}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('documents')
+        .delete()
+        .eq('id', id)
     ).pipe(
-      tap(() => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
         this.removeFromSignal(this.documentsSignal, id);
         this.toastService.success('Success', 'Document deleted successfully');
+        return void 0;
       }),
       catchError(error => {
         console.error('Error deleting document:', error);
         this.toastService.error('Error', 'Failed to delete document');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
-}
 
+  // ===== MAPPING HELPERS =====
+
+  private mapDocumentFromSupabase(data: any): Document {
+    return {
+      id: data.id,
+      title: data.title || data.name || '',
+      category: data.category || 'other',
+      uploadDate: data.upload_date ? new Date(data.upload_date) : (data.created_at ? new Date(data.created_at) : new Date()),
+      fileType: data.file_type || data.mime_type || '',
+      fileSize: data.file_size || 0,
+      tags: data.tags || [],
+      expiryDate: data.expiry_date ? new Date(data.expiry_date) : undefined,
+      isImportant: data.is_important || false,
+      url: data.url || data.file_path || ''
+    };
+  }
+
+  private mapDocumentsFromSupabase(data: any[]): Document[] {
+    return data.map(item => this.mapDocumentFromSupabase(item));
+  }
+}

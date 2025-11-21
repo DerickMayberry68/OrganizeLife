@@ -1,12 +1,13 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { Observable, tap, catchError, of } from 'rxjs';
+import { Observable, tap, catchError, of, from, throwError } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { BaseApiService } from './base-api.service';
 import { AuthService } from './auth.service';
 import type { InventoryItem } from '../models/inventory.model';
 
 /**
  * Inventory Service
- * Handles inventory item operations
+ * Handles inventory item operations using Supabase
  */
 @Injectable({
   providedIn: 'root'
@@ -40,19 +41,6 @@ export class InventoryService extends BaseApiService {
     return this.authService.getDefaultHouseholdId();
   }
 
-  /**
-   * Get auth headers
-   */
-  private getHeaders() {
-    const headers = this.authService.getAuthHeaders();
-    if (!headers.has('Content-Type')) {
-      return {
-        headers: headers.set('Content-Type', 'application/json')
-      };
-    }
-    return { headers };
-  }
-
   // ===== INVENTORY ITEMS =====
 
   public loadInventoryItems(): Observable<InventoryItem[]> {
@@ -62,11 +50,22 @@ export class InventoryService extends BaseApiService {
       return of([]);
     }
 
-    return this.http.get<InventoryItem[]>(
-      `${this.API_URL}/Inventory/household/${householdId}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('inventory_items')
+        .select('*')
+        .eq('household_id', householdId)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
     ).pipe(
-      tap(items => this.inventoryItemsSignal.set(items)),
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const items = this.mapInventoryItemsFromSupabase(response.data || []);
+        this.inventoryItemsSignal.set(items);
+        return items;
+      }),
       catchError(error => {
         console.error('Error loading inventory items:', error);
         this.toastService.error('Error', 'Failed to load inventory items');
@@ -79,59 +78,144 @@ export class InventoryService extends BaseApiService {
     const householdId = this.getHouseholdId();
     if (!householdId) {
       this.toastService.error('Error', 'No household selected');
-      return of({} as InventoryItem);
+      return throwError(() => new Error('No household selected'));
     }
 
-    return this.http.post<InventoryItem>(
-      `${this.API_URL}/Inventory`,
-      item,
-      this.getHeaders()
+    const itemData = {
+      household_id: householdId,
+      name: item.name,
+      description: item.description || null,
+      category: item.category || null,
+      quantity: item.quantity || 1,
+      purchase_price: item.purchasePrice || null,
+      purchase_date: item.purchaseDate ? (typeof item.purchaseDate === 'string' ? item.purchaseDate : item.purchaseDate.toISOString().split('T')[0]) : null,
+      warranty_start_date: item.warranty?.startDate ? (typeof item.warranty.startDate === 'string' ? item.warranty.startDate : item.warranty.startDate.toISOString().split('T')[0]) : null,
+      warranty_end_date: item.warranty?.endDate ? (typeof item.warranty.endDate === 'string' ? item.warranty.endDate : item.warranty.endDate.toISOString().split('T')[0]) : null,
+      location: item.location || null,
+      notes: item.notes || null
+    };
+
+    return from(
+      this.supabase
+        .from('inventory_items')
+        .insert(itemData)
+        .select()
+        .single()
     ).pipe(
-      tap(newItem => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const newItem = this.mapInventoryItemFromSupabase(response.data);
         this.addToSignal(this.inventoryItemsSignal, newItem);
         this.toastService.success('Success', 'Inventory item added successfully');
+        return newItem;
       }),
       catchError(error => {
         console.error('Error adding inventory item:', error);
         this.toastService.error('Error', 'Failed to add inventory item');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   public updateInventoryItem(id: string, updates: Partial<InventoryItem>): Observable<InventoryItem> {
-    return this.http.put<InventoryItem>(
-      `${this.API_URL}/Inventory/${id}`,
-      updates,
-      this.getHeaders()
+    const updateData: any = {};
+    
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.category !== undefined) updateData.category = updates.category;
+    if (updates.purchasePrice !== undefined) updateData.purchase_price = updates.purchasePrice;
+    if (updates.purchaseDate !== undefined) {
+      updateData.purchase_date = updates.purchaseDate 
+        ? (typeof updates.purchaseDate === 'string' ? updates.purchaseDate : updates.purchaseDate.toISOString().split('T')[0])
+        : null;
+    }
+    if (updates.location !== undefined) updateData.location = updates.location;
+    if (updates.notes !== undefined) updateData.notes = updates.notes;
+    if (updates.warranty) {
+      if (updates.warranty.startDate) {
+        updateData.warranty_start_date = typeof updates.warranty.startDate === 'string' 
+          ? updates.warranty.startDate 
+          : updates.warranty.startDate.toISOString().split('T')[0];
+      }
+      if (updates.warranty.endDate) {
+        updateData.warranty_end_date = typeof updates.warranty.endDate === 'string' 
+          ? updates.warranty.endDate 
+          : updates.warranty.endDate.toISOString().split('T')[0];
+      }
+    }
+
+    return from(
+      this.supabase
+        .from('inventory_items')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single()
     ).pipe(
-      tap(updatedItem => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const updatedItem = this.mapInventoryItemFromSupabase(response.data);
         this.updateInSignal(this.inventoryItemsSignal, updatedItem);
         this.toastService.success('Success', 'Inventory item updated successfully');
+        return updatedItem;
       }),
       catchError(error => {
         console.error('Error updating inventory item:', error);
         this.toastService.error('Error', 'Failed to update inventory item');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   public deleteInventoryItem(id: string): Observable<void> {
-    return this.http.delete<void>(
-      `${this.API_URL}/Inventory/${id}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('inventory_items')
+        .delete()
+        .eq('id', id)
     ).pipe(
-      tap(() => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
         this.removeFromSignal(this.inventoryItemsSignal, id);
         this.toastService.success('Success', 'Inventory item deleted successfully');
+        return void 0;
       }),
       catchError(error => {
         console.error('Error deleting inventory item:', error);
         this.toastService.error('Error', 'Failed to delete inventory item');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
-}
 
+  // ===== MAPPING HELPERS =====
+
+  private mapInventoryItemFromSupabase(data: any): InventoryItem {
+    return {
+      id: data.id,
+      name: data.name,
+      category: data.category || '',
+      purchaseDate: data.purchase_date ? new Date(data.purchase_date) : new Date(),
+      purchasePrice: parseFloat(data.purchase_price || 0),
+      location: data.location || '',
+      warranty: (data.warranty_start_date && data.warranty_end_date && data.warranty_provider) ? {
+        startDate: new Date(data.warranty_start_date),
+        endDate: new Date(data.warranty_end_date),
+        provider: data.warranty_provider,
+        documentUrl: data.warranty_document_url || undefined
+      } : undefined,
+      maintenanceSchedule: data.maintenance_schedule || undefined,
+      photos: data.photos || undefined,
+      notes: data.notes || undefined
+    };
+  }
+
+  private mapInventoryItemsFromSupabase(data: any[]): InventoryItem[] {
+    return data.map(item => this.mapInventoryItemFromSupabase(item));
+  }
+}

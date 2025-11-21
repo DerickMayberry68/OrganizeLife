@@ -1,5 +1,6 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { Observable, tap, catchError, of } from 'rxjs';
+import { Observable, tap, catchError, of, from, throwError } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { BaseApiService } from './base-api.service';
 import { AuthService } from './auth.service';
 import type {
@@ -15,7 +16,7 @@ import type {
 
 /**
  * Financial Service
- * Handles all financial-related operations including transactions, budgets, goals, accounts, subscriptions, and categories
+ * Handles all financial-related operations including transactions, budgets, goals, accounts, subscriptions, and categories using Supabase
  */
 @Injectable({
   providedIn: 'root'
@@ -68,19 +69,6 @@ export class FinancialService extends BaseApiService {
   }
 
   /**
-   * Get auth headers
-   */
-  private getHeaders() {
-    const headers = this.authService.getAuthHeaders();
-    if (!headers.has('Content-Type')) {
-      return {
-        headers: headers.set('Content-Type', 'application/json')
-      };
-    }
-    return { headers };
-  }
-
-  /**
    * Format date to DateOnly format (YYYY-MM-DD)
    */
   private formatDateOnly(date: Date | string): string {
@@ -102,11 +90,26 @@ export class FinancialService extends BaseApiService {
       return of([]);
     }
 
-    return this.http.get<Transaction[]>(
-      `${this.API_URL}/Transactions/household/${householdId}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('transactions')
+        .select(`
+          *,
+          accounts:account_id (name),
+          categories:category_id (name)
+        `)
+        .eq('household_id', householdId)
+        .is('deleted_at', null)
+        .order('date', { ascending: false })
     ).pipe(
-      tap(transactions => this.transactionsSignal.set(transactions)),
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const transactions = this.mapTransactionsFromSupabase(response.data || []);
+        this.transactionsSignal.set(transactions);
+        return transactions;
+      }),
       catchError(error => {
         console.error('Error loading transactions:', error);
         this.toastService.error('Error', 'Failed to load transactions');
@@ -119,74 +122,115 @@ export class FinancialService extends BaseApiService {
     const householdId = this.getHouseholdId();
     if (!householdId) {
       this.toastService.error('Error', 'No household selected');
-      return of({} as Transaction);
+      return throwError(() => new Error('No household selected'));
     }
 
-    const transactionDto: any = {
-      householdId,
-      accountId: dto.accountId,
+    const transactionData: any = {
+      household_id: householdId,
+      account_id: dto.accountId,
       date: this.formatDateOnly(dto.date),
       description: dto.description,
       amount: dto.amount,
       type: dto.type,
-      isRecurring: dto.isRecurring || false
+      is_recurring: dto.isRecurring || false
     };
 
-    // Only include optional fields if they have values
-    if (dto.categoryId) transactionDto.categoryId = dto.categoryId;
-    if (dto.merchantName) transactionDto.merchantName = dto.merchantName;
-    if (dto.notes) transactionDto.notes = dto.notes;
-    if (dto.parentTransactionId) transactionDto.parentTransactionId = dto.parentTransactionId;
+    if (dto.categoryId) transactionData.category_id = dto.categoryId;
+    if (dto.merchantName) transactionData.merchant_name = dto.merchantName;
+    if (dto.notes) transactionData.notes = dto.notes;
+    if (dto.parentTransactionId) transactionData.parent_transaction_id = dto.parentTransactionId;
 
-    return this.http.post<Transaction>(
-      `${this.API_URL}/Transactions`,
-      transactionDto,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('transactions')
+        .insert(transactionData)
+        .select(`
+          *,
+          accounts:account_id (name),
+          categories:category_id (name)
+        `)
+        .single()
     ).pipe(
-      tap(newTransaction => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const newTransaction = this.mapTransactionFromSupabase(response.data);
         this.addToSignal(this.transactionsSignal, newTransaction);
         this.toastService.success('Success', 'Transaction added successfully');
+        return newTransaction;
       }),
       catchError(error => {
         console.error('Error adding transaction:', error);
-        const errorMessage = error.error?.Message || error.error?.message || error.error?.title || 'Failed to add transaction';
+        const errorMessage = error.message || error.error?.message || 'Failed to add transaction';
         this.toastService.error('Error', errorMessage);
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   public updateTransaction(id: string, updates: Partial<Transaction>): Observable<Transaction> {
-    return this.http.put<Transaction>(
-      `${this.API_URL}/Transactions/${id}`,
-      updates,
-      this.getHeaders()
+    const updateData: any = {};
+    
+    if (updates.accountId !== undefined) updateData.account_id = updates.accountId;
+    if (updates.categoryId !== undefined) updateData.category_id = updates.categoryId;
+    if (updates.date !== undefined) updateData.date = this.formatDateOnly(updates.date);
+    if (updates.description !== undefined) updateData.description = updates.description;
+    if (updates.amount !== undefined) updateData.amount = updates.amount;
+    if (updates.type !== undefined) updateData.type = updates.type;
+    if (updates.merchantName !== undefined) updateData.merchant_name = updates.merchantName;
+    if (updates.notes !== undefined) updateData.notes = updates.notes;
+    if (updates.isRecurring !== undefined) updateData.is_recurring = updates.isRecurring;
+    if (updates.parentTransactionId !== undefined) updateData.parent_transaction_id = updates.parentTransactionId;
+
+    return from(
+      this.supabase
+        .from('transactions')
+        .update(updateData)
+        .eq('id', id)
+        .select(`
+          *,
+          accounts:account_id (name),
+          categories:category_id (name)
+        `)
+        .single()
     ).pipe(
-      tap(updatedTransaction => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const updatedTransaction = this.mapTransactionFromSupabase(response.data);
         this.updateInSignal(this.transactionsSignal, updatedTransaction);
         this.toastService.success('Success', 'Transaction updated successfully');
+        return updatedTransaction;
       }),
       catchError(error => {
         console.error('Error updating transaction:', error);
         this.toastService.error('Error', 'Failed to update transaction');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   public deleteTransaction(id: string): Observable<void> {
-    return this.http.delete<void>(
-      `${this.API_URL}/Transactions/${id}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('transactions')
+        .delete()
+        .eq('id', id)
     ).pipe(
-      tap(() => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
         this.removeFromSignal(this.transactionsSignal, id);
         this.toastService.success('Success', 'Transaction deleted successfully');
+        return void 0;
       }),
       catchError(error => {
         console.error('Error deleting transaction:', error);
         this.toastService.error('Error', 'Failed to delete transaction');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -200,11 +244,25 @@ export class FinancialService extends BaseApiService {
       return of([]);
     }
 
-    return this.http.get<Budget[]>(
-      `${this.API_URL}/Budgets/household/${householdId}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('budgets')
+        .select(`
+          *,
+          categories:category_id (name)
+        `)
+        .eq('household_id', householdId)
+        .is('deleted_at', null)
+        .order('start_date', { ascending: false })
     ).pipe(
-      tap(budgets => this.budgetsSignal.set(budgets)),
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const budgets = this.mapBudgetsFromSupabase(response.data || []);
+        this.budgetsSignal.set(budgets);
+        return budgets;
+      }),
       catchError(error => {
         console.error('Error loading budgets:', error);
         this.toastService.error('Error', 'Failed to load budgets');
@@ -217,68 +275,105 @@ export class FinancialService extends BaseApiService {
     const householdId = this.getHouseholdId();
     if (!householdId) {
       this.toastService.error('Error', 'No household selected');
-      return of({} as Budget);
+      return throwError(() => new Error('No household selected'));
     }
 
-    const budgetDto = {
-      householdId,
-      categoryId: dto.categoryId,
+    const budgetData = {
+      household_id: householdId,
+      category_id: dto.categoryId,
       name: dto.name,
-      limitAmount: dto.limitAmount,
+      limit_amount: dto.limitAmount,
       period: dto.period,
-      startDate: this.formatDateOnly(dto.startDate),
-      endDate: dto.endDate ? this.formatDateOnly(dto.endDate) : null,
-      isActive: dto.isActive !== undefined ? dto.isActive : true
+      start_date: this.formatDateOnly(dto.startDate),
+      end_date: dto.endDate ? this.formatDateOnly(dto.endDate) : null,
+      is_active: dto.isActive !== undefined ? dto.isActive : true
     };
 
-    return this.http.post<Budget>(
-      `${this.API_URL}/Budgets`,
-      budgetDto,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('budgets')
+        .insert(budgetData)
+        .select(`
+          *,
+          categories:category_id (name)
+        `)
+        .single()
     ).pipe(
-      tap(newBudget => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const newBudget = this.mapBudgetFromSupabase(response.data);
         this.addToSignal(this.budgetsSignal, newBudget);
         this.toastService.success('Success', 'Budget added successfully');
+        return newBudget;
       }),
       catchError(error => {
         console.error('Error adding budget:', error);
         this.toastService.error('Error', 'Failed to add budget');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   public updateBudget(id: string, updates: Partial<Budget>): Observable<Budget> {
-    return this.http.put<Budget>(
-      `${this.API_URL}/Budgets/${id}`,
-      updates,
-      this.getHeaders()
+    const updateData: any = {};
+    
+    if (updates.categoryId !== undefined) updateData.category_id = updates.categoryId;
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.limitAmount !== undefined) updateData.limit_amount = updates.limitAmount;
+    if (updates.period !== undefined) updateData.period = updates.period;
+    if (updates.startDate !== undefined) updateData.start_date = this.formatDateOnly(updates.startDate);
+    if (updates.endDate !== undefined) updateData.end_date = updates.endDate ? this.formatDateOnly(updates.endDate) : null;
+    if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
+
+    return from(
+      this.supabase
+        .from('budgets')
+        .update(updateData)
+        .eq('id', id)
+        .select(`
+          *,
+          categories:category_id (name)
+        `)
+        .single()
     ).pipe(
-      tap(updatedBudget => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const updatedBudget = this.mapBudgetFromSupabase(response.data);
         this.updateInSignal(this.budgetsSignal, updatedBudget);
         this.toastService.success('Success', 'Budget updated successfully');
+        return updatedBudget;
       }),
       catchError(error => {
         console.error('Error updating budget:', error);
         this.toastService.error('Error', 'Failed to update budget');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   public deleteBudget(id: string): Observable<void> {
-    return this.http.delete<void>(
-      `${this.API_URL}/Budgets/${id}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('budgets')
+        .delete()
+        .eq('id', id)
     ).pipe(
-      tap(() => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
         this.removeFromSignal(this.budgetsSignal, id);
         this.toastService.success('Success', 'Budget deleted successfully');
+        return void 0;
       }),
       catchError(error => {
         console.error('Error deleting budget:', error);
         this.toastService.error('Error', 'Failed to delete budget');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -292,11 +387,22 @@ export class FinancialService extends BaseApiService {
       return of([]);
     }
 
-    return this.http.get<FinancialGoal[]>(
-      `${this.API_URL}/FinancialGoals/household/${householdId}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('financial_goals')
+        .select('*')
+        .eq('household_id', householdId)
+        .is('deleted_at', null)
+        .order('deadline', { ascending: true })
     ).pipe(
-      tap(goals => this.financialGoalsSignal.set(goals)),
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const goals = this.mapFinancialGoalsFromSupabase(response.data || []);
+        this.financialGoalsSignal.set(goals);
+        return goals;
+      }),
       catchError(error => {
         console.error('Error loading financial goals:', error);
         this.toastService.error('Error', 'Failed to load financial goals');
@@ -309,57 +415,102 @@ export class FinancialService extends BaseApiService {
     const householdId = this.getHouseholdId();
     if (!householdId) {
       this.toastService.error('Error', 'No household selected');
-      return of({} as FinancialGoal);
+      return throwError(() => new Error('No household selected'));
     }
 
-    return this.http.post<FinancialGoal>(
-      `${this.API_URL}/FinancialGoals`,
-      goal,
-      this.getHeaders()
+    const goalData = {
+      household_id: householdId,
+      name: goal.name,
+      description: goal.description || null,
+      target_amount: goal.targetAmount,
+      current_amount: goal.currentAmount || 0,
+      deadline: goal.deadline ? this.formatDateOnly(goal.deadline) : null,
+      priority_id: goal.priorityId || null,
+      is_achieved: goal.isAchieved || false
+    };
+
+    return from(
+      this.supabase
+        .from('financial_goals')
+        .insert(goalData)
+        .select()
+        .single()
     ).pipe(
-      tap(newGoal => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const newGoal = this.mapFinancialGoalFromSupabase(response.data);
         this.addToSignal(this.financialGoalsSignal, newGoal);
         this.toastService.success('Success', 'Financial goal added successfully');
+        return newGoal;
       }),
       catchError(error => {
         console.error('Error adding financial goal:', error);
         this.toastService.error('Error', 'Failed to add financial goal');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   public updateFinancialGoal(id: string, updates: Partial<FinancialGoal>): Observable<FinancialGoal> {
-    return this.http.put<FinancialGoal>(
-      `${this.API_URL}/FinancialGoals/${id}`,
-      updates,
-      this.getHeaders()
+    const updateData: any = {};
+    
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.targetAmount !== undefined) updateData.target_amount = updates.targetAmount;
+    if (updates.currentAmount !== undefined) updateData.current_amount = updates.currentAmount;
+    if (updates.deadline !== undefined) {
+      updateData.deadline = updates.deadline ? this.formatDateOnly(updates.deadline) : null;
+    }
+    if (updates.priority !== undefined) {
+      // Priority is stored as priority_id in DB, but the model uses priority string
+      // We'll need to map it appropriately
+    }
+
+    return from(
+      this.supabase
+        .from('financial_goals')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single()
     ).pipe(
-      tap(updatedGoal => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const updatedGoal = this.mapFinancialGoalFromSupabase(response.data);
         this.updateInSignal(this.financialGoalsSignal, updatedGoal);
         this.toastService.success('Success', 'Financial goal updated successfully');
+        return updatedGoal;
       }),
       catchError(error => {
         console.error('Error updating financial goal:', error);
         this.toastService.error('Error', 'Failed to update financial goal');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   public deleteFinancialGoal(id: string): Observable<void> {
-    return this.http.delete<void>(
-      `${this.API_URL}/FinancialGoals/${id}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('financial_goals')
+        .delete()
+        .eq('id', id)
     ).pipe(
-      tap(() => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
         this.removeFromSignal(this.financialGoalsSignal, id);
         this.toastService.success('Success', 'Financial goal deleted successfully');
+        return void 0;
       }),
       catchError(error => {
         console.error('Error deleting financial goal:', error);
         this.toastService.error('Error', 'Failed to delete financial goal');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -373,11 +524,22 @@ export class FinancialService extends BaseApiService {
       return of([]);
     }
 
-    return this.http.get<Account[]>(
-      `${this.API_URL}/Accounts/household/${householdId}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('accounts')
+        .select('*')
+        .eq('household_id', householdId)
+        .is('deleted_at', null)
+        .order('name', { ascending: true })
     ).pipe(
-      tap(accounts => this.accountsSignal.set(accounts)),
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const accounts = this.mapAccountsFromSupabase(response.data || []);
+        this.accountsSignal.set(accounts);
+        return accounts;
+      }),
       catchError(error => {
         console.error('Error loading accounts:', error);
         this.toastService.error('Error', 'Failed to load accounts');
@@ -390,67 +552,96 @@ export class FinancialService extends BaseApiService {
     const householdId = this.getHouseholdId();
     if (!householdId) {
       this.toastService.error('Error', 'No household selected');
-      return of({} as Account);
+      return throwError(() => new Error('No household selected'));
     }
 
-    const createAccountDto = {
-      householdId: householdId,
+    const accountData = {
+      household_id: householdId,
       name: account.name,
       type: account.type,
-      institutionName: account.institutionName,
-      balance: account.balance,
+      institution: account.institutionName,
+      balance: account.balance || 0,
       currency: account.currency || 'USD',
-      isActive: account.isActive !== undefined ? account.isActive : true
+      is_active: account.isActive !== undefined ? account.isActive : true
     };
 
-    return this.http.post<Account>(
-      `${this.API_URL}/Accounts`,
-      createAccountDto,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('accounts')
+        .insert(accountData)
+        .select()
+        .single()
     ).pipe(
-      tap(newAccount => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const newAccount = this.mapAccountFromSupabase(response.data);
         this.addToSignal(this.accountsSignal, newAccount);
         this.toastService.success('Success', 'Account added successfully');
+        return newAccount;
       }),
       catchError(error => {
         console.error('Error adding account:', error);
         this.toastService.error('Error', 'Failed to add account');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   public updateAccount(id: string, updates: Partial<Account>): Observable<Account> {
-    return this.http.put<Account>(
-      `${this.API_URL}/Accounts/${id}`,
-      updates,
-      this.getHeaders()
+    const updateData: any = {};
+    
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.type !== undefined) updateData.type = updates.type;
+    if (updates.institution !== undefined) updateData.institution = updates.institution;
+    if (updates.balance !== undefined) updateData.balance = updates.balance;
+    if (updates.lastUpdated !== undefined) updateData.last_synced_at = updates.lastUpdated.toISOString();
+
+    return from(
+      this.supabase
+        .from('accounts')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single()
     ).pipe(
-      tap(updatedAccount => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const updatedAccount = this.mapAccountFromSupabase(response.data);
         this.updateInSignal(this.accountsSignal, updatedAccount);
         this.toastService.success('Success', 'Account updated successfully');
+        return updatedAccount;
       }),
       catchError(error => {
         console.error('Error updating account:', error);
         this.toastService.error('Error', 'Failed to update account');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   public deleteAccount(id: string): Observable<void> {
-    return this.http.delete<void>(
-      `${this.API_URL}/Accounts/${id}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('accounts')
+        .delete()
+        .eq('id', id)
     ).pipe(
-      tap(() => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
         this.removeFromSignal(this.accountsSignal, id);
         this.toastService.success('Success', 'Account deleted successfully');
+        return void 0;
       }),
       catchError(error => {
         console.error('Error deleting account:', error);
         this.toastService.error('Error', 'Failed to delete account');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -464,11 +655,25 @@ export class FinancialService extends BaseApiService {
       return of([]);
     }
 
-    return this.http.get<Subscription[]>(
-      `${this.API_URL}/Subscriptions/household/${householdId}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('subscriptions')
+        .select(`
+          *,
+          frequencies:billing_cycle_id (name)
+        `)
+        .eq('household_id', householdId)
+        .is('deleted_at', null)
+        .order('next_billing_date', { ascending: true })
     ).pipe(
-      tap(subscriptions => this.subscriptionsSignal.set(subscriptions)),
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const subscriptions = this.mapSubscriptionsFromSupabase(response.data || []);
+        this.subscriptionsSignal.set(subscriptions);
+        return subscriptions;
+      }),
       catchError(error => {
         console.error('Error loading subscriptions:', error);
         this.toastService.error('Error', 'Failed to load subscriptions');
@@ -481,57 +686,112 @@ export class FinancialService extends BaseApiService {
     const householdId = this.getHouseholdId();
     if (!householdId) {
       this.toastService.error('Error', 'No household selected');
-      return of({} as Subscription);
+      return throwError(() => new Error('No household selected'));
     }
 
-    return this.http.post<Subscription>(
-      `${this.API_URL}/Subscriptions`,
-      subscription,
-      this.getHeaders()
+    const subscriptionData = {
+      household_id: householdId,
+      account_id: subscription.accountId || null,
+      category_id: subscription.categoryId || null,
+      name: subscription.name,
+      amount: subscription.amount,
+      billing_cycle_id: subscription.billingCycleId,
+      next_billing_date: subscription.nextBillingDate ? this.formatDateOnly(subscription.nextBillingDate) : null,
+      is_active: subscription.isActive !== undefined ? subscription.isActive : true,
+      auto_renew: subscription.autoRenew !== undefined ? subscription.autoRenew : true,
+      merchant_website: subscription.merchantWebsite || null,
+      notes: subscription.notes || null
+    };
+
+    return from(
+      this.supabase
+        .from('subscriptions')
+        .insert(subscriptionData)
+        .select(`
+          *,
+          frequencies:billing_cycle_id (name)
+        `)
+        .single()
     ).pipe(
-      tap(newSubscription => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const newSubscription = this.mapSubscriptionFromSupabase(response.data);
         this.addToSignal(this.subscriptionsSignal, newSubscription);
         this.toastService.success('Success', 'Subscription added successfully');
+        return newSubscription;
       }),
       catchError(error => {
         console.error('Error adding subscription:', error);
         this.toastService.error('Error', 'Failed to add subscription');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   public updateSubscription(id: string, updates: Partial<Subscription>): Observable<Subscription> {
-    return this.http.put<Subscription>(
-      `${this.API_URL}/Subscriptions/${id}`,
-      updates,
-      this.getHeaders()
+    const updateData: any = {};
+    
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.amount !== undefined) updateData.amount = updates.amount;
+    if (updates.billingCycle !== undefined) {
+      // Billing cycle is stored as billing_cycle_id in DB
+    }
+    if (updates.nextBillingDate !== undefined) {
+      updateData.next_billing_date = updates.nextBillingDate ? this.formatDateOnly(updates.nextBillingDate) : null;
+    }
+    if (updates.category !== undefined) {
+      // Category is stored as category_id in DB
+    }
+
+    return from(
+      this.supabase
+        .from('subscriptions')
+        .update(updateData)
+        .eq('id', id)
+        .select(`
+          *,
+          frequencies:billing_cycle_id (name)
+        `)
+        .single()
     ).pipe(
-      tap(updatedSubscription => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const updatedSubscription = this.mapSubscriptionFromSupabase(response.data);
         this.updateInSignal(this.subscriptionsSignal, updatedSubscription);
         this.toastService.success('Success', 'Subscription updated successfully');
+        return updatedSubscription;
       }),
       catchError(error => {
         console.error('Error updating subscription:', error);
         this.toastService.error('Error', 'Failed to update subscription');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   public deleteSubscription(id: string): Observable<void> {
-    return this.http.delete<void>(
-      `${this.API_URL}/Subscriptions/${id}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('subscriptions')
+        .delete()
+        .eq('id', id)
     ).pipe(
-      tap(() => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
         this.removeFromSignal(this.subscriptionsSignal, id);
         this.toastService.success('Success', 'Subscription deleted successfully');
+        return void 0;
       }),
       catchError(error => {
         console.error('Error deleting subscription:', error);
         this.toastService.error('Error', 'Failed to delete subscription');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -545,11 +805,21 @@ export class FinancialService extends BaseApiService {
       return of([]);
     }
 
-    return this.http.get<Category[]>(
-      `${this.API_URL}/Categories`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('name', { ascending: true })
     ).pipe(
-      tap(categories => this.categoriesSignal.set(categories)),
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const categories = this.mapCategoriesFromSupabase(response.data || []);
+        this.categoriesSignal.set(categories);
+        return categories;
+      }),
       catchError(error => {
         console.error('Error loading categories:', error);
         this.toastService.error('Error', 'Failed to load categories');
@@ -559,62 +829,204 @@ export class FinancialService extends BaseApiService {
   }
 
   public addCategory(category: any): Observable<Category> {
-    const householdId = this.getHouseholdId();
-    if (!householdId) {
-      this.toastService.error('Error', 'No household selected');
-      return of({} as Category);
-    }
+    const categoryData = {
+      name: category.name,
+      type: category.type,
+      description: category.description || null,
+      is_active: category.isActive !== undefined ? category.isActive : true
+    };
 
-    return this.http.post<Category>(
-      `${this.API_URL}/Categories`,
-      category,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('categories')
+        .insert(categoryData)
+        .select()
+        .single()
     ).pipe(
-      tap(newCategory => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const newCategory = this.mapCategoryFromSupabase(response.data);
         this.addToSignal(this.categoriesSignal, newCategory);
         this.toastService.success('Success', 'Category added successfully');
+        return newCategory;
       }),
       catchError(error => {
         console.error('Error adding category:', error);
         this.toastService.error('Error', 'Failed to add category');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   public updateCategory(id: string, updates: Partial<Category>): Observable<Category> {
-    return this.http.put<Category>(
-      `${this.API_URL}/Categories/${id}`,
-      updates,
-      this.getHeaders()
+    const updateData: any = {};
+    
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.type !== undefined) updateData.type = updates.type;
+    if (updates.icon !== undefined) updateData.icon = updates.icon;
+    if (updates.color !== undefined) updateData.color = updates.color;
+
+    return from(
+      this.supabase
+        .from('categories')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single()
     ).pipe(
-      tap(updatedCategory => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const updatedCategory = this.mapCategoryFromSupabase(response.data);
         this.updateInSignal(this.categoriesSignal, updatedCategory);
         this.toastService.success('Success', 'Category updated successfully');
+        return updatedCategory;
       }),
       catchError(error => {
         console.error('Error updating category:', error);
         this.toastService.error('Error', 'Failed to update category');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   public deleteCategory(id: string): Observable<void> {
-    return this.http.delete<void>(
-      `${this.API_URL}/Categories/${id}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('categories')
+        .delete()
+        .eq('id', id)
     ).pipe(
-      tap(() => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
         this.removeFromSignal(this.categoriesSignal, id);
         this.toastService.success('Success', 'Category deleted successfully');
+        return void 0;
       }),
       catchError(error => {
         console.error('Error deleting category:', error);
         this.toastService.error('Error', 'Failed to delete category');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
-}
 
+  // ===== MAPPING HELPERS =====
+
+  private mapTransactionFromSupabase(data: any): Transaction {
+    return {
+      id: data.id,
+      householdId: data.household_id,
+      accountId: data.account_id,
+      accountName: data.accounts?.name || data.account_name || '',
+      categoryId: data.category_id,
+      categoryName: data.categories?.name || data.category_name || null,
+      date: new Date(data.date),
+      description: data.description,
+      amount: parseFloat(data.amount),
+      type: data.type,
+      merchantName: data.merchant_name,
+      notes: data.notes,
+      plaidTransactionId: data.plaid_transaction_id,
+      isRecurring: data.is_recurring || false,
+      parentTransactionId: data.parent_transaction_id,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at)
+    };
+  }
+
+  private mapTransactionsFromSupabase(data: any[]): Transaction[] {
+    return data.map(item => this.mapTransactionFromSupabase(item));
+  }
+
+  private mapBudgetFromSupabase(data: any): Budget {
+    return {
+      id: data.id,
+      householdId: data.household_id,
+      categoryId: data.category_id,
+      categoryName: data.categories?.name || data.category_name || '',
+      name: data.name,
+      limitAmount: parseFloat(data.limit_amount),
+      period: data.period,
+      startDate: data.start_date,
+      endDate: data.end_date,
+      isActive: data.is_active || false,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at)
+    };
+  }
+
+  private mapBudgetsFromSupabase(data: any[]): Budget[] {
+    return data.map(item => this.mapBudgetFromSupabase(item));
+  }
+
+  private mapFinancialGoalFromSupabase(data: any): FinancialGoal {
+    return {
+      id: data.id,
+      name: data.name,
+      targetAmount: parseFloat(data.target_amount),
+      currentAmount: parseFloat(data.current_amount),
+      deadline: data.deadline ? new Date(data.deadline) : new Date(),
+      priority: this.mapPriorityFromId(data.priority_id) || 'medium'
+    };
+  }
+
+  private mapFinancialGoalsFromSupabase(data: any[]): FinancialGoal[] {
+    return data.map(item => this.mapFinancialGoalFromSupabase(item));
+  }
+
+  private mapAccountFromSupabase(data: any): Account {
+    return {
+      id: data.id,
+      name: data.name,
+      type: data.type,
+      balance: parseFloat(data.balance),
+      institution: data.institution,
+      lastUpdated: data.last_synced_at ? new Date(data.last_synced_at) : new Date(data.updated_at)
+    };
+  }
+
+  private mapAccountsFromSupabase(data: any[]): Account[] {
+    return data.map(item => this.mapAccountFromSupabase(item));
+  }
+
+  private mapSubscriptionFromSupabase(data: any): Subscription {
+    return {
+      id: data.id,
+      name: data.name,
+      amount: parseFloat(data.amount),
+      billingCycle: data.frequencies?.name?.toLowerCase() || data.billing_cycle || 'monthly',
+      nextBillingDate: data.next_billing_date ? new Date(data.next_billing_date) : new Date(),
+      category: data.category_id || ''
+    };
+  }
+
+  private mapSubscriptionsFromSupabase(data: any[]): Subscription[] {
+    return data.map(item => this.mapSubscriptionFromSupabase(item));
+  }
+
+  private mapCategoryFromSupabase(data: any): Category {
+    return {
+      id: data.id,
+      name: data.name,
+      type: data.type,
+      icon: data.icon,
+      color: data.color
+    };
+  }
+
+  private mapCategoriesFromSupabase(data: any[]): Category[] {
+    return data.map(item => this.mapCategoryFromSupabase(item));
+  }
+
+  private mapPriorityFromId(priorityId: string | null): 'low' | 'medium' | 'high' | undefined {
+    // This is a simplified mapping - you may need to query the priorities table
+    // or store a mapping in the service if priorities have specific IDs
+    return 'medium'; // Default fallback
+  }
+}

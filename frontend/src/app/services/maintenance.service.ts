@@ -1,12 +1,13 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { Observable, tap, catchError, of } from 'rxjs';
+import { Observable, tap, catchError, of, from, throwError } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { BaseApiService } from './base-api.service';
 import { AuthService } from './auth.service';
 import type { MaintenanceTask, ServiceProvider } from '../models/maintenance.model';
 
 /**
  * Maintenance Service
- * Handles maintenance tasks and service provider operations
+ * Handles maintenance tasks and service provider operations using Supabase
  */
 @Injectable({
   providedIn: 'root'
@@ -46,19 +47,6 @@ export class MaintenanceService extends BaseApiService {
     return this.authService.getDefaultHouseholdId();
   }
 
-  /**
-   * Get auth headers
-   */
-  private getHeaders() {
-    const headers = this.authService.getAuthHeaders();
-    if (!headers.has('Content-Type')) {
-      return {
-        headers: headers.set('Content-Type', 'application/json')
-      };
-    }
-    return { headers };
-  }
-
   // ===== MAINTENANCE TASKS =====
 
   public loadMaintenanceTasks(): Observable<MaintenanceTask[]> {
@@ -68,11 +56,22 @@ export class MaintenanceService extends BaseApiService {
       return of([]);
     }
 
-    return this.http.get<MaintenanceTask[]>(
-      `${this.API_URL}/Maintenance/household/${householdId}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('maintenance_tasks')
+        .select('*')
+        .eq('household_id', householdId)
+        .is('deleted_at', null)
+        .order('due_date', { ascending: true })
     ).pipe(
-      tap(tasks => this.maintenanceTasksSignal.set(tasks)),
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const tasks = this.mapMaintenanceTasksFromSupabase(response.data || []);
+        this.maintenanceTasksSignal.set(tasks);
+        return tasks;
+      }),
       catchError(error => {
         console.error('Error loading maintenance tasks:', error);
         this.toastService.error('Error', 'Failed to load maintenance tasks');
@@ -85,57 +84,106 @@ export class MaintenanceService extends BaseApiService {
     const householdId = this.getHouseholdId();
     if (!householdId) {
       this.toastService.error('Error', 'No household selected');
-      return of({} as MaintenanceTask);
+      return throwError(() => new Error('No household selected'));
     }
 
-    return this.http.post<MaintenanceTask>(
-      `${this.API_URL}/MaintenanceTasks`,
-      task,
-      this.getHeaders()
+    const taskData = {
+      household_id: householdId,
+      title: task.title,
+      description: task.description || null,
+      priority: task.priority || 'medium',
+      status: task.status || 'pending',
+      due_date: task.dueDate ? (typeof task.dueDate === 'string' ? task.dueDate : task.dueDate.toISOString().split('T')[0]) : null,
+      service_provider_id: task.serviceProviderId || null,
+      cost: task.cost || null,
+      notes: task.notes || null
+    };
+
+    return from(
+      this.supabase
+        .from('maintenance_tasks')
+        .insert(taskData)
+        .select()
+        .single()
     ).pipe(
-      tap(newTask => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const newTask = this.mapMaintenanceTaskFromSupabase(response.data);
         this.addToSignal(this.maintenanceTasksSignal, newTask);
         this.toastService.success('Success', 'Maintenance task added successfully');
+        return newTask;
       }),
       catchError(error => {
         console.error('Error adding maintenance task:', error);
         this.toastService.error('Error', 'Failed to add maintenance task');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   public updateMaintenanceTask(id: string, updates: Partial<MaintenanceTask>): Observable<MaintenanceTask> {
-    return this.http.put<MaintenanceTask>(
-      `${this.API_URL}/MaintenanceTasks/${id}`,
-      updates,
-      this.getHeaders()
+    const updateData: any = {};
+    
+    if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.category !== undefined) updateData.category = updates.category;
+    if (updates.priority !== undefined) updateData.priority = updates.priority;
+    if (updates.status !== undefined) updateData.status = updates.status;
+    if (updates.dueDate !== undefined) {
+      updateData.due_date = updates.dueDate 
+        ? (typeof updates.dueDate === 'string' ? updates.dueDate : updates.dueDate.toISOString().split('T')[0])
+        : null;
+    }
+    if (updates.estimatedCost !== undefined) updateData.estimated_cost = updates.estimatedCost;
+    if (updates.notes !== undefined) updateData.notes = updates.notes;
+    if (updates.isRecurring !== undefined) updateData.is_recurring = updates.isRecurring;
+    if (updates.frequency !== undefined) updateData.frequency = updates.frequency;
+
+    return from(
+      this.supabase
+        .from('maintenance_tasks')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single()
     ).pipe(
-      tap(updatedTask => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const updatedTask = this.mapMaintenanceTaskFromSupabase(response.data);
         this.updateInSignal(this.maintenanceTasksSignal, updatedTask);
         this.toastService.success('Success', 'Maintenance task updated successfully');
+        return updatedTask;
       }),
       catchError(error => {
         console.error('Error updating maintenance task:', error);
         this.toastService.error('Error', 'Failed to update maintenance task');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   public deleteMaintenanceTask(id: string): Observable<void> {
-    return this.http.delete<void>(
-      `${this.API_URL}/MaintenanceTasks/${id}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('maintenance_tasks')
+        .delete()
+        .eq('id', id)
     ).pipe(
-      tap(() => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
         this.removeFromSignal(this.maintenanceTasksSignal, id);
         this.toastService.success('Success', 'Maintenance task deleted successfully');
+        return void 0;
       }),
       catchError(error => {
         console.error('Error deleting maintenance task:', error);
         this.toastService.error('Error', 'Failed to delete maintenance task');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -149,11 +197,22 @@ export class MaintenanceService extends BaseApiService {
       return of([]);
     }
 
-    return this.http.get<ServiceProvider[]>(
-      `${this.API_URL}/ServiceProviders/household/${householdId}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('service_providers')
+        .select('*')
+        .eq('household_id', householdId)
+        .is('deleted_at', null)
+        .order('name', { ascending: true })
     ).pipe(
-      tap(providers => this.serviceProvidersSignal.set(providers)),
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const providers = this.mapServiceProvidersFromSupabase(response.data || []);
+        this.serviceProvidersSignal.set(providers);
+        return providers;
+      }),
       catchError(error => {
         console.error('Error loading service providers:', error);
         this.toastService.error('Error', 'Failed to load service providers');
@@ -166,59 +225,140 @@ export class MaintenanceService extends BaseApiService {
     const householdId = this.getHouseholdId();
     if (!householdId) {
       this.toastService.error('Error', 'No household selected');
-      return of({} as ServiceProvider);
+      return throwError(() => new Error('No household selected'));
     }
 
-    return this.http.post<ServiceProvider>(
-      `${this.API_URL}/ServiceProviders`,
-      provider,
-      this.getHeaders()
+    const providerData = {
+      household_id: householdId,
+      name: provider.name,
+      service_type: provider.serviceType || null,
+      contact_name: provider.contactName || null,
+      phone: provider.phone || null,
+      email: provider.email || null,
+      address: provider.address || null,
+      notes: provider.notes || null
+    };
+
+    return from(
+      this.supabase
+        .from('service_providers')
+        .insert(providerData)
+        .select()
+        .single()
     ).pipe(
-      tap(newProvider => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const newProvider = this.mapServiceProviderFromSupabase(response.data);
         this.addToSignal(this.serviceProvidersSignal, newProvider);
         this.toastService.success('Success', 'Service provider added successfully');
+        return newProvider;
       }),
       catchError(error => {
         console.error('Error adding service provider:', error);
         this.toastService.error('Error', 'Failed to add service provider');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   public updateServiceProvider(id: string, updates: Partial<ServiceProvider>): Observable<ServiceProvider> {
-    return this.http.put<ServiceProvider>(
-      `${this.API_URL}/ServiceProviders/${id}`,
-      updates,
-      this.getHeaders()
+    const updateData: any = {};
+    
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.category !== undefined) updateData.category = updates.category;
+    if (updates.phone !== undefined) updateData.phone = updates.phone;
+    if (updates.email !== undefined) updateData.email = updates.email;
+    if (updates.website !== undefined) updateData.website = updates.website;
+    if (updates.rating !== undefined) updateData.rating = updates.rating;
+    if (updates.notes !== undefined) updateData.notes = updates.notes;
+
+    return from(
+      this.supabase
+        .from('service_providers')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single()
     ).pipe(
-      tap(updatedProvider => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const updatedProvider = this.mapServiceProviderFromSupabase(response.data);
         this.updateInSignal(this.serviceProvidersSignal, updatedProvider);
         this.toastService.success('Success', 'Service provider updated successfully');
+        return updatedProvider;
       }),
       catchError(error => {
         console.error('Error updating service provider:', error);
         this.toastService.error('Error', 'Failed to update service provider');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
 
   public deleteServiceProvider(id: string): Observable<void> {
-    return this.http.delete<void>(
-      `${this.API_URL}/ServiceProviders/${id}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('service_providers')
+        .delete()
+        .eq('id', id)
     ).pipe(
-      tap(() => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
         this.removeFromSignal(this.serviceProvidersSignal, id);
         this.toastService.success('Success', 'Service provider deleted successfully');
+        return void 0;
       }),
       catchError(error => {
         console.error('Error deleting service provider:', error);
         this.toastService.error('Error', 'Failed to delete service provider');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
-}
 
+  // ===== MAPPING HELPERS =====
+
+  private mapMaintenanceTaskFromSupabase(data: any): MaintenanceTask {
+    return {
+      id: data.id,
+      title: data.title,
+      category: data.category || 'other',
+      priority: data.priority || 'medium',
+      status: data.status || 'pending',
+      dueDate: data.due_date ? new Date(data.due_date) : new Date(),
+      estimatedCost: data.estimated_cost || data.cost || undefined,
+      serviceProvider: data.service_providers ? this.mapServiceProviderFromSupabase(data.service_providers) : undefined,
+      notes: data.notes || undefined,
+      isRecurring: data.is_recurring || false,
+      frequency: data.frequency || undefined,
+      completedDate: data.completed_date ? new Date(data.completed_date) : undefined
+    };
+  }
+
+  private mapMaintenanceTasksFromSupabase(data: any[]): MaintenanceTask[] {
+    return data.map(item => this.mapMaintenanceTaskFromSupabase(item));
+  }
+
+  private mapServiceProviderFromSupabase(data: any): ServiceProvider {
+    return {
+      id: data.id,
+      name: data.name,
+      category: data.category || data.service_type || 'other',
+      phone: data.phone || '',
+      email: data.email || undefined,
+      website: data.website || undefined,
+      rating: data.rating || undefined,
+      notes: data.notes || undefined
+    };
+  }
+
+  private mapServiceProvidersFromSupabase(data: any[]): ServiceProvider[] {
+    return data.map(item => this.mapServiceProviderFromSupabase(item));
+  }
+}

@@ -1,12 +1,13 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { Observable, tap, catchError, of } from 'rxjs';
+import { Observable, tap, catchError, of, from, throwError } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { BaseApiService } from './base-api.service';
 import { AuthService } from './auth.service';
 import type { Alert } from '../models/alert.model';
 
 /**
  * Alert Service
- * Handles all alert-related operations
+ * Handles all alert-related operations using Supabase
  */
 @Injectable({
   providedIn: 'root'
@@ -41,33 +42,31 @@ export class AlertService extends BaseApiService {
   }
 
   /**
-   * Get auth headers
-   */
-  private getHeaders() {
-    const headers = this.authService.getAuthHeaders();
-    if (!headers.has('Content-Type')) {
-      return {
-        headers: headers.set('Content-Type', 'application/json')
-      };
-    }
-    return { headers };
-  }
-
-  /**
    * Load all alerts for the household
    */
   public loadAlerts(): Observable<Alert[]> {
     const householdId = this.getHouseholdId();
     if (!householdId) {
-      console.error('No household ID available');
+      // Silently return empty array when not authenticated - this is expected behavior
       return of([]);
     }
 
-    return this.http.get<Alert[]>(
-      `${this.API_URL}/Alerts/household/${householdId}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('alerts')
+        .select('*')
+        .eq('household_id', householdId)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
     ).pipe(
-      tap(alerts => this.alertsSignal.set(alerts)),
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const alerts = this.mapAlertsFromSupabase(response.data || []);
+        this.alertsSignal.set(alerts);
+        return alerts;
+      }),
       catchError(error => {
         console.error('Error loading alerts:', error);
         return of([]);
@@ -79,18 +78,29 @@ export class AlertService extends BaseApiService {
    * Mark an alert as read
    */
   public markAlertAsRead(id: string): Observable<Alert> {
-    return this.http.post<Alert>(
-      `${this.API_URL}/Alerts/${id}/mark-read`,
-      {},
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('alerts')
+        .update({
+          is_read: true,
+          read_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single()
     ).pipe(
-      tap(updatedAlert => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const updatedAlert = this.mapAlertFromSupabase(response.data);
         this.updateInSignal(this.alertsSignal, updatedAlert);
+        return updatedAlert;
       }),
       catchError(error => {
         console.error('Error marking alert as read:', error);
         this.toastService.error('Error', 'Failed to mark alert as read');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -99,18 +109,30 @@ export class AlertService extends BaseApiService {
    * Dismiss an alert
    */
   public dismissAlert(id: string): Observable<Alert> {
-    return this.http.post<Alert>(
-      `${this.API_URL}/Alerts/${id}/dismiss`,
-      {},
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('alerts')
+        .update({
+          is_dismissed: true,
+          dismissed_at: new Date().toISOString(),
+          status: 'Dismissed'
+        })
+        .eq('id', id)
+        .select()
+        .single()
     ).pipe(
-      tap(updatedAlert => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
+        const updatedAlert = this.mapAlertFromSupabase(response.data);
         this.updateInSignal(this.alertsSignal, updatedAlert);
+        return updatedAlert;
       }),
       catchError(error => {
         console.error('Error dismissing alert:', error);
         this.toastService.error('Error', 'Failed to dismiss alert');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -119,17 +141,23 @@ export class AlertService extends BaseApiService {
    * Delete an alert
    */
   public deleteAlert(id: string): Observable<void> {
-    return this.http.delete<void>(
-      `${this.API_URL}/Alerts/${id}`,
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('alerts')
+        .delete()
+        .eq('id', id)
     ).pipe(
-      tap(() => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
         this.removeFromSignal(this.alertsSignal, id);
+        return void 0;
       }),
       catchError(error => {
         console.error('Error deleting alert:', error);
         this.toastService.error('Error', 'Failed to delete alert');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -143,19 +171,29 @@ export class AlertService extends BaseApiService {
       return of({ count: 0 });
     }
 
-    return this.http.post<any>(
-      `${this.API_URL}/Alerts/household/${householdId}/mark-all-read`,
-      {},
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('alerts')
+        .update({
+          is_read: true,
+          read_at: new Date().toISOString()
+        })
+        .eq('household_id', householdId)
+        .is('deleted_at', null)
+        .eq('is_read', false)
     ).pipe(
-      tap(() => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
         // Reload alerts to get updated state
         this.loadAlerts().subscribe();
+        return { count: Array.isArray(response.data) ? (response.data as any[]).length : 0 };
       }),
       catchError(error => {
         console.error('Error marking all alerts as read:', error);
         this.toastService.error('Error', 'Failed to mark all alerts as read');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
@@ -169,21 +207,66 @@ export class AlertService extends BaseApiService {
       return of({ count: 0 });
     }
 
-    return this.http.post<any>(
-      `${this.API_URL}/Alerts/household/${householdId}/dismiss-all`,
-      {},
-      this.getHeaders()
+    return from(
+      this.supabase
+        .from('alerts')
+        .update({
+          is_dismissed: true,
+          dismissed_at: new Date().toISOString(),
+          status: 'Dismissed'
+        })
+        .eq('household_id', householdId)
+        .is('deleted_at', null)
+        .eq('is_dismissed', false)
     ).pipe(
-      tap(() => {
+      map((response) => {
+        if (response.error) {
+          throw response.error;
+        }
         // Reload alerts to get updated state
         this.loadAlerts().subscribe();
+        return { count: Array.isArray(response.data) ? (response.data as any[]).length : 0 };
       }),
       catchError(error => {
         console.error('Error dismissing all alerts:', error);
         this.toastService.error('Error', 'Failed to dismiss all alerts');
-        throw error;
+        return throwError(() => error);
       })
     );
   }
-}
 
+  // ===== MAPPING HELPERS =====
+
+  private mapAlertFromSupabase(data: any): Alert {
+    return {
+      id: data.id,
+      householdId: data.household_id,
+      type: data.type,
+      category: data.category,
+      severity: data.severity,
+      priority: data.priority,
+      title: data.title,
+      message: data.message,
+      description: data.description,
+      relatedEntityType: data.related_entity_type,
+      relatedEntityId: data.related_entity_id,
+      relatedEntityName: data.related_entity_name,
+      status: data.status,
+      isRead: data.is_read || false,
+      isDismissed: data.is_dismissed || false,
+      createdAt: new Date(data.created_at),
+      readAt: data.read_at ? new Date(data.read_at) : undefined,
+      dismissedAt: data.dismissed_at ? new Date(data.dismissed_at) : undefined,
+      expiresAt: data.expires_at ? new Date(data.expires_at) : undefined,
+      actionUrl: data.action_url,
+      actionLabel: data.action_label,
+      isRecurring: data.is_recurring || false,
+      recurrenceRule: data.recurrence_rule,
+      nextOccurrence: data.next_occurrence ? new Date(data.next_occurrence) : undefined
+    };
+  }
+
+  private mapAlertsFromSupabase(data: any[]): Alert[] {
+    return data.map(item => this.mapAlertFromSupabase(item));
+  }
+}
