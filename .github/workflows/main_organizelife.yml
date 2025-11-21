@@ -1,7 +1,15 @@
-# GitHub Actions workflow for Angular frontend build
-# This workflow builds the Angular app (no deployment - using Supabase)
+# GitHub Actions workflow for Angular frontend build and deployment
+# This workflow builds the Angular app and deploys to Vercel
+#
+# Required GitHub Secrets:
+#   - VERCEL_TOKEN: Get from Vercel Dashboard → Settings → Tokens
+#   - VERCEL_ORG_ID: Find in Vercel Project Settings → General
+#   - VERCEL_PROJECT_ID: Find in Vercel Project Settings → General
+#
+# Note: You can also use Vercel's Git integration for automatic deployments
+#       In that case, configure Root Directory to 'frontend' in Vercel project settings
 
-name: Build Angular app - OrganizeLife
+name: Build and Deploy to Vercel - OrganizeLife
 
 on:
   push:
@@ -45,10 +53,15 @@ jobs:
             exit 1
           fi
 
-      - name: Upload build artifact (optional - for manual deployment)
-        uses: actions/upload-artifact@v4
-        with:
-          name: angular-app-build
-          path: frontend/dist/HomeSynchronicity/browser
-          if-no-files-found: error
-          retention-days: 7
+      - name: Install Vercel CLI
+        working-directory: ./frontend
+        run: npm install --global vercel@latest
+
+      - name: Deploy to Vercel Production
+        working-directory: ./frontend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          vercel deploy --prod --prebuilt --yes --token $VERCEL_TOKEN
