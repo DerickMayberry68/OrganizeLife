@@ -45,8 +45,8 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
-environment.ts
-environment.prod.ts
+# Note: environment.ts is committed (contains non-sensitive config)
+# environment.prod.ts
 !environment.example.ts
 
 # Build files
