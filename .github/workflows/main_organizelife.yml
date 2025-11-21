@@ -49,10 +49,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: angular-app
-          path: |
-            frontend/dist/HomeSynchronicity/browser
-            frontend/dist/HomeSynchronicity
+          path: frontend/dist/HomeSynchronicity/browser
           if-no-files-found: error
+          retention-days: 7
 
   deploy:
     runs-on: ubuntu-latest
@@ -86,4 +85,4 @@ jobs:
         with:
           app-name: 'OrganizeLife'
           slot-name: 'Production'
-          package: .
+          package: deploy
