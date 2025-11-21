@@ -1,15 +1,8 @@
-# GitHub Actions workflow for Angular frontend build and deployment
-# This workflow builds the Angular app and deploys to Vercel
-#
-# Required GitHub Secrets:
-#   - VERCEL_TOKEN: Get from Vercel Dashboard → Settings → Tokens
-#   - VERCEL_ORG_ID: Find in Vercel Project Settings → General
-#   - VERCEL_PROJECT_ID: Find in Vercel Project Settings → General
-#
-# Note: You can also use Vercel's Git integration for automatic deployments
-#       In that case, configure Root Directory to 'frontend' in Vercel project settings
+# GitHub Actions workflow for Angular frontend CI build
+# This workflow builds the Angular app to verify it compiles successfully
+# Vercel handles deployment automatically via Git integration when code is pushed
 
-name: Build and Deploy to Vercel - OrganizeLife
+name: CI Build - Angular App
 
 on:
   push:
@@ -46,22 +39,9 @@ jobs:
         run: |
           echo "Checking build output structure..."
           if [ -d "dist" ]; then
-            echo "dist directory found"
+            echo "✓ Build successful - dist directory found"
             find dist -type d -maxdepth 3 | head -10
           else
-            echo "ERROR: dist directory not found!"
+            echo "✗ ERROR: dist directory not found!"
             exit 1
           fi
-
-      - name: Install Vercel CLI
-        working-directory: ./frontend
-        run: npm install --global vercel@latest
-
-      - name: Deploy to Vercel Production
-        working-directory: ./frontend
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: |
-          vercel deploy --prod --prebuilt --yes --token $VERCEL_TOKEN
