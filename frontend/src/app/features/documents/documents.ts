@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { DocumentService } from '../../services/document.service';
 import { ToastService } from '../../services/toast.service';
 import { StorageService } from '../../services/storage.service';
+import { FileManagerService } from '../../services/file-manager.service';
 import { StatCard } from '../../shared/stat-card/stat-card';
 import { GridModule, PageService, SortService, FilterService, GroupService } from '@syncfusion/ej2-angular-grids';
 import { ChartModule, CategoryService, ColumnSeriesService, LegendService, TooltipService } from '@syncfusion/ej2-angular-charts';
@@ -57,6 +58,7 @@ export class Documents implements OnInit {
 
   private readonly documentService = inject(DocumentService);
   private readonly storageService = inject(StorageService);
+  private readonly fileManagerService = inject(FileManagerService);
   private readonly fb = inject(FormBuilder);
   private readonly toastService = inject(ToastService);
 
@@ -144,6 +146,23 @@ export class Documents implements OnInit {
   // Dropdown data
   protected readonly categories = ['legal', 'financial', 'medical', 'insurance', 'property', 'personal', 'other'];
 
+  // File Manager settings
+  protected readonly fileManagerSettings: any = {
+    view: 'Details',
+    enableVirtualization: false,
+    allowMultiSelection: true,
+    showFileExtension: true,
+    showThumbnail: true
+  };
+
+  // File Manager will use custom adapter - we'll handle operations via events
+  protected readonly fileManagerAjaxSettings: any = {
+    url: '/api/filemanager', // Placeholder - we'll handle via custom adapter
+    getImageUrl: '/api/filemanager/GetImage',
+    uploadUrl: '/api/filemanager/Upload',
+    downloadUrl: '/api/filemanager/Download'
+  };
+
   constructor() {
     // Debug: Log chart data changes
     effect(() => {
@@ -178,11 +197,77 @@ export class Documents implements OnInit {
   // File Manager event handlers
   protected onFileManagerSuccess(args: any): void {
     console.log('File Manager operation successful:', args);
+    // Reload documents after successful operation
+    this.documentService.loadDocuments().subscribe();
   }
 
   protected onFileManagerError(args: any): void {
     console.error('File Manager error:', args);
     this.toastService.error('Error', 'File operation failed');
+  }
+
+  protected onFileManagerBeforeSend(args: any): void {
+    // Intercept File Manager requests and handle with our storage service
+    const action = args.action;
+    const path = args.path || '';
+    
+    switch (action) {
+      case 'read':
+        // Handle read operation
+        this.fileManagerService.read(path).subscribe({
+          next: (data) => {
+            args.response = data;
+          },
+          error: (error) => {
+            args.cancel = true;
+            this.toastService.error('Error', 'Failed to load files');
+          }
+        });
+        break;
+      case 'createFolder':
+        const folderName = args.data?.name || args.name;
+        this.fileManagerService.createFolder(path, folderName).subscribe({
+          next: (data) => {
+            args.response = data;
+          },
+          error: (error) => {
+            args.cancel = true;
+            this.toastService.error('Error', 'Failed to create folder');
+          }
+        });
+        break;
+      case 'upload':
+        const files = args.data?.files || [];
+        this.fileManagerService.upload(files, path).subscribe({
+          next: (data) => {
+            args.response = data;
+            // Also create document records for uploaded files
+            files.forEach((file: File) => {
+              this.documentService.uploadDocument(file, {
+                title: file.name,
+                isImportant: false
+              }).subscribe();
+            });
+          },
+          error: (error) => {
+            args.cancel = true;
+            this.toastService.error('Error', 'Failed to upload files');
+          }
+        });
+        break;
+      case 'delete':
+        const items = args.data?.names || args.names || [];
+        this.fileManagerService.delete(items).subscribe({
+          next: (data) => {
+            args.response = data;
+          },
+          error: (error) => {
+            args.cancel = true;
+            this.toastService.error('Error', 'Failed to delete files');
+          }
+        });
+        break;
+    }
   }
 
   protected openDocumentDialog(): void {
