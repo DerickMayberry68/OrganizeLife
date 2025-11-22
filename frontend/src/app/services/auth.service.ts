@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, BehaviorSubject, from, throwError } from 'rxjs';
+import { Observable, BehaviorSubject, from, throwError, firstValueFrom, race, timer } from 'rxjs';
 import { Router } from '@angular/router';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { SupabaseService } from './supabase.service';
 
 export interface LoginRequest {
@@ -274,7 +274,7 @@ export class AuthService {
    */
   async getToken(): Promise<string | null> {
     try {
-      const session = await this.supabaseService.getSession();
+      const session = await firstValueFrom(this.supabaseService.getSession());
       return session?.access_token || null;
     } catch {
       return null;
@@ -286,7 +286,7 @@ export class AuthService {
    */
   async getRefreshToken(): Promise<string | null> {
     try {
-      const session = await this.supabaseService.getSession();
+      const session = await firstValueFrom(this.supabaseService.getSession());
       return session?.refresh_token || null;
     } catch {
       return null;
@@ -333,15 +333,17 @@ export class AuthService {
       // Finally check session (async, with timeout to prevent hanging)
       console.log('isAuthenticated: Checking session (async)...');
       try {
-        const sessionPromise = this.supabaseService.getSession();
-        const timeoutPromise = new Promise<null>((resolve) => {
-          setTimeout(() => {
-            console.warn('isAuthenticated: Session check timed out after 2s');
-            resolve(null);
-          }, 2000);
-        });
-        
-        const session = await Promise.race([sessionPromise, timeoutPromise]);
+        const session = await firstValueFrom(
+          race(
+            this.supabaseService.getSession(),
+            timer(2000).pipe(
+              map(() => {
+                console.warn('isAuthenticated: Session check timed out after 2s');
+                return null;
+              })
+            )
+          )
+        );
         if (session && session.access_token) {
           console.log('isAuthenticated: ✅ TRUE (session found)');
           // If session exists but no stored user, we should store it
@@ -429,17 +431,20 @@ export class AuthService {
       }
       
       // Check session with shorter timeout (2s instead of 5s) for faster failure
+      // Use RxJS race operator for timeout
       let session: any = null;
       try {
-        session = await Promise.race([
-          this.supabaseService.getSession(),
-          new Promise<any>((resolve) => {
-            setTimeout(() => {
-              console.warn('getSession in loadUserData timed out after 2s');
-              resolve(null);
-            }, 2000);
-          })
-        ]);
+        session = await firstValueFrom(
+          race(
+            this.supabaseService.getSession(),
+            timer(2000).pipe(
+              map(() => {
+                console.warn('getSession in loadUserData timed out after 2s');
+                return null;
+              })
+            )
+          )
+        );
       } catch (error) {
         console.warn('Error getting session in loadUserData:', error);
         session = null;
@@ -457,7 +462,7 @@ export class AuthService {
         return;
       }
 
-      const user = await this.supabaseService.getCurrentUser();
+      const user = await firstValueFrom(this.supabaseService.getCurrentUser());
       if (!user) {
         console.log('No user found, skipping user data load');
         this.currentUserSubject.next(null);

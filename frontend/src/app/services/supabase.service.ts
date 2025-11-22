@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { Observable, from, throwError, timer, race } from 'rxjs';
+import { map, catchError, timeout } from 'rxjs/operators';
 import { environment } from '../config/environment';
 
 /**
@@ -120,53 +122,58 @@ export class SupabaseService {
   }
 
   /**
-   * Get the current authenticated user (returns null if error or no user)
+   * Get the current authenticated user (returns Observable that emits null if error or no user)
+   * Uses RxJS for consistency with Angular patterns
    */
-  async getCurrentUser() {
-    try {
-      const { data: { user }, error } = await this.supabase.auth.getUser();
-      if (error) {
-        console.warn('Error getting user:', error);
-        return null;
-      }
-      return user;
-    } catch (error) {
-      console.warn('Exception getting user:', error);
-      return null;
-    }
+  getCurrentUser(): Observable<any> {
+    return from(this.supabase.auth.getUser()).pipe(
+      map(({ data, error }) => {
+        if (error) {
+          console.warn('Error getting user:', error);
+          return null;
+        }
+        return data.user;
+      }),
+      catchError((error) => {
+        console.warn('Exception getting user:', error);
+        return from([null]); // Return null as Observable value
+      })
+    );
   }
 
   /**
-   * Get the current session (returns null if error or no session)
+   * Get the current session (returns Observable that emits null if error or no session)
    * Includes timeout to prevent hanging
+   * Uses RxJS for consistency with Angular patterns
    */
-  async getSession(): Promise<any> {
-    try {
-      // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('getSession timeout')), 5000)
-      );
-      
-      const sessionPromise = this.supabase.auth.getSession();
-      
-      const { data: { session }, error } = await Promise.race([
-        sessionPromise,
-        timeoutPromise
-      ]) as any;
-      
-      if (error) {
-        console.warn('Error getting session:', error);
-        return null;
-      }
-      return session;
-    } catch (error: any) {
-      if (error?.message?.includes('timeout')) {
-        console.warn('getSession timed out after 5s - session may still be restoring');
-      } else {
-        console.warn('Exception getting session:', error);
-      }
-      return null;
-    }
+  getSession(): Observable<any> {
+    return from(this.supabase.auth.getSession()).pipe(
+      timeout({
+        first: 5000, // 5 second timeout
+        with: () => {
+          console.warn('getSession timed out after 5s - session may still be restoring');
+          return from([null]); // Return null on timeout
+        }
+      }),
+      map((response) => {
+        if (!response) {
+          return null;
+        }
+        if (response.error) {
+          console.warn('Error getting session:', response.error);
+          return null;
+        }
+        return response.data?.session || null;
+      }),
+      catchError((error: any) => {
+        if (error?.message?.includes('timeout')) {
+          console.warn('getSession timed out after 5s - session may still be restoring');
+        } else {
+          console.warn('Exception getting session:', error);
+        }
+        return from([null]); // Return null as Observable value
+      })
+    );
   }
 }
 

@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { Observable, tap, catchError, of, from, throwError } from 'rxjs';
+import { Observable, tap, catchError, of, from, throwError, firstValueFrom } from 'rxjs';
 import { signal, WritableSignal } from '@angular/core';
 import { ToastService } from './toast.service';
 import { SupabaseService } from './supabase.service';
@@ -73,7 +73,7 @@ export abstract class BaseApiService {
    */
   protected async getCurrentUserId(): Promise<string | null> {
     try {
-      const user = await this.supabaseService.getCurrentUser();
+      const user = await firstValueFrom(this.supabaseService.getCurrentUser());
       return user?.id || null;
     } catch (error) {
       console.error('Error getting current user:', error);
