@@ -80,8 +80,24 @@ export class AuthService {
     });
 
     // Load user data on init if session exists (fire and forget - don't block initialization)
+    // Wait a bit for Supabase to restore session from localStorage
     // Using Promise.resolve().then() instead of setTimeout for better zoneless compatibility
-    Promise.resolve().then(() => {
+    Promise.resolve().then(async () => {
+      // Give Supabase a moment to restore session from localStorage
+      // Check if we have a stored user first - if so, keep it while waiting for session
+      const storedUser = this.getUserFromStorage();
+      if (storedUser && storedUser.userId) {
+        console.log('Found stored user on init, keeping it:', storedUser.userId);
+        this.currentUserSubject.next(storedUser);
+        // Wait a bit for Supabase to restore session, then try to load full user data
+        await new Promise(resolve => {
+          // Use requestAnimationFrame for better timing with zoneless
+          requestAnimationFrame(() => {
+            requestAnimationFrame(resolve);
+          });
+        });
+      }
+      
       this.loadUserData().catch(error => {
         console.error('Error loading user data on init:', error);
       });
@@ -369,11 +385,25 @@ export class AuthService {
     try {
       console.log('Loading user data...');
       
+      // First check if we have a stored user in localStorage
+      // If we do, keep it even if session isn't ready yet (session might still be restoring)
+      const storedUser = this.getUserFromStorage();
+      if (storedUser && storedUser.userId) {
+        console.log('Found stored user, keeping it while checking session:', storedUser.userId);
+        this.currentUserSubject.next(storedUser);
+      }
+      
       // First check if we have a session without throwing
       const session = await this.supabaseService.getSession();
       if (!session) {
-        console.log('No session found, skipping user data load');
-        this.currentUserSubject.next(null);
+        console.log('No session found');
+        // Only clear user if we don't have a stored user
+        if (!storedUser || !storedUser.userId) {
+          console.log('No stored user either, clearing user data');
+          this.currentUserSubject.next(null);
+        } else {
+          console.log('Keeping stored user even though session not found (session may still be restoring)');
+        }
         return;
       }
 
