@@ -56,6 +56,8 @@ export class MaintenanceService extends BaseApiService {
       return of([]);
     }
 
+    console.log('[MaintenanceService] Loading maintenance tasks for household:', householdId);
+
     return from(
       this.supabase
         .from('maintenance_tasks')
@@ -69,14 +71,17 @@ export class MaintenanceService extends BaseApiService {
     ).pipe(
       map((response) => {
         if (response.error) {
+          console.error('[MaintenanceService] Error from Supabase:', response.error);
           throw response.error;
         }
+        console.log('[MaintenanceService] Raw data from Supabase:', response.data);
         const tasks = this.mapMaintenanceTasksFromSupabase(response.data || []);
+        console.log('[MaintenanceService] Mapped tasks:', tasks);
         this.maintenanceTasksSignal.set(tasks);
         return tasks;
       }),
       catchError(error => {
-        console.error('Error loading maintenance tasks:', error);
+        console.error('[MaintenanceService] Error loading maintenance tasks:', error);
         this.toastService.error('Error', 'Failed to load maintenance tasks');
         return of([]);
       })

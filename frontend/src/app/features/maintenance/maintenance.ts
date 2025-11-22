@@ -190,10 +190,17 @@ export class Maintenance implements OnInit {
   }
 
   ngOnInit(): void {
-    // Tasks are already loaded via DataService signals
-    // Use setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
-    setTimeout(() => {
-      this.isLoading.set(false);
+    // Load maintenance tasks when component initializes
+    this.isLoading.set(true);
+    this.maintenanceService.loadMaintenanceTasks().subscribe({
+      next: (tasks) => {
+        console.log('Loaded maintenance tasks:', tasks.length);
+        this.isLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading maintenance tasks:', error);
+        this.isLoading.set(false);
+      }
     });
   }
 
