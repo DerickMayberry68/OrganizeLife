@@ -106,10 +106,13 @@
           #fileManager
           id="file-manager"
           [ajaxSettings]="fileManagerAjaxSettings"
+          [pathSettings]="fileManagerPathSettings"
           [view]="fileManagerSettings.view"
           [allowMultiSelection]="fileManagerSettings.allowMultiSelection"
           [showFileExtension]="fileManagerSettings.showFileExtension"
           [showThumbnail]="fileManagerSettings.showThumbnail"
+          [path]="''"
+          (beforeSend)="onFileManagerBeforeSend($event)"
           (success)="onFileManagerSuccess($event)"
           (failure)="onFileManagerError($event)">
         </ejs-filemanager>

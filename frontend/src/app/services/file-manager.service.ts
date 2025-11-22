@@ -28,40 +28,50 @@ export class FileManagerService {
    * File Manager Read operation
    * Returns file/folder structure in File Manager format
    */
-  read(path: string, showHiddenItems: boolean = false): Observable<any> {
+  read(path: string | null | undefined, showHiddenItems: boolean = false): Observable<any> {
     const householdId = this.getHouseholdId();
     if (!householdId) {
       return throwError(() => new Error('No household selected'));
     }
 
+    // Ensure path is always a string, default to empty string for root
+    const safePath = path && typeof path === 'string' ? path : '';
+    
     // Remove household_id prefix if present
-    const cleanPath = path.startsWith(householdId + '/') 
-      ? path.substring(householdId.length + 1)
-      : path;
+    const cleanPath = safePath.startsWith(householdId + '/') 
+      ? safePath.substring(householdId.length + 1)
+      : safePath;
 
     return this.storageService.listFiles(cleanPath || undefined).pipe(
       map((files) => {
+        // Ensure we have a valid path for the breadcrumb
+        const displayPath = cleanPath || '';
+        const pathSegments = displayPath ? displayPath.split('/').filter((s: string) => s) : [];
+        
         const result: any = {
           cwd: {
-            name: cleanPath || 'Root',
+            name: pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : 'Root',
             size: 0,
             dateModified: new Date().toISOString(),
             type: 'Folder',
             hasChild: true,
             isFile: false,
-            isRoot: !cleanPath
+            isRoot: !cleanPath,
+            filterPath: displayPath // Ensure filterPath is always a string
           },
-          files: files.map((file: any) => {
-            const isFolder = !file.name || file.name.endsWith('/') || file.metadata?.mimetype === '';
+          files: (files || []).map((file: any) => {
+            // Ensure file.name is always a string
+            const fileName = file.name && typeof file.name === 'string' ? file.name : 'unknown';
+            const isFolder = !fileName || fileName.endsWith('/') || file.metadata?.mimetype === '';
             
             return {
-              name: file.name,
+              name: fileName,
               size: file.metadata?.size || 0,
               dateModified: file.updated_at || file.created_at || new Date().toISOString(),
               type: isFolder ? 'Folder' : 'File',
               hasChild: isFolder,
               isFile: !isFolder,
-              filterPath: cleanPath ? `${cleanPath}/${file.name}` : file.name
+              filterPath: cleanPath ? `${cleanPath}/${fileName}` : fileName
             };
           })
         };

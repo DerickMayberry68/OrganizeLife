@@ -156,11 +156,17 @@ export class Documents implements OnInit {
   };
 
   // File Manager will use custom adapter - we'll handle operations via events
+  // Note: These URLs are placeholders since we're using a custom adapter
   protected readonly fileManagerAjaxSettings: any = {
-    url: '/api/filemanager', // Placeholder - we'll handle via custom adapter
+    url: '/api/filemanager',
     getImageUrl: '/api/filemanager/GetImage',
     uploadUrl: '/api/filemanager/Upload',
     downloadUrl: '/api/filemanager/Download'
+  };
+
+  // File Manager path settings - initialize with root
+  protected readonly fileManagerPathSettings: any = {
+    rootAliasName: 'Root'
   };
 
   constructor() {
@@ -192,6 +198,18 @@ export class Documents implements OnInit {
         this.isLoading.set(false);
       }
     });
+
+    // Initialize File Manager after a short delay to ensure household is loaded
+    setTimeout(() => {
+      if (this.fileManager) {
+        // Ensure File Manager has a valid initial path
+        try {
+          this.fileManager.path = '';
+        } catch (error) {
+          console.warn('Error initializing File Manager path:', error);
+        }
+      }
+    }, 100);
   }
 
   // File Manager event handlers
@@ -209,63 +227,136 @@ export class Documents implements OnInit {
   protected onFileManagerBeforeSend(args: any): void {
     // Intercept File Manager requests and handle with our storage service
     const action = args.action;
-    const path = args.path || '';
+    
+    // Ensure path is always a string, default to empty string for root
+    // File Manager may pass null/undefined, so we need to handle that
+    let path = '';
+    if (args.path !== null && args.path !== undefined) {
+      if (typeof args.path === 'string') {
+        path = args.path;
+      } else if (args.path.path) {
+        path = args.path.path;
+      }
+    }
+    
+    // Cancel the default HTTP request since we're handling it ourselves
+    args.cancel = true;
     
     switch (action) {
       case 'read':
-        // Handle read operation
-        this.fileManagerService.read(path).subscribe({
+        // Handle read operation - ensure path is safe
+        this.fileManagerService.read(path || '').subscribe({
           next: (data) => {
+            // File Manager expects response to be set directly on args
+            // Ensure all paths are strings to prevent .split() errors
+            if (data && data.cwd) {
+              data.cwd.filterPath = data.cwd.filterPath || '';
+            }
+            if (data && data.files) {
+              data.files = data.files.map((file: any) => ({
+                ...file,
+                filterPath: file.filterPath || file.name || ''
+              }));
+            }
             args.response = data;
           },
           error: (error) => {
-            args.cancel = true;
+            console.error('File Manager read error:', error);
+            // Return empty result to prevent File Manager from crashing
+            args.response = {
+              cwd: {
+                name: 'Root',
+                size: 0,
+                dateModified: new Date().toISOString(),
+                type: 'Folder',
+                hasChild: false,
+                isFile: false,
+                isRoot: true,
+                filterPath: ''
+              },
+              files: []
+            };
             this.toastService.error('Error', 'Failed to load files');
           }
         });
         break;
       case 'createFolder':
-        const folderName = args.data?.name || args.name;
+        const folderName = args.data?.name || args.name || '';
+        if (!folderName) {
+          this.toastService.error('Error', 'Folder name is required');
+          return;
+        }
         this.fileManagerService.createFolder(path, folderName).subscribe({
           next: (data) => {
-            args.response = data;
+            if (args.onSuccess) {
+              args.onSuccess(data);
+            }
           },
           error: (error) => {
-            args.cancel = true;
+            console.error('File Manager createFolder error:', error);
+            if (args.onError) {
+              args.onError(error);
+            }
             this.toastService.error('Error', 'Failed to create folder');
           }
         });
         break;
       case 'upload':
-        const files = args.data?.files || [];
+        const files = args.data?.files || args.files || [];
+        if (!files || files.length === 0) {
+          this.toastService.error('Error', 'No files selected');
+          return;
+        }
         this.fileManagerService.upload(files, path).subscribe({
           next: (data) => {
-            args.response = data;
+            if (args.onSuccess) {
+              args.onSuccess(data);
+            }
             // Also create document records for uploaded files
             files.forEach((file: File) => {
               this.documentService.uploadDocument(file, {
                 title: file.name,
                 isImportant: false
-              }).subscribe();
+              }).subscribe({
+                error: (error) => {
+                  console.warn('Failed to create document record:', error);
+                }
+              });
             });
           },
           error: (error) => {
-            args.cancel = true;
+            console.error('File Manager upload error:', error);
+            if (args.onError) {
+              args.onError(error);
+            }
             this.toastService.error('Error', 'Failed to upload files');
           }
         });
         break;
       case 'delete':
         const items = args.data?.names || args.names || [];
+        if (!items || items.length === 0) {
+          this.toastService.error('Error', 'No items selected');
+          return;
+        }
         this.fileManagerService.delete(items).subscribe({
           next: (data) => {
-            args.response = data;
+            if (args.onSuccess) {
+              args.onSuccess(data);
+            }
           },
           error: (error) => {
-            args.cancel = true;
+            console.error('File Manager delete error:', error);
+            if (args.onError) {
+              args.onError(error);
+            }
             this.toastService.error('Error', 'Failed to delete files');
           }
         });
+        break;
+      default:
+        // For other operations, let File Manager handle them
+        args.cancel = false;
         break;
     }
   }
