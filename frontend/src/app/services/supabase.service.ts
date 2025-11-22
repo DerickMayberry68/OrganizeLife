@@ -138,17 +138,33 @@ export class SupabaseService {
 
   /**
    * Get the current session (returns null if error or no session)
+   * Includes timeout to prevent hanging
    */
-  async getSession() {
+  async getSession(): Promise<any> {
     try {
-      const { data: { session }, error } = await this.supabase.auth.getSession();
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('getSession timeout')), 5000)
+      );
+      
+      const sessionPromise = this.supabase.auth.getSession();
+      
+      const { data: { session }, error } = await Promise.race([
+        sessionPromise,
+        timeoutPromise
+      ]) as any;
+      
       if (error) {
         console.warn('Error getting session:', error);
         return null;
       }
       return session;
-    } catch (error) {
-      console.warn('Exception getting session:', error);
+    } catch (error: any) {
+      if (error?.message?.includes('timeout')) {
+        console.warn('getSession timed out after 5s - session may still be restoring');
+      } else {
+        console.warn('Exception getting session:', error);
+      }
       return null;
     }
   }

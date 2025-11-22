@@ -80,25 +80,30 @@ export class AuthService {
     });
 
     // Load user data on init if session exists (fire and forget - don't block initialization)
-    // Wait a bit for Supabase to restore session from localStorage
+    // Delay to ensure Supabase client is fully initialized and session is restored
     // Using Promise.resolve().then() instead of setTimeout for better zoneless compatibility
     Promise.resolve().then(async () => {
-      // Give Supabase a moment to restore session from localStorage
       // Check if we have a stored user first - if so, keep it while waiting for session
       const storedUser = this.getUserFromStorage();
       if (storedUser && storedUser.userId) {
         console.log('Found stored user on init, keeping it:', storedUser.userId);
         this.currentUserSubject.next(storedUser);
-        // Wait a bit for Supabase to restore session, then try to load full user data
-        await new Promise(resolve => {
-          // Use requestAnimationFrame for better timing with zoneless
-          requestAnimationFrame(() => {
-            requestAnimationFrame(resolve);
-          });
-        });
       }
       
-      this.loadUserData().catch(error => {
+      // Wait a bit for Supabase to restore session from localStorage
+      // Use a small delay to let Supabase initialize
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Load user data with timeout protection
+      Promise.race([
+        this.loadUserData(),
+        new Promise<void>((resolve) => {
+          setTimeout(() => {
+            console.warn('loadUserData timed out after 10s - continuing anyway');
+            resolve();
+          }, 10000);
+        })
+      ]).catch(error => {
         console.error('Error loading user data on init:', error);
       });
     });
@@ -380,6 +385,7 @@ export class AuthService {
 
   /**
    * Load user data from Supabase
+   * Includes timeout protection to prevent hanging
    */
   private async loadUserData(): Promise<void> {
     try {
@@ -393,8 +399,23 @@ export class AuthService {
         this.currentUserSubject.next(storedUser);
       }
       
-      // First check if we have a session without throwing
-      const session = await this.supabaseService.getSession();
+      // Check session with timeout protection
+      let session: any = null;
+      try {
+        session = await Promise.race([
+          this.supabaseService.getSession(),
+          new Promise<any>((resolve) => {
+            setTimeout(() => {
+              console.warn('getSession in loadUserData timed out after 5s');
+              resolve(null);
+            }, 5000);
+          })
+        ]);
+      } catch (error) {
+        console.warn('Error getting session in loadUserData:', error);
+        session = null;
+      }
+      
       if (!session) {
         console.log('No session found');
         // Only clear user if we don't have a stored user
