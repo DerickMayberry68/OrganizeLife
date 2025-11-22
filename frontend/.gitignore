@@ -45,8 +45,8 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
-# Note: environment.ts is committed (contains non-sensitive config)
-# environment.prod.ts
+# Note: environment.ts and environment.prod.ts are committed (contain non-sensitive config)
+# These files contain public Supabase anon keys which are safe to commit
 !environment.example.ts
 
 # Build files
