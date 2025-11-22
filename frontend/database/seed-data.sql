@@ -66,6 +66,18 @@ INSERT INTO categories (name, type, description) VALUES
 ('Fitness', 'subscription', 'Gym and fitness apps'),
 ('Professional', 'subscription', 'Professional memberships');
 
+-- Inventory Categories
+INSERT INTO categories (name, type, description) VALUES
+('Electronics', 'inventory', 'Computers, phones, tablets, TVs, audio equipment'),
+('Furniture', 'inventory', 'Chairs, tables, sofas, beds, cabinets'),
+('Appliances', 'inventory', 'Kitchen and laundry appliances'),
+('Vehicles', 'inventory', 'Cars, trucks, motorcycles, boats, RVs'),
+('Tools', 'inventory', 'Power tools, hand tools, workshop equipment'),
+('Outdoor', 'inventory', 'Lawn mowers, grills, patio furniture, garden tools'),
+('Sports & Recreation', 'inventory', 'Exercise equipment, bicycles, sports gear'),
+('Collectibles', 'inventory', 'Art, antiques, collectible items'),
+('Other', 'inventory', 'Miscellaneous inventory items');
+
 -- =====================================================
 -- FREQUENCIES
 -- =====================================================

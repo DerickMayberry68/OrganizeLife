@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DocumentService } from '../../services/document.service';
 import { ToastService } from '../../services/toast.service';
+import { StorageService } from '../../services/storage.service';
 import { StatCard } from '../../shared/stat-card/stat-card';
 import { GridModule, PageService, SortService, FilterService, GroupService } from '@syncfusion/ej2-angular-grids';
 import { ChartModule, CategoryService, ColumnSeriesService, LegendService, TooltipService } from '@syncfusion/ej2-angular-charts';
@@ -12,6 +13,7 @@ import { DatePickerModule } from '@syncfusion/ej2-angular-calendars';
 import { TextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import { DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
 import { UploaderModule } from '@syncfusion/ej2-angular-inputs';
+import { FileManagerModule, FileManagerAllModule, NavigationPaneService, ToolbarService, DetailsViewService } from '@syncfusion/ej2-angular-filemanager';
 import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
 
 @Component({
@@ -29,6 +31,7 @@ import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
     TextBoxModule,
     DropDownListModule,
     UploaderModule,
+    FileManagerAllModule,
     AppBarModule
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -40,15 +43,20 @@ import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
     CategoryService,
     ColumnSeriesService,
     LegendService,
-    TooltipService
+    TooltipService,
+    NavigationPaneService,
+    ToolbarService,
+    DetailsViewService
   ],
   templateUrl: './documents.html',
   styleUrl: './documents.scss'
 })
 export class Documents implements OnInit {
   @ViewChild('documentDialog') documentDialog!: DialogComponent;
+  @ViewChild('fileManager') fileManager!: any;
 
   private readonly documentService = inject(DocumentService);
+  private readonly storageService = inject(StorageService);
   private readonly fb = inject(FormBuilder);
   private readonly toastService = inject(ToastService);
 
@@ -153,10 +161,28 @@ export class Documents implements OnInit {
   }
 
   ngOnInit(): void {
-    // Data is already loaded via DataService signals
-    setTimeout(() => {
-      this.isLoading.set(false);
+    // Load documents
+    this.isLoading.set(true);
+    this.documentService.loadDocuments().subscribe({
+      next: (documents) => {
+        console.log('Loaded documents:', documents.length);
+        this.isLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading documents:', error);
+        this.isLoading.set(false);
+      }
     });
+  }
+
+  // File Manager event handlers
+  protected onFileManagerSuccess(args: any): void {
+    console.log('File Manager operation successful:', args);
+  }
+
+  protected onFileManagerError(args: any): void {
+    console.error('File Manager error:', args);
+    this.toastService.error('Error', 'File operation failed');
   }
 
   protected openDocumentDialog(): void {

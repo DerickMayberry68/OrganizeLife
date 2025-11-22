@@ -40,6 +40,7 @@
     "@syncfusion/ej2-angular-calendars": "^31.1.23",
     "@syncfusion/ej2-angular-charts": "^31.1.23",
     "@syncfusion/ej2-angular-dropdowns": "^31.1.23",
+    "@syncfusion/ej2-angular-filemanager": "^31.2.12",
     "@syncfusion/ej2-angular-grids": "^31.1.23",
     "@syncfusion/ej2-angular-inputs": "^31.1.23",
     "@syncfusion/ej2-angular-layouts": "^31.1.22",

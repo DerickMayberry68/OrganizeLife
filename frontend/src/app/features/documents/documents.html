@@ -95,42 +95,24 @@
     </div>
   </section>
 
-  <!-- All Documents Grid -->
+  <!-- File Manager -->
   <section class="documents__section">
     <div class="card">
       <div class="card-header">
-        <h3>All Documents</h3>
+        <h3>Document Manager</h3>
       </div>
-      <div class="card-content">
-        @if (documents().length > 0) {
-          <ejs-grid 
-            [dataSource]="documents()" 
-            [allowPaging]="true"
-            [allowSorting]="true"
-            [allowFiltering]="true"
-            [allowGrouping]="true"
-            [pageSettings]="pageSettings"
-            [filterSettings]="filterSettings"
-            (queryCellInfo)="queryCellInfo($event)">
-            <e-columns>
-              <e-column field="title" headerText="Title" width="200"></e-column>
-              <e-column field="category" headerText="Category" width="120"></e-column>
-              <e-column field="fileType" headerText="Type" width="100"></e-column>
-              <e-column field="uploadDate" headerText="Uploaded" width="140" [format]="formatDate"></e-column>
-              <e-column field="expiryDate" headerText="Expires" width="140" [format]="formatDate"></e-column>
-              <e-column field="isImportant" headerText="Priority" width="120"></e-column>
-            </e-columns>
-          </ejs-grid>
-        } @else {
-          <div class="empty-state">
-            <div class="empty-state__icon">📄</div>
-            <h3>No Documents Found</h3>
-            <p>You haven't uploaded any documents yet. Start by uploading your first document for safe keeping.</p>
-            <button class="btn btn--accent" (click)="openDocumentDialog()">
-              + Upload Your First Document
-            </button>
-          </div>
-        }
+      <div class="card-content file-manager-container">
+        <ejs-filemanager 
+          #fileManager
+          id="file-manager"
+          [ajaxSettings]="fileManagerAjaxSettings"
+          [view]="fileManagerSettings.view"
+          [allowMultiSelection]="fileManagerSettings.allowMultiSelection"
+          [showFileExtension]="fileManagerSettings.showFileExtension"
+          [showThumbnail]="fileManagerSettings.showThumbnail"
+          (success)="onFileManagerSuccess($event)"
+          (failure)="onFileManagerError($event)">
+        </ejs-filemanager>
       </div>
     </div>
   </section>
