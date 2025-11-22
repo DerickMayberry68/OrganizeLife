@@ -1,10 +1,16 @@
 {
   "name": "homesynchronicity",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:patch": "node scripts/bump-version.js patch && ng build",
+    "build:minor": "node scripts/bump-version.js minor && ng build",
+    "build:major": "node scripts/bump-version.js major && ng build",
+    "version:bump": "node scripts/bump-version.js patch",
+    "version:bump:minor": "node scripts/bump-version.js minor",
+    "version:bump:major": "node scripts/bump-version.js major",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
