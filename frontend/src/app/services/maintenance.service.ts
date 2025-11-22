@@ -95,7 +95,7 @@ export class MaintenanceService extends BaseApiService {
       status: task.status || 'pending',
       due_date: task.dueDate ? (typeof task.dueDate === 'string' ? task.dueDate : task.dueDate.toISOString().split('T')[0]) : null,
       service_provider_id: task.serviceProviderId || null,
-      cost: task.cost || null,
+      estimated_cost: task.estimatedCost || task.cost || null, // Use estimated_cost to match database schema
       notes: task.notes || null
     };
 
