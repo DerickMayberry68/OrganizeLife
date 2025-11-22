@@ -146,7 +146,6 @@ export class InventoryService extends BaseApiService {
             .single()
         );
       }),
-      switchMap(insertObservable => insertObservable),
       map((response) => {
         if (response.error) {
           throw response.error;
@@ -212,7 +211,6 @@ export class InventoryService extends BaseApiService {
             .single()
         );
       }),
-      switchMap(updateObservable => updateObservable),
       map((response) => {
         if (response.error) {
           throw response.error;
