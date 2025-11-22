@@ -1,0 +1,87 @@
+# Environment Configuration Pattern
+
+## Overview
+The application uses a centralized environment configuration file for Supabase settings.
+
+## File Location
+- **Path**: `src/app/config/environment.ts`
+- **Status**: **MUST be committed to repository** (not in .gitignore)
+
+## Configuration Structure
+
+```typescript
+export const environment = {
+  production: false,
+  supabase: {
+    url: 'https://your-project.supabase.co',
+    anonKey: 'your-anon-key-here'
+  }
+};
+```
+
+## Import Pattern
+
+**✅ CORRECT:**
+```typescript
+import { environment } from '../config/environment';
+// OR
+import { environment } from '@app/config/environment';
+```
+
+**❌ INCORRECT:**
+```typescript
+import { environment } from '../config/environment.js';  // Don't use .js extension
+import { environment } from '../config/environment.ts';  // Don't use .ts extension
+```
+
+## TypeScript Import Rules
+
+- **Never include file extensions** in TypeScript imports
+- TypeScript compiler automatically resolves `.ts` files
+- Including extensions (`.js` or `.ts`) will cause build failures
+
+## Git Ignore Rules
+
+The `.gitignore` file should **allow** `environment.ts` to be committed:
+
+```gitignore
+# Environment files - IMPORTANT: DO NOT COMMIT THESE
+.env
+.env.local
+.env.*.local
+# Note: environment.ts is committed (contains non-sensitive config)
+# environment.prod.ts
+!environment.example.ts
+```
+
+## Why environment.ts is Committed
+
+1. **Non-sensitive configuration**: Contains only Supabase URL and anon key (which is public)
+2. **Build requirement**: Required for TypeScript compilation and build process
+3. **Team consistency**: Ensures all developers use the same configuration
+
+## Production Environment Variables
+
+For production deployments, you can override values using:
+- Environment variables: `NG_APP_SUPABASE_URL` and `NG_APP_SUPABASE_ANON_KEY`
+- Or create `environment.prod.ts` (if needed)
+
+## Related Files
+
+- `src/app/services/supabase.service.ts` - Uses environment config
+- `src/app/config/environment.ts` - Environment configuration
+- `.gitignore` - Must allow environment.ts
+
+## Build Errors to Watch For
+
+If you see:
+```
+✘ [ERROR] Could not resolve "../config/environment"
+✘ [ERROR] TS2307: Cannot find module '../config/environment'
+```
+
+Check:
+1. ✅ Import path has no file extension
+2. ✅ environment.ts file exists at correct path
+3. ✅ environment.ts is not ignored in .gitignore
+4. ✅ environment.ts is committed to repository

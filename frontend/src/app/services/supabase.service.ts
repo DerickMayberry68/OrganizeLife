@@ -16,9 +16,20 @@ export class SupabaseService {
     const supabaseUrl = environment.supabase.url;
     const supabaseAnonKey = environment.supabase.anonKey;
 
+    console.log('[SupabaseService] Initializing...', {
+      url: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'MISSING',
+      hasAnonKey: !!supabaseAnonKey,
+      location: typeof window !== 'undefined' ? window.location.href : 'server',
+      timestamp: new Date().toISOString()
+    });
+
     if (!supabaseUrl || !supabaseAnonKey) {
-      console.error('Supabase configuration is missing. Please set NG_APP_SUPABASE_URL and NG_APP_SUPABASE_ANON_KEY environment variables.');
-      throw new Error('Supabase configuration is missing');
+      const errorMsg = 'Supabase configuration is missing. URL or AnonKey is not set.';
+      console.error('[SupabaseService]', errorMsg, {
+        url: supabaseUrl,
+        hasAnonKey: !!supabaseAnonKey
+      });
+      throw new Error(errorMsg);
     }
 
     try {
@@ -26,22 +37,75 @@ export class SupabaseService {
         auth: {
           persistSession: true,
           autoRefreshToken: true,
-          detectSessionInUrl: true
+          detectSessionInUrl: true,
+          storage: typeof window !== 'undefined' ? window.localStorage : undefined
         },
         db: {
           schema: 'public'
         },
         global: {
           headers: {
-            'x-client-info': 'angular-client'
+            'x-client-info': 'angular-client',
+            'apikey': supabaseAnonKey
           }
+        },
+        realtime: {
+          timeout: 20000
         }
       });
       
-      console.log('Supabase client initialized with URL:', supabaseUrl);
+      console.log('[SupabaseService] ✓ Client initialized successfully', {
+        url: supabaseUrl,
+        timestamp: new Date().toISOString()
+      });
+
+      // Test connection immediately (fire and forget)
+      this.testConnection().catch(error => {
+        console.warn('[SupabaseService] Initial connection test failed (non-blocking):', error);
+      });
     } catch (error) {
-      console.error('Failed to initialize Supabase client:', error);
+      console.error('[SupabaseService] ✗ Failed to initialize Supabase client:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Test Supabase connection (non-blocking)
+   * Uses a simple health check that won't fail if tables don't exist
+   */
+  private async testConnection(): Promise<void> {
+    try {
+      // Simple connection test - check auth endpoint
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Connection test timeout')), 10000)
+      );
+      
+      const testPromise = fetch(`${environment.supabase.url}/rest/v1/`, {
+        method: 'HEAD',
+        headers: {
+          'apikey': environment.supabase.anonKey
+        }
+      }).then(response => {
+        if (response.ok || response.status === 404) { // 404 is ok for HEAD on root
+          console.log('[SupabaseService] ✓ Connection test successful - Supabase is reachable');
+          return true;
+        } else {
+          console.warn('[SupabaseService] Connection test returned unexpected status:', response.status);
+          return false;
+        }
+      });
+
+      await Promise.race([testPromise, timeoutPromise]);
+    } catch (error: any) {
+      if (error.message?.includes('timeout')) {
+        console.error('[SupabaseService] ✗ Connection test TIMEOUT - Supabase may be unreachable from this location');
+      } else if (error.message?.includes('CORS')) {
+        console.error('[SupabaseService] ✗ CORS error - Check Supabase CORS settings for:', window.location.origin);
+      } else if (error.message?.includes('Failed to fetch')) {
+        console.error('[SupabaseService] ✗ Network error - Cannot reach Supabase URL');
+      } else {
+        console.warn('[SupabaseService] Connection test failed:', error);
+      }
     }
   }
 
