@@ -70,16 +70,22 @@ export class AuthService {
       if (event === 'SIGNED_OUT' || !session) {
         this.logout();
       } else if (event === 'SIGNED_IN' && session) {
-        this.loadUserData().catch(error => {
-          console.error('Error loading user data on auth state change:', error);
-        });
+        // Use setTimeout to ensure this doesn't block the event handler
+        setTimeout(() => {
+          this.loadUserData().catch(error => {
+            console.error('Error loading user data on auth state change:', error);
+          });
+        }, 0);
       }
     });
 
     // Load user data on init if session exists (fire and forget - don't block initialization)
-    this.loadUserData().catch(error => {
-      console.error('Error loading user data on init:', error);
-    });
+    // Use setTimeout to ensure this doesn't block the constructor
+    setTimeout(() => {
+      this.loadUserData().catch(error => {
+        console.error('Error loading user data on init:', error);
+      });
+    }, 0);
   }
 
   /**
