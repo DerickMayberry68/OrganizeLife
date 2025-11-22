@@ -1,6 +1,6 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { Observable, tap, catchError, of, from, throwError } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 import { BaseApiService } from './base-api.service';
 import { AuthService } from './auth.service';
 import type { MaintenanceTask, ServiceProvider } from '../models/maintenance.model';
@@ -90,28 +90,38 @@ export class MaintenanceService extends BaseApiService {
       return throwError(() => new Error('No household selected'));
     }
 
-    const taskData: any = {
-      household_id: householdId,
-      title: task.title,
-      description: task.description || null,
-      // priority_id: null, // TODO: Look up priority_id from priorities table based on task.priority
-      status: task.status || 'pending',
-      due_date: task.dueDate ? (typeof task.dueDate === 'string' ? task.dueDate : task.dueDate.toISOString().split('T')[0]) : null,
-      service_provider_id: task.serviceProviderId || null,
-      estimated_cost: task.estimatedCost || task.cost || null, // Use estimated_cost to match database schema
-      notes: task.notes || null
-    };
+    // Get current user ID for created_by/updated_by, then insert
+    return from(this.getCurrentUserId()).pipe(
+      switchMap((userId) => {
+        if (!userId) {
+          return throwError(() => new Error('User not authenticated'));
+        }
 
-    return from(
-      this.supabase
-        .from('maintenance_tasks')
-        .insert(taskData)
-        .select(`
-          *,
-          priorities (name)
-        `)
-        .single()
-    ).pipe(
+        const taskData: any = {
+          household_id: householdId,
+          title: task.title,
+          description: task.description || null,
+          // priority_id: null, // TODO: Look up priority_id from priorities table based on task.priority
+          status: task.status || 'pending',
+          due_date: task.dueDate ? (typeof task.dueDate === 'string' ? task.dueDate : task.dueDate.toISOString().split('T')[0]) : null,
+          service_provider_id: task.serviceProviderId || null,
+          estimated_cost: task.estimatedCost || task.cost || null, // Use estimated_cost to match database schema
+          notes: task.notes || null,
+          created_by: userId,
+          updated_by: userId
+        };
+
+        return from(
+          this.supabase
+            .from('maintenance_tasks')
+            .insert(taskData)
+            .select(`
+              *,
+              priorities (name)
+            `)
+            .single()
+        );
+      }),
       map((response) => {
         if (response.error) {
           throw response.error;
@@ -130,33 +140,44 @@ export class MaintenanceService extends BaseApiService {
   }
 
   public updateMaintenanceTask(id: string, updates: Partial<MaintenanceTask>): Observable<MaintenanceTask> {
-    const updateData: any = {};
-    
-    if (updates.title !== undefined) updateData.title = updates.title;
-    if (updates.category !== undefined) updateData.category = updates.category;
-    // if (updates.priority !== undefined) updateData.priority_id = null; // TODO: Look up priority_id from priorities table
-    if (updates.status !== undefined) updateData.status = updates.status;
-    if (updates.dueDate !== undefined) {
-      updateData.due_date = updates.dueDate 
-        ? (typeof updates.dueDate === 'string' ? updates.dueDate : updates.dueDate.toISOString().split('T')[0])
-        : null;
-    }
-    if (updates.estimatedCost !== undefined) updateData.estimated_cost = updates.estimatedCost;
-    if (updates.notes !== undefined) updateData.notes = updates.notes;
-    if (updates.isRecurring !== undefined) updateData.is_recurring = updates.isRecurring;
-    if (updates.frequency !== undefined) updateData.frequency = updates.frequency;
+    // Get current user ID for updated_by, then update
+    return from(this.getCurrentUserId()).pipe(
+      switchMap((userId) => {
+        if (!userId) {
+          return throwError(() => new Error('User not authenticated'));
+        }
 
-    return from(
-      this.supabase
-        .from('maintenance_tasks')
-        .update(updateData)
-        .eq('id', id)
-        .select(`
-          *,
-          priorities (name)
-        `)
-        .single()
-    ).pipe(
+        const updateData: any = {};
+        
+        if (updates.title !== undefined) updateData.title = updates.title;
+        if (updates.category !== undefined) updateData.category = updates.category;
+        // if (updates.priority !== undefined) updateData.priority_id = null; // TODO: Look up priority_id from priorities table
+        if (updates.status !== undefined) updateData.status = updates.status;
+        if (updates.dueDate !== undefined) {
+          updateData.due_date = updates.dueDate 
+            ? (typeof updates.dueDate === 'string' ? updates.dueDate : updates.dueDate.toISOString().split('T')[0])
+            : null;
+        }
+        if (updates.estimatedCost !== undefined) updateData.estimated_cost = updates.estimatedCost;
+        if (updates.notes !== undefined) updateData.notes = updates.notes;
+        if (updates.isRecurring !== undefined) updateData.is_recurring = updates.isRecurring;
+        if (updates.frequency !== undefined) updateData.frequency = updates.frequency;
+        
+        // Always update updated_by
+        updateData.updated_by = userId;
+
+        return from(
+          this.supabase
+            .from('maintenance_tasks')
+            .update(updateData)
+            .eq('id', id)
+            .select(`
+              *,
+              priorities (name)
+            `)
+            .single()
+        );
+      }),
       map((response) => {
         if (response.error) {
           throw response.error;
