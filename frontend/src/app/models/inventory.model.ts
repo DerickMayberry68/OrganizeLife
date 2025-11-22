@@ -1,7 +1,8 @@
 export interface InventoryItem {
   id: string;
   name: string;
-  category: string;
+  category: string; // Category name for display
+  categoryId?: string | null; // Category ID for database operations
   purchaseDate: Date;
   purchasePrice: number;
   location: string;

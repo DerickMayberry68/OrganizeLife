@@ -131,8 +131,11 @@ export class Inventory implements OnInit {
   protected itemForm: FormGroup;
 
   // Dropdown data
-  protected readonly categories = ['Electronics', 'Appliances', 'Furniture', 'Tools', 'Kitchen', 'Other'];
+  protected readonly categories = this.inventoryService.categories;
   protected readonly locations = ['Living Room', 'Kitchen', 'Bedroom', 'Garage', 'Basement', 'Office', 'Other'];
+  
+  // Category dropdown fields for Syncfusion
+  protected readonly categoryFields = { value: 'id', text: 'name' };
 
   constructor() {
     // Debug: Log chart data changes
@@ -143,7 +146,7 @@ export class Inventory implements OnInit {
 
     this.itemForm = this.fb.group({
       name: ['', Validators.required],
-      category: ['', Validators.required],
+      categoryId: ['', Validators.required], // Use categoryId instead of category
       purchaseDate: [new Date(), Validators.required],
       purchasePrice: [0, [Validators.required, Validators.min(0)]],
       location: ['', Validators.required],
@@ -152,9 +155,29 @@ export class Inventory implements OnInit {
   }
 
   ngOnInit(): void {
-    // Data is already loaded via DataService signals
-    setTimeout(() => {
-      this.isLoading.set(false);
+    // Load categories and inventory items
+    this.isLoading.set(true);
+    
+    // Load categories first
+    this.inventoryService.loadCategories().subscribe({
+      next: (categories) => {
+        console.log('Loaded inventory categories:', categories.length);
+      },
+      error: (error) => {
+        console.error('Error loading categories:', error);
+      }
+    });
+    
+    // Load inventory items
+    this.inventoryService.loadInventoryItems().subscribe({
+      next: (items) => {
+        console.log('Loaded inventory items:', items.length);
+        this.isLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading inventory items:', error);
+        this.isLoading.set(false);
+      }
     });
   }
 
@@ -171,7 +194,7 @@ export class Inventory implements OnInit {
       const formValue = this.itemForm.value;
       const item = {
         name: formValue.name,
-        category: formValue.category,
+        categoryId: formValue.categoryId, // Use categoryId
         purchaseDate: formValue.purchaseDate,
         purchasePrice: formValue.purchasePrice,
         location: formValue.location,

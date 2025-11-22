@@ -161,8 +161,9 @@
             <label for="itemCategory" class="form-label">Category *</label>
             <ejs-dropdownlist
               id="itemCategory"
-              formControlName="category"
-              [dataSource]="categories"
+              formControlName="categoryId"
+              [dataSource]="categories()"
+              [fields]="categoryFields"
               placeholder="Select category"
               cssClass="form-control">
             </ejs-dropdownlist>
