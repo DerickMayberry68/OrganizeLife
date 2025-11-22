@@ -65,56 +65,42 @@ export class LoginComponent {
           }
         }
         
-        // Wait a moment for session to be fully established before navigating
+        // Navigate after login - use Promise.resolve for better zoneless compatibility
         console.log('Starting navigation process...');
-        setTimeout(async () => {
+        Promise.resolve().then(async () => {
           console.log('Navigating to dashboard...');
           
-          // Double-check authentication before navigating
-          const isAuth = await this.authService.isAuthenticated();
-          console.log('✅ Login - Pre-navigation auth check:', isAuth);
-          if (!isAuth) {
-            console.error('❌ Login - Not authenticated before navigation!');
-          }
-          
-          // Double-check authentication before navigating (with timeout)
-          console.log('Checking authentication before navigation...');
+          // Quick auth check with timeout
           try {
+            let timeoutId: ReturnType<typeof setTimeout> | null = null;
             const authCheck = Promise.race([
               this.authService.isAuthenticated(),
-              new Promise<boolean>((resolve) => 
-                setTimeout(() => {
-                  console.warn('Auth check timed out after 3s, assuming authenticated');
+              new Promise<boolean>((resolve) => {
+                timeoutId = setTimeout(() => {
+                  console.warn('Auth check timed out after 2s, assuming authenticated');
                   resolve(true); // Assume authenticated if check times out
-                }, 3000)
-              )
+                }, 2000);
+              })
             ]);
             const isAuth = await authCheck;
+            if (timeoutId) clearTimeout(timeoutId);
             console.log('Pre-navigation auth check result:', isAuth);
           } catch (error) {
             console.warn('Auth check error:', error);
             // Continue anyway - login was successful
           }
           
-          // Try router navigation first (with timeout)
+          // Navigate to dashboard
           console.log('Attempting router navigation...');
-          const navPromise = this.router.navigate(['/dashboard']);
-          const navTimeout = new Promise<boolean>((resolve) => {
-            setTimeout(() => {
-              console.warn('Router navigation timed out after 2s, using window.location fallback');
-              resolve(false);
-            }, 2000);
-          });
-          
-          const navResult = await Promise.race([navPromise, navTimeout]);
-          
-          if (navResult === false || !navResult) {
-            console.warn('Router navigation failed or timed out, using window.location');
-            window.location.href = '/dashboard';
-          } else {
+          try {
+            await this.router.navigate(['/dashboard']);
             console.log('Router navigation successful!');
+          } catch (error) {
+            console.error('Router navigation failed:', error);
+            // Fallback to window.location
+            window.location.href = '/dashboard';
           }
-        }, 300);
+        });
       },
       error: (error) => {
         console.error('Login failed', error);

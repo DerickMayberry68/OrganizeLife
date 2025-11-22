@@ -59,13 +59,13 @@ export class SupabaseService {
         timestamp: new Date().toISOString()
       });
 
-      // Test connection immediately (fire and forget, with delay to not block initialization)
-      // Use setTimeout to ensure this doesn't block the constructor
-      setTimeout(() => {
+      // Test connection immediately (fire and forget)
+      // Using Promise.resolve().then() instead of setTimeout for better zoneless compatibility
+      Promise.resolve().then(() => {
         this.testConnection().catch(error => {
           console.warn('[SupabaseService] Initial connection test failed (non-blocking):', error);
         });
-      }, 0);
+      });
     } catch (error) {
       console.error('[SupabaseService] ✗ Failed to initialize Supabase client:', error);
       throw error;
