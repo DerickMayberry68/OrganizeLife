@@ -59,7 +59,10 @@ export class MaintenanceService extends BaseApiService {
     return from(
       this.supabase
         .from('maintenance_tasks')
-        .select('*')
+        .select(`
+          *,
+          priorities (name)
+        `)
         .eq('household_id', householdId)
         .is('deleted_at', null)
         .order('due_date', { ascending: true })
@@ -87,11 +90,11 @@ export class MaintenanceService extends BaseApiService {
       return throwError(() => new Error('No household selected'));
     }
 
-    const taskData = {
+    const taskData: any = {
       household_id: householdId,
       title: task.title,
       description: task.description || null,
-      priority: task.priority || 'medium',
+      // priority_id: null, // TODO: Look up priority_id from priorities table based on task.priority
       status: task.status || 'pending',
       due_date: task.dueDate ? (typeof task.dueDate === 'string' ? task.dueDate : task.dueDate.toISOString().split('T')[0]) : null,
       service_provider_id: task.serviceProviderId || null,
@@ -103,7 +106,10 @@ export class MaintenanceService extends BaseApiService {
       this.supabase
         .from('maintenance_tasks')
         .insert(taskData)
-        .select()
+        .select(`
+          *,
+          priorities (name)
+        `)
         .single()
     ).pipe(
       map((response) => {
@@ -128,7 +134,7 @@ export class MaintenanceService extends BaseApiService {
     
     if (updates.title !== undefined) updateData.title = updates.title;
     if (updates.category !== undefined) updateData.category = updates.category;
-    if (updates.priority !== undefined) updateData.priority = updates.priority;
+    // if (updates.priority !== undefined) updateData.priority_id = null; // TODO: Look up priority_id from priorities table
     if (updates.status !== undefined) updateData.status = updates.status;
     if (updates.dueDate !== undefined) {
       updateData.due_date = updates.dueDate 
@@ -145,7 +151,10 @@ export class MaintenanceService extends BaseApiService {
         .from('maintenance_tasks')
         .update(updateData)
         .eq('id', id)
-        .select()
+        .select(`
+          *,
+          priorities (name)
+        `)
         .single()
     ).pipe(
       map((response) => {
@@ -329,7 +338,7 @@ export class MaintenanceService extends BaseApiService {
       id: data.id,
       title: data.title,
       category: data.category || 'other',
-      priority: data.priority || 'medium',
+      priority: data.priorities?.name || data.priority || 'medium', // Get priority name from joined table or fallback
       status: data.status || 'pending',
       dueDate: data.due_date ? new Date(data.due_date) : new Date(),
       estimatedCost: data.estimated_cost || data.cost || undefined,
