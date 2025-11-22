@@ -63,6 +63,10 @@ export class AuthService {
   
   private currentUserSubject = new BehaviorSubject<CurrentUser | null>(this.getUserFromStorage());
   public currentUser$ = this.currentUserSubject.asObservable();
+  
+  // Flag to prevent multiple simultaneous loadUserData calls
+  private isLoadingUserData = false;
+  private loadUserDataPromise: Promise<void> | null = null;
 
   constructor() {
     // Listen to auth state changes
@@ -70,12 +74,14 @@ export class AuthService {
       if (event === 'SIGNED_OUT' || !session) {
         this.logout();
       } else if (event === 'SIGNED_IN' && session) {
-        // Use Promise.resolve().then() instead of setTimeout for better zoneless compatibility
-        Promise.resolve().then(() => {
-          this.loadUserData().catch(error => {
-            console.error('Error loading user data on auth state change:', error);
+        // Debounce: only load if not already loading
+        if (!this.isLoadingUserData) {
+          Promise.resolve().then(() => {
+            this.loadUserData().catch(error => {
+              console.error('Error loading user data on auth state change:', error);
+            });
           });
-        });
+        }
       }
     });
 
@@ -92,20 +98,22 @@ export class AuthService {
       
       // Wait a bit for Supabase to restore session from localStorage
       // Use a small delay to let Supabase initialize
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
       
-      // Load user data with timeout protection
-      Promise.race([
-        this.loadUserData(),
-        new Promise<void>((resolve) => {
-          setTimeout(() => {
-            console.warn('loadUserData timed out after 10s - continuing anyway');
-            resolve();
-          }, 10000);
-        })
-      ]).catch(error => {
-        console.error('Error loading user data on init:', error);
-      });
+      // Load user data with timeout protection (only if not already loading)
+      if (!this.isLoadingUserData) {
+        Promise.race([
+          this.loadUserData(),
+          new Promise<void>((resolve) => {
+            setTimeout(() => {
+              console.warn('loadUserData timed out after 10s - continuing anyway');
+              resolve();
+            }, 10000);
+          })
+        ]).catch(error => {
+          console.error('Error loading user data on init:', error);
+        });
+      }
     });
   }
 
@@ -386,8 +394,29 @@ export class AuthService {
   /**
    * Load user data from Supabase
    * Includes timeout protection to prevent hanging
+   * Prevents multiple simultaneous calls
    */
   private async loadUserData(): Promise<void> {
+    // If already loading, return the existing promise
+    if (this.isLoadingUserData && this.loadUserDataPromise) {
+      console.log('loadUserData already in progress, reusing existing promise');
+      return this.loadUserDataPromise;
+    }
+    
+    // Mark as loading and create promise
+    this.isLoadingUserData = true;
+    this.loadUserDataPromise = this._loadUserDataInternal().finally(() => {
+      this.isLoadingUserData = false;
+      this.loadUserDataPromise = null;
+    });
+    
+    return this.loadUserDataPromise;
+  }
+  
+  /**
+   * Internal method that actually loads user data
+   */
+  private async _loadUserDataInternal(): Promise<void> {
     try {
       console.log('Loading user data...');
       
@@ -399,16 +428,16 @@ export class AuthService {
         this.currentUserSubject.next(storedUser);
       }
       
-      // Check session with timeout protection
+      // Check session with shorter timeout (2s instead of 5s) for faster failure
       let session: any = null;
       try {
         session = await Promise.race([
           this.supabaseService.getSession(),
           new Promise<any>((resolve) => {
             setTimeout(() => {
-              console.warn('getSession in loadUserData timed out after 5s');
+              console.warn('getSession in loadUserData timed out after 2s');
               resolve(null);
-            }, 5000);
+            }, 2000);
           })
         ]);
       } catch (error) {
@@ -442,14 +471,14 @@ export class AuthService {
       const firstName = userMetadata['first_name'];
       const lastName = userMetadata['last_name'];
 
-      // Load households (with timeout to prevent hanging on empty database)
+      // Load households (with shorter timeout to prevent hanging)
       console.log('Loading households...');
       const householdsPromise = this.loadHouseholds(user.id);
       const timeoutPromise = new Promise<HouseholdMembership[]>((resolve) => {
         setTimeout(() => {
-          console.warn('Household loading timed out after 3s, continuing with empty array (database may be empty)');
+          console.warn('Household loading timed out after 2s, continuing with empty array');
           resolve([]);
-        }, 3000);
+        }, 2000);
       });
       
       const households = await Promise.race([householdsPromise, timeoutPromise]);
