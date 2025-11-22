@@ -30,9 +30,29 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Determine version bump type
+        id: version-type
+        run: |
+          # Get the last commit message (excluding version bump commits)
+          COMMIT_MSG=$(git log -1 --pretty=%B | head -1)
+          
+          # Check for breaking changes
+          if echo "$COMMIT_MSG" | grep -qiE "(breaking|major|!|BREAKING)"; then
+            echo "type=major" >> $GITHUB_OUTPUT
+            echo "🔴 Major version bump detected (breaking change)"
+          # Check for new features
+          elif echo "$COMMIT_MSG" | grep -qiE "^feat|^feature|^add"; then
+            echo "type=minor" >> $GITHUB_OUTPUT
+            echo "🟡 Minor version bump detected (new feature)"
+          # Default to patch for fixes and other changes
+          else
+            echo "type=patch" >> $GITHUB_OUTPUT
+            echo "🟢 Patch version bump (default)"
+          fi
+
       - name: Bump version
         run: |
-          node scripts/bump-version.js patch
+          node scripts/bump-version.js ${{ steps.version-type.outputs.type }}
           
       - name: Check for changes
         id: check-changes
