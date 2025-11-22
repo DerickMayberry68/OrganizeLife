@@ -66,8 +66,14 @@ export class Dashboard implements OnInit {
   protected readonly alerts = this.alertService.alerts;
 
   ngOnInit(): void {
+    console.log('Dashboard component initialized');
     // Load essential data for dashboard display
-    this.loadDashboardData();
+    try {
+      this.loadDashboardData();
+    } catch (error) {
+      console.error('Error in dashboard ngOnInit:', error);
+      // Continue anyway - dashboard should still render
+    }
   }
 
   private loadDashboardData(): void {
