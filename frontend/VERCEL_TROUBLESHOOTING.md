@@ -6,11 +6,23 @@ If the Angular app works locally but hangs when deployed to Vercel, check the fo
 
 ### 1. Check Browser Console Logs
 
+**This is the most important debugging step!** Vercel logs only show static file requests, not runtime errors.
+
 Open the browser DevTools (F12) and check the Console tab. Look for:
 - `[SupabaseService]` logs showing initialization status
+- `🚨 Global Error:` - Enhanced error logging with full context
+- `🚨 Unhandled Promise Rejection:` - Async errors
+- `🚨 Bootstrap Error:` - App initialization errors
 - Any CORS errors
 - Network errors or timeouts
 - Connection test results
+
+**Enhanced Error Logging:**
+The app now logs detailed error information including:
+- Error message and stack trace
+- File name and line numbers
+- Timestamp and current URL
+- Full error object for debugging
 
 ### 2. Check Network Tab
 
@@ -42,15 +54,39 @@ curl -I https://cwvkrkiejntyexfxzxpx.supabase.co/rest/v1/
 
 Should return HTTP 200 or 404 (not a connection error).
 
-### 5. Check Vercel Build Logs
+### 5. Understanding Vercel Logs
+
+**Important:** Vercel logs for Angular SPAs only show static file requests, not runtime errors.
+
+**What Vercel Logs Show:**
+- `GET /` → 200 (successful request for index.html)
+- `GET /` → 304 (browser using cached content)
+- Static asset requests (JS, CSS, images)
+
+**What Vercel Logs DON'T Show:**
+- JavaScript errors
+- Runtime exceptions
+- API call failures
+- Authentication issues
+- Client-side errors
+
+**To Debug Runtime Issues:**
+1. Use browser DevTools Console (most important!)
+2. Check Network tab for failed API calls
+3. Look for `🚨` prefixed error logs in console
+
+### 6. Check Vercel Build Logs
 
 In Vercel Dashboard:
 1. Go to **Deployments**
-2. Click on the failed/slow deployment
+2. Click on the deployment
 3. Check **Build Logs** for:
-   - Build errors
+   - Build errors (TypeScript, compilation)
    - Environment variable issues
    - Network timeouts during build
+   - Missing dependencies
+
+**Note:** Build logs show build-time errors, not runtime errors. Runtime errors appear in browser console.
 
 ### 6. Verify Environment Configuration
 
