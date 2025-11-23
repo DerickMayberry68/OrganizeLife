@@ -69,52 +69,56 @@ export class AuthService {
   private loadUserDataPromise: Promise<void> | null = null;
 
   constructor() {
-    // Listen to auth state changes
-    this.supabaseService.client.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT' || !session) {
-        this.logout();
-      } else if (event === 'SIGNED_IN' && session) {
-        // Debounce: only load if not already loading
-        if (!this.isLoadingUserData) {
-          Promise.resolve().then(() => {
-            this.loadUserData().catch(error => {
-              console.error('Error loading user data on auth state change:', error);
-            });
+    // Don't initialize Supabase in constructor - wait until login/register is called
+    // This allows the login screen to render immediately without blocking
+    
+    // Check if we have a stored user - restore it immediately for faster UI
+    const storedUser = this.getUserFromStorage();
+    if (storedUser && storedUser.userId) {
+      console.log('Found stored user on init, restoring:', storedUser.userId);
+      this.currentUserSubject.next(storedUser);
+      
+      // Initialize Supabase in background to check session (non-blocking)
+      // This happens asynchronously and won't block the UI
+      Promise.resolve().then(async () => {
+        try {
+          await this.supabaseService.ensureInitialized();
+          
+          // Set up auth state listener after initialization
+          this.supabaseService.client.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT' || !session) {
+              this.logout();
+            } else if (event === 'SIGNED_IN' && session) {
+              // Debounce: only load if not already loading
+              if (!this.isLoadingUserData) {
+                Promise.resolve().then(() => {
+                  this.loadUserData().catch(error => {
+                    console.error('Error loading user data on auth state change:', error);
+                  });
+                });
+              }
+            }
           });
-        }
-      }
-    });
 
-    // Load user data on init if session exists (fire and forget - don't block initialization)
-    // Delay to ensure Supabase client is fully initialized and session is restored
-    // Using Promise.resolve().then() instead of setTimeout for better zoneless compatibility
-    Promise.resolve().then(async () => {
-      // Check if we have a stored user first - if so, keep it while waiting for session
-      const storedUser = this.getUserFromStorage();
-      if (storedUser && storedUser.userId) {
-        console.log('Found stored user on init, keeping it:', storedUser.userId);
-        this.currentUserSubject.next(storedUser);
-      }
-      
-      // Wait a bit for Supabase to restore session from localStorage
-      // Use a small delay to let Supabase initialize
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      // Load user data with timeout protection (only if not already loading)
-      if (!this.isLoadingUserData) {
-        Promise.race([
-          this.loadUserData(),
-          new Promise<void>((resolve) => {
-            setTimeout(() => {
-              console.warn('loadUserData timed out after 10s - continuing anyway');
-              resolve();
-            }, 10000);
-          })
-        ]).catch(error => {
-          console.error('Error loading user data on init:', error);
-        });
-      }
-    });
+          // Load user data if session exists (non-blocking)
+          if (!this.isLoadingUserData) {
+            Promise.race([
+              this.loadUserData(),
+              new Promise<void>((resolve) => {
+                setTimeout(() => {
+                  console.warn('loadUserData timed out after 10s - continuing anyway');
+                  resolve();
+                }, 10000);
+              })
+            ]).catch(error => {
+              console.error('Error loading user data on init:', error);
+            });
+          }
+        } catch (error) {
+          console.warn('Failed to initialize Supabase on startup (non-blocking):', error);
+        }
+      });
+    }
   }
 
   /**
@@ -123,6 +127,10 @@ export class AuthService {
   register(request: RegisterRequest): Observable<RegisterResponse> {
     return from(
       (async () => {
+        // Initialize Supabase before using it
+        await this.supabaseService.ensureInitialized();
+        this._setupAuthStateListener();
+        
         const response = await this.supabaseService.client.auth.signUp({
           email: request.email,
           password: request.password,
@@ -177,6 +185,10 @@ export class AuthService {
   login(request: LoginRequest): Observable<LoginResponse> {
     return from(
       (async () => {
+        // Initialize Supabase before using it
+        await this.supabaseService.ensureInitialized();
+        this._setupAuthStateListener();
+        
         const response = await this.supabaseService.client.auth.signInWithPassword({
           email: request.email,
           password: request.password
@@ -260,10 +272,43 @@ export class AuthService {
   }
 
   /**
+   * Set up auth state listener (only once)
+   */
+  private authStateListenerSetup = false;
+  private _setupAuthStateListener(): void {
+    if (this.authStateListenerSetup) {
+      return; // Already set up
+    }
+    this.authStateListenerSetup = true;
+    
+    this.supabaseService.client.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        this.logout();
+      } else if (event === 'SIGNED_IN' && session) {
+        // Debounce: only load if not already loading
+        if (!this.isLoadingUserData) {
+          Promise.resolve().then(() => {
+            this.loadUserData().catch(error => {
+              console.error('Error loading user data on auth state change:', error);
+            });
+          });
+        }
+      }
+    });
+  }
+
+  /**
    * Logout and clear storage
    */
   logout(): void {
-    this.supabaseService.client.auth.signOut();
+    // Only sign out if Supabase is initialized
+    if (this.supabaseService) {
+      this.supabaseService.ensureInitialized().then(() => {
+        this.supabaseService.client.auth.signOut();
+      }).catch(() => {
+        // If Supabase not initialized, just clear local storage
+      });
+    }
     localStorage.removeItem(this.USER_KEY);
     this.currentUserSubject.next(null);
     this.router.navigate(['/login']);
@@ -420,6 +465,9 @@ export class AuthService {
    */
   private async _loadUserDataInternal(): Promise<void> {
     try {
+      // Ensure Supabase is initialized before loading user data
+      await this.supabaseService.ensureInitialized();
+      
       console.log('Loading user data...');
       
       // First check if we have a stored user in localStorage
@@ -510,6 +558,9 @@ export class AuthService {
    */
   private async loadHouseholds(userId: string): Promise<HouseholdMembership[]> {
     try {
+      // Ensure Supabase is initialized
+      await this.supabaseService.ensureInitialized();
+      
       console.log('Loading households for user:', userId);
       
       const { data, error } = await this.supabaseService.client
@@ -564,6 +615,9 @@ export class AuthService {
    * Create a new household
    */
   private async createHousehold(name: string, userId: string): Promise<{ id: string; name: string }> {
+    // Ensure Supabase is initialized
+    await this.supabaseService.ensureInitialized();
+    
     // Insert household
     const { data: household, error: householdError } = await this.supabaseService.client
       .from('households')

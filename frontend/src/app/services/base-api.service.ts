@@ -14,10 +14,19 @@ export abstract class BaseApiService {
   protected readonly toastService = inject(ToastService);
   
   /**
-   * Get the Supabase client instance
+   * Get the Supabase client instance (lazy initialization)
+   * Note: This will throw if Supabase is not initialized
+   * For async operations, ensure Supabase is initialized first
    */
   protected get supabase(): SupabaseClient {
     return this.supabaseService.client;
+  }
+
+  /**
+   * Ensure Supabase is initialized before use
+   */
+  protected async ensureSupabaseInitialized(): Promise<SupabaseClient> {
+    return await this.supabaseService.ensureInitialized();
   }
 
   /**

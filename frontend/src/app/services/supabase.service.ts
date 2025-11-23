@@ -12,9 +12,46 @@ import { environment } from '../config/environment';
   providedIn: 'root'
 })
 export class SupabaseService {
-  private readonly supabase: SupabaseClient;
+  private supabase: SupabaseClient | null = null;
+  private isInitializing = false;
+  private initPromise: Promise<SupabaseClient> | null = null;
 
   constructor() {
+    // Don't initialize Supabase in constructor - make it lazy
+    console.log('[SupabaseService] Service created (lazy initialization)');
+  }
+
+  /**
+   * Initialize Supabase client (lazy initialization)
+   * Only initializes when first accessed
+   */
+  private async initialize(): Promise<SupabaseClient> {
+    // If already initialized, return existing client
+    if (this.supabase) {
+      return this.supabase;
+    }
+
+    // If currently initializing, wait for existing promise
+    if (this.isInitializing && this.initPromise) {
+      return this.initPromise;
+    }
+
+    // Start initialization
+    this.isInitializing = true;
+    this.initPromise = this._doInitialize();
+    
+    try {
+      const client = await this.initPromise;
+      this.isInitializing = false;
+      return client;
+    } catch (error) {
+      this.isInitializing = false;
+      this.initPromise = null;
+      throw error;
+    }
+  }
+
+  private async _doInitialize(): Promise<SupabaseClient> {
     const supabaseUrl = environment.supabase.url;
     const supabaseAnonKey = environment.supabase.anonKey;
 
@@ -62,12 +99,13 @@ export class SupabaseService {
       });
 
       // Test connection immediately (fire and forget)
-      // Using Promise.resolve().then() instead of setTimeout for better zoneless compatibility
       Promise.resolve().then(() => {
         this.testConnection().catch(error => {
           console.warn('[SupabaseService] Initial connection test failed (non-blocking):', error);
         });
       });
+
+      return this.supabase;
     } catch (error) {
       console.error('[SupabaseService] ✗ Failed to initialize Supabase client:', error);
       throw error;
@@ -115,10 +153,25 @@ export class SupabaseService {
   }
 
   /**
-   * Get the Supabase client instance
+   * Get the Supabase client instance (lazy initialization)
+   * Initializes Supabase on first access
    */
   get client(): SupabaseClient {
+    if (!this.supabase) {
+      // Synchronous access - initialize immediately but don't block
+      // This will throw if called before async initialization completes
+      // For async access, use ensureInitialized() first
+      throw new Error('Supabase client not initialized. Call ensureInitialized() first or use async methods.');
+    }
     return this.supabase;
+  }
+
+  /**
+   * Ensure Supabase is initialized (async)
+   * Call this before accessing client in async contexts
+   */
+  async ensureInitialized(): Promise<SupabaseClient> {
+    return await this.initialize();
   }
 
   /**
@@ -126,7 +179,7 @@ export class SupabaseService {
    * Uses RxJS for consistency with Angular patterns
    */
   getCurrentUser(): Observable<any> {
-    return from(this.supabase.auth.getUser()).pipe(
+    return from(this.ensureInitialized().then(client => client.auth.getUser())).pipe(
       map(({ data, error }) => {
         if (error) {
           console.warn('Error getting user:', error);
@@ -147,7 +200,7 @@ export class SupabaseService {
    * Uses RxJS for consistency with Angular patterns
    */
   getSession(): Observable<any> {
-    return from(this.supabase.auth.getSession()).pipe(
+    return from(this.ensureInitialized().then(client => client.auth.getSession())).pipe(
       timeout({
         first: 5000, // 5 second timeout
         with: () => {
