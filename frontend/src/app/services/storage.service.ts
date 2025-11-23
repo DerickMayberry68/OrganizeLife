@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, from, throwError } from 'rxjs';
+import { Observable, from, throwError, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { SupabaseService } from './supabase.service';
 import { AuthService } from './auth.service';
@@ -159,6 +159,7 @@ export class StorageService {
 
   /**
    * Create a folder in Supabase Storage
+   * Folders are created by uploading a .keep file
    */
   createFolder(folderPath: string): Observable<void> {
     const householdId = this.getHouseholdId();
@@ -177,16 +178,33 @@ export class StorageService {
         .from(this.BUCKET_NAME)
         .upload(fullPath, file, {
           cacheControl: '3600',
-          upsert: false
+          upsert: true // Allow overwriting if folder already exists
         })
     ).pipe(
       map(({ error }) => {
         if (error) {
+          // If the error is "already exists", treat it as success
+          // since the folder is already created
+          const errorMessage = error.message || String(error);
+          if (errorMessage.includes('already exists') || 
+              errorMessage.includes('duplicate') ||
+              errorMessage.includes('409')) {
+            console.log('Folder already exists, treating as success:', fullPath);
+            return void 0;
+          }
           throw error;
         }
         return void 0;
       }),
       catchError(error => {
+        // Handle "already exists" error gracefully
+        const errorMessage = error?.message || String(error);
+        if (errorMessage.includes('already exists') || 
+            errorMessage.includes('duplicate') ||
+            errorMessage.includes('409')) {
+          console.log('Folder already exists, treating as success:', fullPath);
+          return of(void 0); // Return success Observable
+        }
         console.error('Error creating folder:', error);
         return throwError(() => error);
       })

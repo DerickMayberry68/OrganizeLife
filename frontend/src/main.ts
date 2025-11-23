@@ -2,9 +2,25 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { appConfig } from './app/app.config';
 import { AppComponent } from './app/app';
 import { registerLicense } from '@syncfusion/ej2-base';
+import { environment } from './app/config/environment';
 
-// Register Syncfusion license
-registerLicense('Ngo9BigBOggjHTQxAR8/V1JFaF5cXGRCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdmWH9ed3ZWR2JZU0B/WUZWYEg=');
+// Register Syncfusion license from environment configuration
+// IMPORTANT: License must be registered BEFORE any Syncfusion components are imported/used
+// This includes File Manager and all other Syncfusion components
+// To update your license key:
+// 1. Get your license key from https://www.syncfusion.com/account/manage-license
+// 2. Ensure the key matches your Syncfusion version (check package.json for @syncfusion versions)
+// 3. Update the licenseKey in src/app/config/environment.ts and environment.prod.ts
+if (environment.syncfusion?.licenseKey) {
+  try {
+    registerLicense(environment.syncfusion.licenseKey);
+    console.log('✓ Syncfusion license registered successfully');
+  } catch (error) {
+    console.error('✗ Failed to register Syncfusion license:', error);
+  }
+} else {
+  console.warn('⚠️ Syncfusion license key not found in environment configuration');
+}
 
 // Enhanced error logging for debugging
 window.addEventListener('error', (event) => {

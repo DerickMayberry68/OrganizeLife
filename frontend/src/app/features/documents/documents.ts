@@ -156,12 +156,12 @@ export class Documents implements OnInit {
   };
 
   // File Manager will use custom adapter - we'll handle operations via events
-  // Note: These URLs are placeholders since we're using a custom adapter
+  // Note: We set these to prevent HTTP requests - all operations are handled in beforeSend
   protected readonly fileManagerAjaxSettings: any = {
-    url: '/api/filemanager',
-    getImageUrl: '/api/filemanager/GetImage',
-    uploadUrl: '/api/filemanager/Upload',
-    downloadUrl: '/api/filemanager/Download'
+    url: 'about:blank', // Use about:blank to prevent actual HTTP requests
+    getImageUrl: 'about:blank',
+    uploadUrl: 'about:blank',
+    downloadUrl: 'about:blank'
   };
 
   // File Manager path settings - initialize with root
@@ -199,17 +199,8 @@ export class Documents implements OnInit {
       }
     });
 
-    // Initialize File Manager after a short delay to ensure household is loaded
-    setTimeout(() => {
-      if (this.fileManager) {
-        // Ensure File Manager has a valid initial path
-        try {
-          this.fileManager.path = '';
-        } catch (error) {
-          console.warn('Error initializing File Manager path:', error);
-        }
-      }
-    }, 100);
+    // File Manager will initialize automatically - no need to set path manually
+    // The path will be set when the first read operation is performed
   }
 
   // File Manager event handlers
@@ -225,8 +216,12 @@ export class Documents implements OnInit {
   }
 
   protected onFileManagerBeforeSend(args: any): void {
+    // ALWAYS cancel the default HTTP request FIRST - we handle everything ourselves
+    args.cancel = true;
+    
     // Intercept File Manager requests and handle with our storage service
-    const action = args.action;
+    // Normalize action to lowercase for case-insensitive handling
+    const action = (args.action || '').toLowerCase();
     
     // Ensure path is always a string, default to empty string for root
     // File Manager may pass null/undefined, so we need to handle that
@@ -234,13 +229,10 @@ export class Documents implements OnInit {
     if (args.path !== null && args.path !== undefined) {
       if (typeof args.path === 'string') {
         path = args.path;
-      } else if (args.path.path) {
+      } else if (args.path && typeof args.path === 'object' && args.path.path) {
         path = args.path.path;
       }
     }
-    
-    // Cancel the default HTTP request since we're handling it ourselves
-    args.cancel = true;
     
     switch (action) {
       case 'read':
@@ -280,23 +272,22 @@ export class Documents implements OnInit {
           }
         });
         break;
-      case 'createFolder':
+      case 'create':
+      case 'createfolder':
+        // Handle folder creation
         const folderName = args.data?.name || args.name || '';
         if (!folderName) {
           this.toastService.error('Error', 'Folder name is required');
+          args.response = { files: [] };
           return;
         }
         this.fileManagerService.createFolder(path, folderName).subscribe({
           next: (data) => {
-            if (args.onSuccess) {
-              args.onSuccess(data);
-            }
+            args.response = data || { files: [] };
           },
           error: (error) => {
             console.error('File Manager createFolder error:', error);
-            if (args.onError) {
-              args.onError(error);
-            }
+            args.response = { files: [] };
             this.toastService.error('Error', 'Failed to create folder');
           }
         });
@@ -305,13 +296,12 @@ export class Documents implements OnInit {
         const files = args.data?.files || args.files || [];
         if (!files || files.length === 0) {
           this.toastService.error('Error', 'No files selected');
+          args.response = { files: [] };
           return;
         }
         this.fileManagerService.upload(files, path).subscribe({
           next: (data) => {
-            if (args.onSuccess) {
-              args.onSuccess(data);
-            }
+            args.response = data || { files: [] };
             // Also create document records for uploaded files
             files.forEach((file: File) => {
               this.documentService.uploadDocument(file, {
@@ -326,9 +316,7 @@ export class Documents implements OnInit {
           },
           error: (error) => {
             console.error('File Manager upload error:', error);
-            if (args.onError) {
-              args.onError(error);
-            }
+            args.response = { files: [] };
             this.toastService.error('Error', 'Failed to upload files');
           }
         });
@@ -337,26 +325,67 @@ export class Documents implements OnInit {
         const items = args.data?.names || args.names || [];
         if (!items || items.length === 0) {
           this.toastService.error('Error', 'No items selected');
+          args.response = { files: [] };
           return;
         }
         this.fileManagerService.delete(items).subscribe({
           next: (data) => {
-            if (args.onSuccess) {
-              args.onSuccess(data);
-            }
+            args.response = data || { files: [] };
           },
           error: (error) => {
             console.error('File Manager delete error:', error);
-            if (args.onError) {
-              args.onError(error);
-            }
+            args.response = { files: [] };
             this.toastService.error('Error', 'Failed to delete files');
           }
         });
         break;
+      case 'download':
+        // Handle download operation
+        const downloadPath = path || args.data?.path || '';
+        if (!downloadPath) {
+          this.toastService.error('Error', 'No file selected for download');
+          return;
+        }
+        this.fileManagerService.download(downloadPath).subscribe({
+          next: (blob) => {
+            // Create download link
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = downloadPath.split('/').pop() || 'download';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            args.response = {};
+          },
+          error: (error) => {
+            console.error('File Manager download error:', error);
+            this.toastService.error('Error', 'Failed to download file');
+          }
+        });
+        break;
+      case 'getImage':
+        // Handle getImage operation
+        const imagePath = path || args.data?.path || '';
+        if (!imagePath) {
+          args.response = { url: '' };
+          return;
+        }
+        this.fileManagerService.getImage(imagePath).subscribe({
+          next: (url) => {
+            args.response = { url: url };
+          },
+          error: (error) => {
+            console.error('File Manager getImage error:', error);
+            args.response = { url: '' };
+          }
+        });
+        break;
       default:
-        // For other operations, let File Manager handle them
-        args.cancel = false;
+        // For unknown operations, return empty response
+        console.warn(`Unhandled File Manager action: ${action}`);
+        args.response = { files: [] };
         break;
     }
   }

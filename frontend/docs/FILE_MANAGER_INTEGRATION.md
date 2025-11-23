@@ -55,21 +55,23 @@ You need to create the `household_documents` bucket in Supabase:
    - `UPDATE` - Users can update their household's documents
    - `DELETE` - Users can delete their household's documents
 
-### 2. RLS Policy Example
-```sql
--- Allow users to access their household's documents
-CREATE POLICY "Users can access their household documents"
-ON storage.objects FOR SELECT
-USING (
-  bucket_id = 'household_documents' AND
-  (storage.foldername(name))[1] = (
-    SELECT household_id::text 
-    FROM household_members 
-    WHERE user_id = auth.uid() AND is_active = true
-    LIMIT 1
-  )
-);
-```
+### 2. RLS Policies
+
+**Important:** You must set up RLS policies for the `household_documents` bucket. 
+
+Run the SQL script in `database/storage-rls-policies.sql` in your Supabase SQL Editor. This will create policies for:
+- **SELECT**: Read files in user's household folder
+- **INSERT**: Upload files and create folders in user's household folder
+- **UPDATE**: Modify files in user's household folder
+- **DELETE**: Delete files in user's household folder
+
+The policies check that the first folder segment (household_id) matches the user's household membership.
+
+**Quick Setup:**
+1. Go to Supabase Dashboard → SQL Editor
+2. Copy and paste the contents of `database/storage-rls-policies.sql`
+3. Run the script
+4. Verify policies are created in Storage → Policies
 
 ### 3. File Manager Custom Adapter
 Syncfusion File Manager expects HTTP endpoints. The current implementation uses event handlers, but you may need to:
