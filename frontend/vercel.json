@@ -1,7 +1,7 @@
 {
   "version": 2,
   "buildCommand": "npm run build",
-  "outputDirectory": "dist/HomeSynchronicity/browser",
+  "outputDirectory": "dist/HomeSynchronicity",
   "framework": "angular",
   "rewrites": [
     {
