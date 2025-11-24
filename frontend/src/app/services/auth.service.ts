@@ -1,8 +1,8 @@
 // src/app/services/auth.service.ts
 
-import { Injectable, inject, signal, computed } from '@angular/core';
-import { Observable, from, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Injectable, inject, signal, computed, effect, untracked } from '@angular/core';
+import { Observable, from, throwError, of } from 'rxjs';
+import { map, catchError, switchMap, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { SupabaseService } from './supabase.service';
 
@@ -59,45 +59,49 @@ export interface RegisterResponse {
 }
 
 // ──────────────────────────────────────────────────────────────
-//  AuthService – Signals + Full Compatibility
+//  AuthService – 100% Signals + Observables, Zero Promises
 // ──────────────────────────────────────────────────────────────
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly supabase = inject(SupabaseService);
   private readonly router = inject(Router);
 
-  // ───── Core Signal (zoneless-native) ─────
+  // ───── Core State (signals) ─────
   private readonly currentUser = signal<CurrentUser | null>(null);
+  private readonly loadingUser = signal(false);
+  private authListenerSetup = false;
 
   // Public readonly signals
   readonly currentUser$ = this.currentUser.asReadonly();
   readonly isAuthenticated = computed(() => !!this.currentUser());
   readonly userName = computed(() => {
-    const user = this.currentUser();
-    if (!user) return 'Guest';
-    if (user.firstName) {
-      return `${user.firstName} ${user.lastName || ''}`.trim();
+    const u = this.currentUser();
+    if (!u) return 'Guest';
+    if (u.firstName) {
+      return `${u.firstName} ${u.lastName || ''}`.trim();
     }
-    return user.email.split('@')[0];
+    return u.email.split('@')[0];
   });
 
-  private loadingUserData = false;
-
+  // ───── React to Supabase client becoming ready ─────
   constructor() {
-    this.supabase.ensureInitialized().then(() => {
-      this.setupAuthStateListener();
-      this.checkInitialSession();
+    effect(() => {
+      const client = this.supabase.client$();
+      if (client && !this.authListenerSetup) {
+        untracked(() => {
+          this.setupAuthListener(client);
+          this.authListenerSetup = true;
+          this.restoreSession(client);
+        });
+      }
     });
   }
 
-  private setupAuthStateListener(): void {
-    this.supabase.client.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth event:', event);
-
+  // ───── Auth State Listener (pure reactive) ─────
+  private setupAuthListener(client: any): void {
+    client.auth.onAuthStateChange((event: string, session: any) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (session?.user) await this.loadUserProfile();
+        if (session?.user) this.loadUserProfile();
       } else if (event === 'SIGNED_OUT') {
         this.currentUser.set(null);
         this.router.navigate(['/login']);
@@ -105,170 +109,229 @@ export class AuthService {
     });
   }
 
-  private async checkInitialSession(): Promise<void> {
-    try {
-      const { data } = await this.supabase.client.auth.getSession();
-      if (data.session?.user) {
-        await this.loadUserProfile();
-      } else {
-        this.currentUser.set(null);
-      }
-    } catch {
-      this.currentUser.set(null);
+  // ───── Restore session on app start (Observable-based) ─────
+  private restoreSession(client: any): void {
+    from(client.auth.getSession())
+      .pipe(
+        map(({ data }: any) => {
+          if (data.session?.user) {
+            this.loadUserProfile();
+          } else {
+            this.currentUser.set(null);
+          }
+        }),
+        catchError(() => {
+          this.currentUser.set(null);
+          return of(null);
+        })
+      )
+      .subscribe();
+  }
+
+  // ───── Load full user profile (Observable-based) ─────
+  private loadUserProfile(): void {
+    if (this.loadingUser()) return;
+    this.loadingUser.set(true);
+
+    const client = this.supabase.client$();
+    if (!client) {
+      this.loadingUser.set(false);
+      return;
     }
+
+    from(client.auth.getUser())
+      .pipe(
+        switchMap(({ data: { user } }: any) => {
+          if (!user) {
+            this.currentUser.set(null);
+            this.loadingUser.set(false);
+            return of(null);
+          }
+
+          const metadata = user.user_metadata || {};
+          return this.loadHouseholds$(user.id).pipe(
+            map(households => ({
+              userId: user.id,
+              email: user.email || '',
+              firstName: metadata['first_name'],
+              lastName: metadata['last_name'],
+              households
+            }))
+          );
+        }),
+        tap(user => {
+          if (user) {
+            this.currentUser.set(user);
+          }
+          this.loadingUser.set(false);
+        }),
+        catchError(() => {
+          this.currentUser.set(null);
+          this.loadingUser.set(false);
+          return of(null);
+        })
+      )
+      .subscribe();
   }
 
-  private async loadUserProfile(): Promise<void> {
-    if (this.loadingUserData) return;
-    this.loadingUserData = true;
+  // ───── Household loading (Observable-based) ─────
+  private loadHouseholds$(userId: string): Observable<HouseholdMembership[]> {
+    const client = this.supabase.client$();
+    if (!client) return of([]);
 
-    try {
-      const { data: { user } } = await this.supabase.client.auth.getUser();
-      if (!user) {
-        this.currentUser.set(null);
-        return;
-      }
-
-      const metadata = user.user_metadata || {};
-      const households = await this.loadHouseholdsWithTimeout(user.id);
-
-      const currentUser: CurrentUser = {
-        userId: user.id,
-        email: user.email || '',
-        firstName: metadata['first_name'],
-        lastName: metadata['last_name'],
-        households
-      };
-
-      this.currentUser.set(currentUser);
-    } catch (err) {
-      console.error('Failed to load user profile:', err);
-      this.currentUser.set(null);
-    } finally {
-      this.loadingUserData = false;
-    }
-  }
-
-  // ───── Household Helpers ─────
-  private async loadHouseholdsWithTimeout(userId: string): Promise<HouseholdMembership[]> {
-    const loadPromise = this.loadHouseholds(userId);
-    const timeoutPromise = new Promise<HouseholdMembership[]>((resolve) =>
-      setTimeout(() => resolve([]), 3000)
-    );
-    return Promise.race([loadPromise, timeoutPromise]);
-  }
-
-  private async loadHouseholds(userId: string): Promise<HouseholdMembership[]> {
-    try {
-      const { data, error } = await this.supabase.client
+    return from(
+      client
         .from('household_members')
-        .select(`
-          household_id,
-          role,
-          joined_at,
-          households (
-            id,
-            name
-          )
-        `)
+        .select(`household_id, role, joined_at, households (id, name)`)
         .eq('user_id', userId)
-        .eq('is_active', true);
+        .eq('is_active', true)
+    ).pipe(
+      map(({ data, error }: any) => {
+        if (error) {
+          console.error('Error loading households:', error);
+          return [];
+        }
 
-      if (error) throw error;
-
-      return (data || []).map((row: any) => ({
-        householdId: row.household_id,
-        householdName: row.households?.name || 'Unknown Household',
-        role: row.role || 'Member',
-        joinedAt: row.joined_at
-      }));
-    } catch (err: any) {
-      console.error('Error loading households:', err);
-      return [];
-    }
+        return (data || []).map((row: any) => ({
+          householdId: row.household_id,
+          householdName: row.households?.name || 'Unknown Household',
+          role: row.role || 'Member',
+          joinedAt: row.joined_at
+        }));
+      }),
+      catchError(err => {
+        console.error('Error loading households:', err);
+        return of([]);
+      })
+    );
   }
 
   // ───── Public API ─────
+  
   login(request: LoginRequest): Observable<LoginResponse> {
-    return from(this.loginInternal(request));
-  }
+    return this.supabase.whenReady$().pipe(
+      switchMap(client => from(client.auth.signInWithPassword(request))),
+      map(({ data, error }: any) => {
+        if (error) {
+          throw new Error(error.message.includes('Invalid') ? 'Invalid email or password' : 'Login failed');
+        }
+        if (!data.session || !data.user) {
+          throw new Error('No session');
+        }
 
-  private async loginInternal(request: LoginRequest): Promise<LoginResponse> {
-    await this.supabase.ensureInitialized();
-    const { data, error } = await this.supabase.client.auth.signInWithPassword(request);
-
-    if (error) throw new Error(error.message.includes('Invalid') ? 'Invalid email or password' : 'Login failed');
-    if (!data.session || !data.user) throw new Error('No session');
-
-    return {
-      userId: data.user.id,
-      email: data.user.email!,
-      accessToken: data.session.access_token,
-      tokenType: 'Bearer',
-      expiresIn: data.session.expires_in ?? 3600,
-      refreshToken: data.session.refresh_token,
-      households: []
-    };
+        // User profile will be loaded via auth state listener
+        return {
+          userId: data.user.id,
+          email: data.user.email!,
+          accessToken: data.session.access_token,
+          tokenType: 'Bearer',
+          expiresIn: data.session.expires_in ?? 3600,
+          refreshToken: data.session.refresh_token,
+          households: []
+        };
+      }),
+      catchError(err => throwError(() => err))
+    );
   }
 
   register(request: RegisterRequest): Observable<RegisterResponse> {
-    return from(this.registerInternal(request)).pipe(catchError(err => throwError(() => err)));
+    return this.supabase.whenReady$().pipe(
+      switchMap(client => from(
+        client.auth.signUp({
+          email: request.email,
+          password: request.password,
+          options: { data: { first_name: request.firstName, last_name: request.lastName } }
+        })
+      )),
+      switchMap(({ data, error }: any) => {
+        if (error) {
+          return throwError(() => error);
+        }
+        if (!data.user || !data.session) {
+          return throwError(() => new Error('Registration failed'));
+        }
+
+        // Create household
+        return this.createHousehold$(request.householdName, data.user.id).pipe(
+          map(household => ({
+            userId: data.user.id,
+            email: data.user.email!,
+            accessToken: data.session.access_token,
+            tokenType: 'Bearer',
+            expiresIn: data.session.expires_in ?? 3600,
+            refreshToken: data.session.refresh_token,
+            defaultHouseholdId: household.id,
+            defaultHouseholdName: household.name
+          }))
+        );
+      }),
+      catchError(err => throwError(() => err))
+    );
   }
 
-  private async registerInternal(request: RegisterRequest): Promise<RegisterResponse> {
-    await this.supabase.ensureInitialized();
-    const { data, error } = await this.supabase.client.auth.signUp({
-      email: request.email,
-      password: request.password,
-      options: { data: { first_name: request.firstName, last_name: request.lastName } }
-    });
+  private createHousehold$(name: string, userId: string): Observable<{ id: string; name: string }> {
+    return this.supabase.whenReady$().pipe(
+      switchMap(client => {
+        return from(
+          client
+            .from('households')
+            .insert({ name, created_by: userId })
+            .select()
+            .single()
+        ).pipe(
+          switchMap(({ data: household, error }: any) => {
+            if (error || !household) {
+              return throwError(() => new Error('Failed to create household'));
+            }
 
-    if (error) throw error;
-    if (!data.user || !data.session) throw new Error('Registration failed');
-
-    const household = await this.createHousehold(request.householdName, data.user.id);
-
-    return {
-      userId: data.user.id,
-      email: data.user.email!,
-      accessToken: data.session.access_token,
-      tokenType: 'Bearer',
-      expiresIn: data.session.expires_in ?? 3600,
-      refreshToken: data.session.refresh_token,
-      defaultHouseholdId: household.id,
-      defaultHouseholdName: household.name
-    };
+            // Add user as admin member
+            return from(
+              client
+                .from('household_members')
+                .insert({
+                  household_id: household.id,
+                  user_id: userId,
+                  role: 'Admin',
+                  is_active: true,
+                  joined_at: new Date().toISOString()
+                })
+            ).pipe(
+              map(() => ({ id: household.id, name: household.name }))
+            );
+          })
+        );
+      }),
+      catchError(err => throwError(() => err))
+    );
   }
 
-  private async createHousehold(name: string, userId: string) {
-    const { data: household, error } = await this.supabase.client
-      .from('households')
-      .insert({ name, created_by: userId })
-      .select()
-      .single();
-
-    if (error || !household) throw new Error('Failed to create household');
-
-    await this.supabase.client
-      .from('household_members')
-      .insert({
-        household_id: household.id,
-        user_id: userId,
-        role: 'Admin',
-        is_active: true,
-        joined_at: new Date().toISOString()
-      });
-
-    return { id: household.id, name: household.name };
+  logout(): Observable<void> {
+    return this.supabase.whenReady$().pipe(
+      switchMap(client => from(client.auth.signOut())),
+      tap(() => {
+        this.currentUser.set(null);
+        this.router.navigate(['/login']);
+      }),
+      map(() => void 0),
+      catchError(() => {
+        // Even if signOut fails, clear local state
+        this.currentUser.set(null);
+        this.router.navigate(['/login']);
+        return of<void>(undefined);
+      })
+    );
   }
 
-  async logout(): Promise<void> {
-    await this.supabase.client.auth.signOut();
-    this.currentUser.set(null);
-    this.router.navigate(['/login']);
+  // ───── Token management (Observable-based) ─────
+  getToken(): Observable<string | null> {
+    return this.supabase.whenReady$().pipe(
+      switchMap(client => from(client.auth.getSession())),
+      map(({ data }) => data.session?.access_token || null),
+      catchError(() => of(null))
+    );
   }
 
-  // ───── COMPATIBILITY METHODS (keeps old code working) ─────
+  // ───── Compatibility (keeps old code working) ─────
   getCurrentUser(): CurrentUser | null {
     return this.currentUser();
   }
@@ -277,12 +340,6 @@ export class AuthService {
     return this.currentUser()?.households?.[0]?.householdId || null;
   }
 
-  async getToken(): Promise<string | null> {
-    const { data } = await this.supabase.client.auth.getSession();
-    return data.session?.access_token || null;
-  }
-
-  // Keeps profile update / guards working
   updateCurrentUser(user: CurrentUser): void {
     this.currentUser.set(user);
   }
