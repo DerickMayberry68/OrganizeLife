@@ -71,13 +71,24 @@ export class AuthService {
   public readonly currentUser$ = this.currentUserSubject.asObservable();
 
   private loadingUserData = false;
+  private readonly USER_KEY = 'butler_user';
 
   constructor() {
+    // First, check localStorage immediately (synchronous) to restore user quickly
+    // This prevents the "stuck" state on hard refresh
+    const storedUser = this.getUserFromStorage();
+    if (storedUser && storedUser.userId) {
+      console.log('✅ [AuthService] Found stored user on init, restoring immediately:', storedUser.userId);
+      this.currentUserSubject.next(storedUser);
+    }
+    
+    // Then initialize Supabase in background to check session
     this.supabaseService.ensureInitialized().then(() => {
       this.setupAuthStateListener();
       this.checkInitialSession();
     }).catch(err => {
-      console.warn('Supabase failed to initialize on startup:', err);
+      console.warn('⚠️ [AuthService] Supabase failed to initialize on startup (non-blocking):', err);
+      // Don't clear user if Supabase fails - keep stored user
     });
   }
 
@@ -99,12 +110,25 @@ export class AuthService {
 
   private async checkInitialSession(): Promise<void> {
     try {
-      const { data } = await this.supabaseService.client.auth.getSession();
+      // Supabase automatically restores session from localStorage
+      // We just need to check if a session exists and load user data
+      const { data, error } = await this.supabaseService.client.auth.getSession();
+      
+      if (error) {
+        console.warn('⚠️ [AuthService] Error getting session:', error);
+        return;
+      }
+      
       if (data.session?.user) {
+        console.log('✅ [AuthService] Session found, loading user profile...');
         await this.loadUserProfile();
+      } else {
+        console.log('ℹ️ [AuthService] No active session found');
+        this.currentUserSubject.next(null);
       }
     } catch (err) {
-      console.warn('Failed to restore session on startup:', err);
+      console.warn('⚠️ [AuthService] Failed to restore session on startup:', err);
+      // Don't clear user on error - let Supabase handle it
     }
   }
 
@@ -131,11 +155,39 @@ export class AuthService {
       };
 
       this.currentUserSubject.next(currentUser);
+      // Note: We don't manually store user data - Supabase handles session persistence
+      // The session token in Supabase's localStorage is what matters for authentication
     } catch (err) {
       console.error('Failed to load user profile:', err);
       this.currentUserSubject.next(null);
     } finally {
       this.loadingUserData = false;
+    }
+  }
+
+  /**
+   * Get user from localStorage (synchronous)
+   */
+  private getUserFromStorage(): CurrentUser | null {
+    try {
+      const stored = localStorage.getItem(this.USER_KEY);
+      if (stored) {
+        return JSON.parse(stored) as CurrentUser;
+      }
+    } catch (error) {
+      console.warn('Error reading user from localStorage:', error);
+    }
+    return null;
+  }
+
+  /**
+   * Store user in localStorage
+   */
+  private storeUserData(user: CurrentUser): void {
+    try {
+      localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    } catch (error) {
+      console.warn('Error storing user in localStorage:', error);
     }
   }
 
@@ -283,6 +335,7 @@ export class AuthService {
   }
 
   async logout(): Promise<void> {
+    // Supabase's signOut() automatically clears session from localStorage
     await this.supabaseService.client.auth.signOut();
     this.currentUserSubject.next(null);
     this.router.navigate(['/login']);

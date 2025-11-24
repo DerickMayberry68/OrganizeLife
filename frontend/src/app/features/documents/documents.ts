@@ -281,14 +281,33 @@ export class Documents implements OnInit {
           args.response = { files: [] };
           return;
         }
+        console.log('🔵 [Documents] Creating folder:', folderName, 'in path:', path);
         this.fileManagerService.createFolder(path, folderName).subscribe({
           next: (data) => {
+            console.log('✅ [Documents] Folder created successfully:', data);
             args.response = data || { files: [] };
+            // Reload file list after folder creation
+            this.documentService.loadDocuments().subscribe();
           },
           error: (error) => {
-            console.error('File Manager createFolder error:', error);
+            console.error('🔴 [Documents] File Manager createFolder error:', error);
+            console.error('🔴 [Documents] Error details:', {
+              message: error?.message,
+              code: error?.code,
+              statusCode: error?.statusCode,
+              name: error?.name
+            });
             args.response = { files: [] };
-            this.toastService.error('Error', 'Failed to create folder');
+            // Provide more specific error message
+            let errorMessage = 'Failed to create folder';
+            if (error?.message?.includes('row-level security') || error?.message?.includes('RLS')) {
+              errorMessage = 'Permission denied. Please check your Supabase RLS policies.';
+            } else if (error?.message?.includes('already exists')) {
+              errorMessage = 'Folder already exists';
+            } else if (error?.message) {
+              errorMessage = `Failed to create folder: ${error.message}`;
+            }
+            this.toastService.error('Error', errorMessage);
           }
         });
         break;
