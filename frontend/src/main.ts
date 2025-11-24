@@ -51,6 +51,22 @@ bootstrapApplication(AppComponent, appConfig)
       error: err,
       message: err?.message,
       stack: err?.stack,
+      name: err?.name,
+      cause: err?.cause,
       timestamp: new Date().toISOString()
     });
+    // Also log the full error object for debugging
+    console.error('🚨 Full Bootstrap Error Object:', err);
+    // Try to display error in DOM if possible
+    if (typeof document !== 'undefined') {
+      const errorDiv = document.createElement('div');
+      errorDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#ff0000;color:#fff;padding:20px;z-index:99999;font-family:monospace;';
+      errorDiv.innerHTML = `
+        <h2>Bootstrap Error</h2>
+        <p><strong>Message:</strong> ${err?.message || 'Unknown error'}</p>
+        <p><strong>Name:</strong> ${err?.name || 'Unknown'}</p>
+        <pre>${err?.stack || 'No stack trace'}</pre>
+      `;
+      document.body.appendChild(errorDiv);
+    }
   });

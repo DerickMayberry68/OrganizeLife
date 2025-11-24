@@ -1,6 +1,5 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { environment } from './config/environment';
 // HTTP client removed - all services now use Supabase directly
 // Auth interceptor removed - Supabase handles authentication automatically
 
@@ -9,9 +8,10 @@ import { routes } from './app.routes';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    // Temporarily disable zoneless in production to debug freezing issues
-    // Re-enable once async operations are fully compatible
-    ...(environment.production ? [] : [provideZonelessChangeDetection()]),
+    // Always enable zoneless for now to avoid bootstrap errors
+    // The conditional check was causing issues with environment import
+    // We can add conditional logic back later once bootstrap is stable
+    provideZonelessChangeDetection(),
     provideRouter(routes)
   ]
 };
