@@ -1,4 +1,6 @@
-import { Component, Input, Output, EventEmitter, Renderer2, OnDestroy, OnInit, inject, computed } from '@angular/core';
+// src/app/components/header/header.component.ts
+
+import { Component, Input, Output, EventEmitter, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AppSettings } from '../../services/app-settings.service';
@@ -13,100 +15,83 @@ import { slideToggle } from '../../utils/slide-animations';
   standalone: true,
   imports: [CommonModule, RouterLink]
 })
-export class HeaderComponent implements OnInit, OnDestroy {
-  private authService = inject(AuthService);
+export class HeaderComponent {
+  private auth = inject(AuthService);
   private alertService = inject(AlertService);
-  
+  public appSettings = inject(AppSettings);
+
   @Input() appSidebarTwo: any;
-	@Output() appSidebarEndToggled = new EventEmitter<boolean>();
-	@Output() appSidebarMobileToggled = new EventEmitter<boolean>();
-	@Output() appSidebarEndMobileToggled = new EventEmitter<boolean>();
-	
-	// Alerts
-	protected readonly alerts = this.alertService.alerts;
-	protected readonly recentAlerts = computed(() => 
+  @Output() appSidebarEndToggled = new EventEmitter<boolean>();
+  @Output() appSidebarMobileToggled = new EventEmitter<boolean>();
+  @Output() appSidebarEndMobileToggled = new EventEmitter<boolean>();
+
+  // ───── Alerts (already perfect with signals) ─────
+  protected readonly alerts = this.alertService.alerts;
+  protected readonly recentAlerts = computed(() =>
     this.alerts()
       .filter(a => !a.isDismissed)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 5)
   );
-	protected readonly notificationCount = this.alertService.unreadAlertsCount;
-	
-	// Get current user info
-	get currentUser() {
-	  return this.authService.getCurrentUser();
-	}
-	
-	get userDisplayName(): string {
-	  const user = this.currentUser;
-	  if (user?.firstName && user?.lastName) {
-	    return `${user.firstName} ${user.lastName}`;
-	  } else if (user?.firstName) {
-	    return user.firstName;
-	  } else if (user?.email) {
-	    // Fallback to email if no name is available
-	    return user.email.split('@')[0];
-	  }
-	  return 'User';
-	}
-	
-	get userInitials(): string {
-	  const user = this.currentUser;
-	  if (user?.firstName && user?.lastName) {
-	    return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
-	  } else if (user?.firstName) {
-	    return user.firstName.charAt(0).toUpperCase();
-	  } else if (user?.email) {
-	    return user.email.charAt(0).toUpperCase();
-	  }
-	  return 'U';
-	}
-	
-  toggleAppSidebarMobile(): void {
-		this.appSidebarMobileToggled.emit(true);
-  }
-  
-	toggleAppSidebarEnd(): void {
-		this.appSidebarEndToggled.emit(true);
-	}
-	
-  toggleAppSidebarEndMobile(): void {
-		this.appSidebarEndMobileToggled.emit(true);
+  protected readonly notificationCount = this.alertService.unreadAlertsCount;
+
+  // ───── User Info — Now Pure Signals! (No getCurrentUser() needed) ─────
+  protected readonly user = this.auth.currentUser$;           // readonly signal
+  protected readonly isAuthenticated = this.auth.isAuthenticated; // computed boolean
+  protected readonly userDisplayName = this.auth.userName;    // already computed!
+
+  protected readonly userInitials = computed(() => {
+    const u = this.user();
+    if (!u) return 'U';
+    if (u.firstName && u.lastName) {
+      return `${u.firstName[0]}${u.lastName[0]}`.toUpperCase();
+    }
+    if (u.firstName) return u.firstName[0].toUpperCase();
+    return u.email[0].toUpperCase();
+  });
+
+  // ───── UI Actions ─────
+  toggleAppSidebarMobile() {
+    this.appSidebarMobileToggled.emit(true);
   }
 
-	toggleAppTopMenuMobile(): void {
-		var target = document.querySelector('.app-top-menu') as HTMLElement | null;
-		if (target) {
-			slideToggle(target);
-		}
-	}
-
-	toggleAppHeaderMegaMenuMobile(): void {
-	  this.appSettings.appHeaderMegaMenuMobileToggled = !this.appSettings.appHeaderMegaMenuMobileToggled;
-	}
-
-	ngOnInit(): void {
-    this.alertService.loadAlerts().subscribe();
+  toggleAppSidebarEnd() {
+    this.appSidebarEndToggled.emit(true);
   }
 
-	markAlertAsRead(id: string, event: Event): void {
+  toggleAppSidebarEndMobile() {
+    this.appSidebarEndMobileToggled.emit(true);
+  }
+
+  toggleAppTopMenuMobile() {
+    const target = document.querySelector('.app-top-menu') as HTMLElement | null;
+    if (target) slideToggle(target);
+  }
+
+  toggleAppHeaderMegaMenuMobile() {
+    this.appSettings.appHeaderMegaMenuMobileToggled = !this.appSettings.appHeaderMegaMenuMobileToggled;
+  }
+
+  markAlertAsRead(id: string, event: Event) {
     event.stopPropagation();
     this.alertService.markAlertAsRead(id).subscribe();
   }
 
-	getSeverityIcon(severity: string): string {
-    switch (severity) {
-      case 'Critical': return '🚨';
-      case 'High': return '⚠️';
-      case 'Medium': return 'ℹ️';
-      case 'Low': return '✅';
-      default: return '🔔';
-    }
+  logout() {
+    this.auth.logout();
   }
 
-	getRelativeTime(date: Date): string {
-    const now = new Date();
-    const diff = now.getTime() - new Date(date).getTime();
+  getSeverityIcon(severity: string): string {
+    return {
+      'Critical': 'Emergency',
+      'High': 'Warning',
+      'Medium': 'Info',
+      'Low': 'Check'
+    }[severity] || 'Bell';
+  }
+
+  getRelativeTime(date: Date): string {
+    const diff = Date.now() - new Date(date).getTime();
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
@@ -117,14 +102,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
     return `${days}d ago`;
   }
 
-	logout(): void {
-	  this.authService.logout();
-	}
-
-	ngOnDestroy(): void {
-	  this.appSettings.appHeaderMegaMenuMobileToggled = false;
-	}
-
-  constructor(private renderer: Renderer2, public appSettings: AppSettings) {
+  // Load alerts on init
+  constructor() {
+    this.alertService.loadAlerts().subscribe();
   }
 }

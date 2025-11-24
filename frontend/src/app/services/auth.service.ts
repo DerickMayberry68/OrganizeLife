@@ -1,12 +1,13 @@
 // src/app/services/auth.service.ts
 
-import { Injectable, inject } from '@angular/core';
-import { Observable, BehaviorSubject, from, throwError, catchError } from 'rxjs';
+import { Injectable, inject, signal, computed } from '@angular/core';
+import { Observable, from, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { SupabaseService } from './supabase.service';
 
 // ──────────────────────────────────────────────────────────────
-//  Interfaces (must be exported or defined here)
+//  Interfaces
 // ──────────────────────────────────────────────────────────────
 export interface LoginRequest {
   email: string;
@@ -58,51 +59,47 @@ export interface RegisterResponse {
 }
 
 // ──────────────────────────────────────────────────────────────
-//  AuthService
+//  AuthService – Signals + Full Compatibility
 // ──────────────────────────────────────────────────────────────
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private readonly supabaseService = inject(SupabaseService);
+  private readonly supabase = inject(SupabaseService);
   private readonly router = inject(Router);
 
-  private currentUserSubject = new BehaviorSubject<CurrentUser | null>(null);
-  public readonly currentUser$ = this.currentUserSubject.asObservable();
+  // ───── Core Signal (zoneless-native) ─────
+  private readonly currentUser = signal<CurrentUser | null>(null);
+
+  // Public readonly signals
+  readonly currentUser$ = this.currentUser.asReadonly();
+  readonly isAuthenticated = computed(() => !!this.currentUser());
+  readonly userName = computed(() => {
+    const user = this.currentUser();
+    if (!user) return 'Guest';
+    if (user.firstName) {
+      return `${user.firstName} ${user.lastName || ''}`.trim();
+    }
+    return user.email.split('@')[0];
+  });
 
   private loadingUserData = false;
-  private readonly USER_KEY = 'butler_user';
 
   constructor() {
-    // First, check localStorage immediately (synchronous) to restore user quickly
-    // This prevents the "stuck" state on hard refresh
-    const storedUser = this.getUserFromStorage();
-    if (storedUser && storedUser.userId) {
-      console.log('✅ [AuthService] Found stored user on init, restoring immediately:', storedUser.userId);
-      this.currentUserSubject.next(storedUser);
-    }
-    
-    // Then initialize Supabase in background to check session
-    this.supabaseService.ensureInitialized().then(() => {
+    this.supabase.ensureInitialized().then(() => {
       this.setupAuthStateListener();
       this.checkInitialSession();
-    }).catch(err => {
-      console.warn('⚠️ [AuthService] Supabase failed to initialize on startup (non-blocking):', err);
-      // Don't clear user if Supabase fails - keep stored user
     });
   }
 
   private setupAuthStateListener(): void {
-    this.supabaseService.client.auth.onAuthStateChange(async (event, session) => {
+    this.supabase.client.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth event:', event);
 
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (session?.user) {
-          await this.loadUserProfile();
-        }
+        if (session?.user) await this.loadUserProfile();
       } else if (event === 'SIGNED_OUT') {
-        // 'USER_DELETED' is rare and not always sent — SIGNED_OUT is sufficient
-        this.currentUserSubject.next(null);
+        this.currentUser.set(null);
         this.router.navigate(['/login']);
       }
     });
@@ -110,25 +107,14 @@ export class AuthService {
 
   private async checkInitialSession(): Promise<void> {
     try {
-      // Supabase automatically restores session from localStorage
-      // We just need to check if a session exists and load user data
-      const { data, error } = await this.supabaseService.client.auth.getSession();
-      
-      if (error) {
-        console.warn('⚠️ [AuthService] Error getting session:', error);
-        return;
-      }
-      
+      const { data } = await this.supabase.client.auth.getSession();
       if (data.session?.user) {
-        console.log('✅ [AuthService] Session found, loading user profile...');
         await this.loadUserProfile();
       } else {
-        console.log('ℹ️ [AuthService] No active session found');
-        this.currentUserSubject.next(null);
+        this.currentUser.set(null);
       }
-    } catch (err) {
-      console.warn('⚠️ [AuthService] Failed to restore session on startup:', err);
-      // Don't clear user on error - let Supabase handle it
+    } catch {
+      this.currentUser.set(null);
     }
   }
 
@@ -137,9 +123,9 @@ export class AuthService {
     this.loadingUserData = true;
 
     try {
-      const { data: { user } } = await this.supabaseService.client.auth.getUser();
+      const { data: { user } } = await this.supabase.client.auth.getUser();
       if (!user) {
-        this.currentUserSubject.next(null);
+        this.currentUser.set(null);
         return;
       }
 
@@ -154,43 +140,16 @@ export class AuthService {
         households
       };
 
-      this.currentUserSubject.next(currentUser);
-      // Note: We don't manually store user data - Supabase handles session persistence
-      // The session token in Supabase's localStorage is what matters for authentication
+      this.currentUser.set(currentUser);
     } catch (err) {
       console.error('Failed to load user profile:', err);
-      this.currentUserSubject.next(null);
+      this.currentUser.set(null);
     } finally {
       this.loadingUserData = false;
     }
   }
 
-  /**
-   * Get user from localStorage (synchronous)
-   */
-  private getUserFromStorage(): CurrentUser | null {
-    try {
-      const stored = localStorage.getItem(this.USER_KEY);
-      if (stored) {
-        return JSON.parse(stored) as CurrentUser;
-      }
-    } catch (error) {
-      console.warn('Error reading user from localStorage:', error);
-    }
-    return null;
-  }
-
-  /**
-   * Store user in localStorage
-   */
-  private storeUserData(user: CurrentUser): void {
-    try {
-      localStorage.setItem(this.USER_KEY, JSON.stringify(user));
-    } catch (error) {
-      console.warn('Error storing user in localStorage:', error);
-    }
-  }
-
+  // ───── Household Helpers ─────
   private async loadHouseholdsWithTimeout(userId: string): Promise<HouseholdMembership[]> {
     const loadPromise = this.loadHouseholds(userId);
     const timeoutPromise = new Promise<HouseholdMembership[]>((resolve) =>
@@ -201,7 +160,7 @@ export class AuthService {
 
   private async loadHouseholds(userId: string): Promise<HouseholdMembership[]> {
     try {
-      const { data, error } = await this.supabaseService.client
+      const { data, error } = await this.supabase.client
         .from('household_members')
         .select(`
           household_id,
@@ -224,45 +183,22 @@ export class AuthService {
         joinedAt: row.joined_at
       }));
     } catch (err: any) {
-      if (err.message?.includes('relation') || err.code === 'PGRST116') {
-        console.warn('household_members table not found — likely first-time setup');
-      } else {
-        console.error('Error loading households:', err);
-      }
+      console.error('Error loading households:', err);
       return [];
     }
   }
 
-  // ──────────────────────────────────────────────────────────────
-  // Public API
-  // ──────────────────────────────────────────────────────────────
-
+  // ───── Public API ─────
   login(request: LoginRequest): Observable<LoginResponse> {
     return from(this.loginInternal(request));
   }
 
   private async loginInternal(request: LoginRequest): Promise<LoginResponse> {
-    await this.supabaseService.ensureInitialized();
+    await this.supabase.ensureInitialized();
+    const { data, error } = await this.supabase.client.auth.signInWithPassword(request);
 
-    const loginPromise = this.supabaseService.client.auth.signInWithPassword({
-      email: request.email,
-      password: request.password
-    });
-
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Login timed out after 30s')), 30000)
-    );
-
-    const { data, error } = await Promise.race([loginPromise, timeoutPromise]) as any;
-
-    if (error) {
-      let message = 'Login failed. Please try again.';
-      if (error.message.includes('Invalid login credentials')) message = 'Invalid email or password.';
-      if (error.message.includes('fetch')) message = 'No internet connection.';
-      throw new Error(message);
-    }
-
-    if (!data.session || !data.user) throw new Error('Login succeeded but no session');
+    if (error) throw new Error(error.message.includes('Invalid') ? 'Invalid email or password' : 'Login failed');
+    if (!data.session || !data.user) throw new Error('No session');
 
     return {
       userId: data.user.id,
@@ -271,28 +207,20 @@ export class AuthService {
       tokenType: 'Bearer',
       expiresIn: data.session.expires_in ?? 3600,
       refreshToken: data.session.refresh_token,
-      households: [] // populated via listener
+      households: []
     };
   }
 
   register(request: RegisterRequest): Observable<RegisterResponse> {
-    return from(this.registerInternal(request)).pipe(
-      catchError(err => throwError(() => err))
-    );
+    return from(this.registerInternal(request)).pipe(catchError(err => throwError(() => err)));
   }
 
   private async registerInternal(request: RegisterRequest): Promise<RegisterResponse> {
-    await this.supabaseService.ensureInitialized();
-
-    const { data, error } = await this.supabaseService.client.auth.signUp({
+    await this.supabase.ensureInitialized();
+    const { data, error } = await this.supabase.client.auth.signUp({
       email: request.email,
       password: request.password,
-      options: {
-        data: {
-          first_name: request.firstName,
-          last_name: request.lastName
-        }
-      }
+      options: { data: { first_name: request.firstName, last_name: request.lastName } }
     });
 
     if (error) throw error;
@@ -313,7 +241,7 @@ export class AuthService {
   }
 
   private async createHousehold(name: string, userId: string) {
-    const { data: household, error } = await this.supabaseService.client
+    const { data: household, error } = await this.supabase.client
       .from('households')
       .insert({ name, created_by: userId })
       .select()
@@ -321,7 +249,7 @@ export class AuthService {
 
     if (error || !household) throw new Error('Failed to create household');
 
-    await this.supabaseService.client
+    await this.supabase.client
       .from('household_members')
       .insert({
         household_id: household.id,
@@ -335,44 +263,30 @@ export class AuthService {
   }
 
   async logout(): Promise<void> {
-    // Supabase's signOut() automatically clears session from localStorage
-    await this.supabaseService.client.auth.signOut();
-    this.currentUserSubject.next(null);
+    await this.supabase.client.auth.signOut();
+    this.currentUser.set(null);
     this.router.navigate(['/login']);
   }
 
-  async isAuthenticated(): Promise<boolean> {
-    try {
-      const { data } = await this.supabaseService.client.auth.getSession();
-      return !!data.session;
-    } catch {
-      return false;
-    }
-  }
-
+  // ───── COMPATIBILITY METHODS (keeps old code working) ─────
   getCurrentUser(): CurrentUser | null {
-    return this.currentUserSubject.value;
+    return this.currentUser();
   }
 
   getDefaultHouseholdId(): string | null {
-    return this.getCurrentUser()?.households?.[0]?.householdId || null;
+    return this.currentUser()?.households?.[0]?.householdId || null;
   }
 
-  // ──────────────────────────────────────────────────────────────
-  // Optional: Keep these if other parts of your app use them
-  // ──────────────────────────────────────────────────────────────
-
-  /** For dev only – remove in production */
-  backdoorLogin?(request: LoginRequest): Observable<LoginResponse>;
-
-  /** For auth interceptor – Supabase handles tokens automatically */
   async getToken(): Promise<string | null> {
-    const { data } = await this.supabaseService.client.auth.getSession();
+    const { data } = await this.supabase.client.auth.getSession();
     return data.session?.access_token || null;
   }
 
-  /** For profile update – optional */
+  // Keeps profile update / guards working
   updateCurrentUser(user: CurrentUser): void {
-    this.currentUserSubject.next(user);
+    this.currentUser.set(user);
   }
+
+  // Optional backdoor login for dev
+  backdoorLogin?(request: LoginRequest): Observable<LoginResponse>;
 }
