@@ -194,20 +194,46 @@ export class AuthService {
         this._setupAuthStateListener();
         
         console.log('🔵 [AuthService] Calling signInWithPassword...');
+        console.log('🔵 [AuthService] Supabase client:', this.supabaseService.client ? 'EXISTS' : 'MISSING');
+        console.log('🔵 [AuthService] Auth object:', this.supabaseService.client?.auth ? 'EXISTS' : 'MISSING');
+        
         // Add timeout to prevent hanging
         const loginPromise = this.supabaseService.client.auth.signInWithPassword({
           email: request.email,
           password: request.password
         });
         
+        // Log when promise is created
+        console.log('🔵 [AuthService] Login promise created, setting up timeout...');
+        
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => {
+            console.error('🔴 [AuthService] Login timeout - request took longer than 30 seconds');
             reject(new Error('Login request timed out after 30 seconds. Please check your connection and try again.'));
           }, 30000); // 30 second timeout
         });
         
         console.log('🔵 [AuthService] Waiting for login response (with 30s timeout)...');
-        const response = await Promise.race([loginPromise, timeoutPromise]) as any;
+        console.log('🔵 [AuthService] Race condition started, waiting for either login or timeout...');
+        
+        // Add a check to see if the promise is pending
+        let responseReceived = false;
+        const response = await Promise.race([
+          loginPromise.then(result => {
+            responseReceived = true;
+            console.log('✅ [AuthService] Login promise resolved');
+            return result;
+          }).catch(error => {
+            responseReceived = true;
+            console.error('🔴 [AuthService] Login promise rejected:', error);
+            throw error;
+          }),
+          timeoutPromise
+        ]) as any;
+        
+        if (!responseReceived) {
+          console.warn('⚠️ [AuthService] Response received but responseReceived flag not set');
+        }
         console.log('🔵 [AuthService] Login response received:', response ? 'SUCCESS' : 'NULL', response?.error ? 'ERROR' : 'OK');
 
         if (response.error) {

@@ -77,7 +77,9 @@ export class SupabaseService {
           persistSession: true,
           autoRefreshToken: true,
           detectSessionInUrl: true,
-          storage: typeof window !== 'undefined' ? window.localStorage : undefined
+          storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+          // Add flow type to ensure password flow
+          flowType: 'pkce'
         },
         db: {
           schema: 'public'
@@ -86,6 +88,28 @@ export class SupabaseService {
           headers: {
             'x-client-info': 'angular-client',
             'apikey': supabaseAnonKey
+          },
+          // Add fetch timeout
+          fetch: (url, options = {}) => {
+            console.log('[SupabaseService] Fetch request:', url, options.method || 'GET');
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => {
+              console.error('[SupabaseService] Fetch timeout after 30s:', url);
+              controller.abort();
+            }, 30000);
+            
+            return fetch(url, {
+              ...options,
+              signal: controller.signal
+            }).then(response => {
+              clearTimeout(timeoutId);
+              console.log('[SupabaseService] Fetch response:', url, response.status);
+              return response;
+            }).catch(error => {
+              clearTimeout(timeoutId);
+              console.error('[SupabaseService] Fetch error:', url, error);
+              throw error;
+            });
           }
         },
         realtime: {
