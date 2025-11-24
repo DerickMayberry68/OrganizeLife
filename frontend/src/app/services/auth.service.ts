@@ -183,141 +183,116 @@ export class AuthService {
    * Login with email and password
    */
   login(request: LoginRequest): Observable<LoginResponse> {
-    return from(
+    console.log('🔵 [AuthService] Login method called, creating observable...');
+    
+    return new Observable<LoginResponse>(observer => {
       (async () => {
-        console.log('🔵 [AuthService] Starting login process...');
-        
-        // Initialize Supabase before using it
-        console.log('🔵 [AuthService] Ensuring Supabase is initialized...');
-        await this.supabaseService.ensureInitialized();
-        console.log('🔵 [AuthService] Supabase initialized, setting up auth state listener...');
-        this._setupAuthStateListener();
-        
-        console.log('🔵 [AuthService] Calling signInWithPassword...');
-        console.log('🔵 [AuthService] Supabase client:', this.supabaseService.client ? 'EXISTS' : 'MISSING');
-        console.log('🔵 [AuthService] Auth object:', this.supabaseService.client?.auth ? 'EXISTS' : 'MISSING');
-        
-        // Add timeout to prevent hanging
-        const loginPromise = this.supabaseService.client.auth.signInWithPassword({
-          email: request.email,
-          password: request.password
-        });
-        
-        // Log when promise is created
-        console.log('🔵 [AuthService] Login promise created, setting up timeout...');
-        
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => {
-            console.error('🔴 [AuthService] Login timeout - request took longer than 30 seconds');
-            reject(new Error('Login request timed out after 30 seconds. Please check your connection and try again.'));
-          }, 30000); // 30 second timeout
-        });
-        
-        console.log('🔵 [AuthService] Waiting for login response (with 30s timeout)...');
-        console.log('🔵 [AuthService] Race condition started, waiting for either login or timeout...');
-        
-        // Add a check to see if the promise is pending
-        let responseReceived = false;
-        const response = await Promise.race([
-          loginPromise.then(result => {
-            responseReceived = true;
-            console.log('✅ [AuthService] Login promise resolved');
-            return result;
-          }).catch(error => {
-            responseReceived = true;
-            console.error('🔴 [AuthService] Login promise rejected:', error);
-            throw error;
-          }),
-          timeoutPromise
-        ]) as any;
-        
-        if (!responseReceived) {
-          console.warn('⚠️ [AuthService] Response received but responseReceived flag not set');
+        try {
+          console.log('🔵 [AuthService] Starting login process...');
+          
+          // Initialize Supabase before using it
+          console.log('🔵 [AuthService] Ensuring Supabase is initialized...');
+          await this.supabaseService.ensureInitialized();
+          console.log('🔵 [AuthService] Supabase initialized, setting up auth state listener...');
+          this._setupAuthStateListener();
+          
+          console.log('🔵 [AuthService] Calling signInWithPassword...');
+          
+          // Add timeout to prevent hanging
+          const loginPromise = this.supabaseService.client.auth.signInWithPassword({
+            email: request.email,
+            password: request.password
+          });
+          
+          console.log('🔵 [AuthService] Login promise created, setting up timeout...');
+          
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => {
+              console.error('🔴 [AuthService] Login timeout - request took longer than 30 seconds');
+              reject(new Error('Login request timed out after 30 seconds. Please check your connection and try again.'));
+            }, 30000);
+          });
+          
+          console.log('🔵 [AuthService] Waiting for login response (with 30s timeout)...');
+          
+          const response = await Promise.race([loginPromise, timeoutPromise]) as any;
+          console.log('✅ [AuthService] Login response received:', response?.error ? 'ERROR' : 'SUCCESS');
+
+          if (response.error) {
+            console.error('🔴 [AuthService] Login error:', response.error);
+            observer.error(response.error);
+            return;
+          }
+
+          if (!response.data?.user || !response.data?.session) {
+            console.error('🔴 [AuthService] Login failed: No user or session returned', response);
+            observer.error(new Error('Login failed: No user or session returned'));
+            return;
+          }
+
+          console.log('✅ [AuthService] Login successful, processing response...');
+          const userId = response.data.user.id;
+          const accessToken = response.data.session.access_token;
+          const refreshToken = response.data.session.refresh_token;
+
+          // Store basic user info immediately so authentication checks work
+          const userMetadata = response.data.user.user_metadata || {};
+          const currentUser: CurrentUser = {
+            userId,
+            email: response.data.user.email || request.email,
+            firstName: userMetadata['first_name'],
+            lastName: userMetadata['last_name'],
+            households: [] // Will be loaded in background
+          };
+          
+          console.log('✅ [AuthService] Storing user data...');
+          // Store user immediately so authentication checks work
+          this.currentUserSubject.next(currentUser);
+          this.storeUserData(currentUser);
+          
+          console.log('✅ [AuthService] User stored immediately after login:', currentUser.userId);
+
+          // Load user data including households in background (non-blocking)
+          this.loadUserData().catch(error => {
+            console.warn('⚠️ [AuthService] Error loading user data after login (non-blocking):', error);
+            // Continue - user is still authenticated even if user data fails
+          });
+          
+          const loginResponse: LoginResponse = {
+            userId,
+            email: request.email,
+            accessToken,
+            tokenType: 'Bearer',
+            expiresIn: response.data.session.expires_in || 3600,
+            refreshToken,
+            households: [] // Will be populated when loadUserData completes
+          };
+          
+          console.log('✅ [AuthService] Login complete, emitting response');
+          observer.next(loginResponse);
+          observer.complete();
+        } catch (error: any) {
+          console.error('🔴 [AuthService] Login error caught:', error);
+          
+          // Provide user-friendly error messages
+          let errorMessage = 'Login failed. Please try again.';
+          if (error?.message?.includes('Failed to fetch') || 
+              error?.message?.includes('ERR_NAME_NOT_RESOLVED') ||
+              error?.name === 'AuthRetryableFetchError') {
+            errorMessage = 'Cannot connect to Supabase. Please verify your internet connection and that your Supabase project is active.';
+          } else if (error?.message?.includes('Invalid login credentials')) {
+            errorMessage = 'Invalid email or password. Please try again.';
+          } else if (error?.message?.includes('timeout')) {
+            errorMessage = 'Login request timed out. Please check your connection and try again.';
+          } else if (error?.message) {
+            errorMessage = error.message;
+          }
+          
+          console.error('🔴 [AuthService] Emitting error:', errorMessage);
+          observer.error(new Error(errorMessage));
         }
-        console.log('🔵 [AuthService] Login response received:', response ? 'SUCCESS' : 'NULL', response?.error ? 'ERROR' : 'OK');
-
-        if (response.error) {
-          console.error('🔴 [AuthService] Login error:', response.error);
-          throw response.error;
-        }
-
-        if (!response.data?.user || !response.data?.session) {
-          console.error('🔴 [AuthService] Login failed: No user or session returned', response);
-          throw new Error('Login failed: No user or session returned');
-        }
-
-        console.log('✅ [AuthService] Login successful, processing response...');
-        const userId = response.data.user.id;
-        const accessToken = response.data.session.access_token;
-        const refreshToken = response.data.session.refresh_token;
-
-        // Store basic user info immediately so authentication checks work
-        const userMetadata = response.data.user.user_metadata || {};
-        const currentUser: CurrentUser = {
-          userId,
-          email: response.data.user.email || request.email,
-          firstName: userMetadata['first_name'],
-          lastName: userMetadata['last_name'],
-          households: [] // Will be loaded in background
-        };
-        
-        console.log('✅ [AuthService] Storing user data...');
-        // Store user immediately so authentication checks work
-        this.currentUserSubject.next(currentUser);
-        this.storeUserData(currentUser);
-        
-        console.log('✅ [AuthService] User stored immediately after login:', currentUser.userId);
-        // Verify it was stored
-        const verifyStored = localStorage.getItem(this.USER_KEY);
-        console.log('✅ [AuthService] Verification - localStorage.getItem result:', verifyStored ? 'SUCCESS' : 'FAILED');
-
-        // Load user data including households in background (non-blocking)
-        this.loadUserData().catch(error => {
-          console.warn('⚠️ [AuthService] Error loading user data after login (non-blocking):', error);
-          // Continue - user is still authenticated even if user data fails
-        });
-        
-        const loginResponse: LoginResponse = {
-          userId,
-          email: request.email,
-          accessToken,
-          tokenType: 'Bearer',
-          expiresIn: response.data.session.expires_in || 3600,
-          refreshToken,
-          households: [] // Will be populated when loadUserData completes
-        };
-        
-        console.log('✅ [AuthService] Login complete, returning response');
-        return loginResponse;
-      })()
-    ).pipe(
-      catchError(error => {
-        console.error('🔴 [AuthService] Login error caught:', error);
-        console.error('🔴 [AuthService] Error details:', {
-          name: error?.name,
-          message: error?.message,
-          status: error?.status,
-          code: error?.code
-        });
-        
-        // Provide user-friendly error messages
-        let errorMessage = 'Login failed. Please try again.';
-        if (error?.message?.includes('Failed to fetch') || 
-            error?.message?.includes('ERR_NAME_NOT_RESOLVED') ||
-            error?.name === 'AuthRetryableFetchError') {
-          errorMessage = 'Cannot connect to Supabase. Please verify your internet connection and that your Supabase project is active.';
-        } else if (error?.message?.includes('Invalid login credentials')) {
-          errorMessage = 'Invalid email or password. Please try again.';
-        } else if (error?.message?.includes('timeout')) {
-          errorMessage = 'Login request timed out. Please check your connection and try again.';
-        } else if (error?.message) {
-          errorMessage = error.message;
-        }
-        
-        console.error('🔴 [AuthService] Throwing error with message:', errorMessage);
-        return throwError(() => new Error(errorMessage));
-      })
-    );
+      })();
+    });
   }
 
   /**
