@@ -376,30 +376,37 @@ export class AuthService {
       }
       
       // Finally check session (async, with timeout to prevent hanging)
-      console.log('isAuthenticated: Checking session (async)...');
-      try {
-        const session = await firstValueFrom(
-          race(
-            this.supabaseService.getSession(),
-            timer(2000).pipe(
-              map(() => {
-                console.warn('isAuthenticated: Session check timed out after 2s');
-                return null;
-              })
+      // Only check session if we have a stored user (don't initialize Supabase unnecessarily)
+      const hasStoredUser = !!localStorage.getItem(this.USER_KEY);
+      if (hasStoredUser) {
+        console.log('isAuthenticated: Checking session (async)...');
+        try {
+          // Ensure Supabase is initialized before checking session
+          await this.supabaseService.ensureInitialized();
+          
+          const session = await firstValueFrom(
+            race(
+              this.supabaseService.getSession(),
+              timer(2000).pipe(
+                map(() => {
+                  console.warn('isAuthenticated: Session check timed out after 2s');
+                  return null;
+                })
+              )
             )
-          )
-        );
-        if (session && session.access_token) {
-          console.log('isAuthenticated: ✅ TRUE (session found)');
-          // If session exists but no stored user, we should store it
-          // But for now just return true
-          return true;
-        } else {
-          console.log('isAuthenticated: No valid session found');
+          );
+          if (session && session.access_token) {
+            console.log('isAuthenticated: ✅ TRUE (session found)');
+            return true;
+          } else {
+            console.log('isAuthenticated: No valid session found');
+          }
+        } catch (sessionError) {
+          console.warn('isAuthenticated: Session check error:', sessionError);
+          // Continue - will return false below
         }
-      } catch (sessionError) {
-        console.warn('isAuthenticated: Session check error:', sessionError);
-        // Continue - will return false below
+      } else {
+        console.log('isAuthenticated: No stored user, skipping session check (Supabase not initialized)');
       }
       
       console.log('isAuthenticated: ❌ FALSE (no session or user)');

@@ -10,13 +10,15 @@ export const authGuard: CanActivateFn = async (route, state) => {
   console.log('Auth guard checking authentication for:', state.url);
   
   try {
-    // First, check localStorage quickly (synchronous check)
+    // First, check localStorage quickly (synchronous check) - this is the fastest path
     const storedUser = localStorage.getItem('butler_user');
     if (storedUser) {
       try {
         const user = JSON.parse(storedUser);
         if (user && user.userId) {
           console.log('Auth guard - User found in localStorage, allowing access');
+          // Update the service's current user subject to keep it in sync
+          authService.updateCurrentUser(user);
           return true;
         }
       } catch (e) {
@@ -31,41 +33,20 @@ export const authGuard: CanActivateFn = async (route, state) => {
       return true;
     }
 
-    // Finally, check session with timeout (async check)
-    const authCheck = Promise.race([
-      authService.isAuthenticated(),
-      new Promise<boolean>((resolve) => {
-        setTimeout(() => {
-          console.warn('Auth guard: Authentication check timed out after 3s, checking localStorage fallback');
-          // Check localStorage one more time as fallback
-          const fallbackUser = localStorage.getItem('butler_user');
-          resolve(!!fallbackUser); // Allow if user exists in storage
-        }, 3000);
-      })
-    ]);
-    
-    const isAuthenticated = await authCheck;
-    console.log('Auth guard - isAuthenticated:', isAuthenticated);
-    
-    if (isAuthenticated) {
-      console.log('Auth guard - allowing navigation to:', state.url);
-      return true;
-    }
-
-    // Redirect to login with return url
-    console.log('Auth guard - redirecting to login');
+    // If no stored user, immediately redirect to login (don't try to initialize Supabase)
+    // This prevents blocking on Supabase initialization when user is not logged in
+    console.log('Auth guard - No user found, redirecting to login');
     router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
     return false;
+    
   } catch (error) {
     console.error('Auth guard error:', error);
-    // On error, check localStorage as final fallback
-    const fallbackUser = localStorage.getItem('butler_user');
-    if (fallbackUser) {
-      console.warn('Auth guard - Allowing access due to localStorage fallback');
-      return true;
+    // On any error, redirect to login (fail-safe)
+    try {
+      router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
+    } catch (navError) {
+      console.error('Auth guard - Failed to navigate to login:', navError);
     }
-    // Redirect to login if no user found
-    router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
     return false;
   }
 };

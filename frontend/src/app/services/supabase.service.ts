@@ -177,9 +177,14 @@ export class SupabaseService {
   /**
    * Get the current authenticated user (returns Observable that emits null if error or no user)
    * Uses RxJS for consistency with Angular patterns
+   * Note: Supabase must be initialized before calling this
    */
   getCurrentUser(): Observable<any> {
-    return from(this.ensureInitialized().then(client => client.auth.getUser())).pipe(
+    if (!this.supabase) {
+      console.warn('getCurrentUser called before Supabase initialization');
+      return from([null]);
+    }
+    return from(this.supabase.auth.getUser()).pipe(
       map(({ data, error }) => {
         if (error) {
           console.warn('Error getting user:', error);
@@ -198,9 +203,14 @@ export class SupabaseService {
    * Get the current session (returns Observable that emits null if error or no session)
    * Includes timeout to prevent hanging
    * Uses RxJS for consistency with Angular patterns
+   * Note: Supabase must be initialized before calling this
    */
   getSession(): Observable<any> {
-    return from(this.ensureInitialized().then(client => client.auth.getSession())).pipe(
+    if (!this.supabase) {
+      console.warn('getSession called before Supabase initialization');
+      return from([null]);
+    }
+    return from(this.supabase.auth.getSession()).pipe(
       timeout({
         first: 5000, // 5 second timeout
         with: () => {
