@@ -1,6 +1,6 @@
 // src/app/components/header/header.component.ts
 
-import { Component, Input, Output, EventEmitter, inject, computed } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AppSettings } from '../../services/app-settings.service';
@@ -49,6 +49,17 @@ export class HeaderComponent {
     if (u.firstName) return u.firstName[0].toUpperCase();
     return u.email[0].toUpperCase();
   });
+
+  // ───── Quick Actions Drawer ─────
+  protected readonly isQuickActionsOpen = signal(false);
+
+  toggleQuickActions(): void {
+    this.isQuickActionsOpen.update(value => !value);
+  }
+
+  closeQuickActions(): void {
+    this.isQuickActionsOpen.set(false);
+  }
 
   // ───── UI Actions ─────
   toggleAppSidebarMobile() {

@@ -56,6 +56,13 @@
       </form>
     </div>
 
+    <!-- Quick Actions Button -->
+    <div class="navbar-item">
+      <a href="javascript:;" (click)="toggleQuickActions()" class="navbar-link icon" title="Quick Actions">
+        <i class="fa fa-bolt"></i>
+      </a>
+    </div>
+
     <!-- Alerts Bell -->
     <div class="navbar-item">
       <a routerLink="/alerts" class="navbar-link icon alert-bell-link">
@@ -159,3 +166,43 @@
   <!-- END nav -->
 </div>
 <!-- END #header -->
+
+<!-- Quick Actions Drawer (Bootstrap Offcanvas) -->
+<div class="offcanvas offcanvas-top" [class.show]="isQuickActionsOpen()" tabindex="-1" id="quickActionsDrawer" 
+     [attr.aria-hidden]="!isQuickActionsOpen()" [attr.aria-labelledby]="'quickActionsDrawerLabel'">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="quickActionsDrawerLabel">
+      <i class="fa fa-bolt me-2"></i>Quick Actions
+    </h5>
+    <button type="button" class="btn-close btn-close-white" (click)="closeQuickActions()" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div class="quick-actions-grid">
+      <a [routerLink]="['/bills']" class="quick-action-card" (click)="closeQuickActions()">
+        <div class="quick-action-icon">💳</div>
+        <div class="quick-action-label">Pay Bill</div>
+      </a>
+      <a [routerLink]="['/financial']" class="quick-action-card" (click)="closeQuickActions()">
+        <div class="quick-action-icon">💰</div>
+        <div class="quick-action-label">Add Transaction</div>
+      </a>
+      <a [routerLink]="['/maintenance']" class="quick-action-card" (click)="closeQuickActions()">
+        <div class="quick-action-icon">🔨</div>
+        <div class="quick-action-label">Schedule Task</div>
+      </a>
+      <a [routerLink]="['/documents']" class="quick-action-card" (click)="closeQuickActions()">
+        <div class="quick-action-icon">📄</div>
+        <div class="quick-action-label">Upload Document</div>
+      </a>
+      <a [routerLink]="['/healthcare']" class="quick-action-card" (click)="closeQuickActions()">
+        <div class="quick-action-icon">🏥</div>
+        <div class="quick-action-label">Healthcare</div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Backdrop for drawer -->
+@if (isQuickActionsOpen()) {
+  <div class="offcanvas-backdrop fade show" (click)="closeQuickActions()"></div>
+}
