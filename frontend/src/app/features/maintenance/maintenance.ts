@@ -1,4 +1,4 @@
-import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, ViewChild, OnInit, computed, signal, effect } from '@angular/core';
+import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, ViewChild, OnInit, AfterViewInit, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MaintenanceService } from '../../services/maintenance.service';
@@ -45,7 +45,7 @@ import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
   templateUrl: './maintenance.html',
   styleUrl: './maintenance.scss'
 })
-export class Maintenance implements OnInit {
+export class Maintenance implements OnInit, AfterViewInit {
   @ViewChild('taskDialog') taskDialog!: DialogComponent;
 
   private readonly maintenanceService = inject(MaintenanceService);
@@ -187,6 +187,22 @@ export class Maintenance implements OnInit {
       isRecurring: [false],
       frequency: ['monthly']
     });
+  }
+
+  ngAfterViewInit(): void {
+    // Force teal gradient on AppBar buttons
+    setTimeout(() => {
+      const buttons = document.querySelectorAll('.e-appbar.custom-appbar button.e-btn.e-primary');
+      buttons.forEach((button: any) => {
+        if (button && button.style) {
+          button.style.background = 'linear-gradient(135deg, #108E91 0%, #20B6AA 100%)';
+          button.style.backgroundColor = '#108E91';
+          button.style.backgroundImage = 'linear-gradient(135deg, #108E91 0%, #20B6AA 100%)';
+          button.style.color = 'white';
+          button.style.border = 'none';
+        }
+      });
+    }, 100);
   }
 
   ngOnInit(): void {

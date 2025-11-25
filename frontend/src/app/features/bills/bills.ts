@@ -1,4 +1,4 @@
-import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, ViewChild, OnInit, computed, signal, effect } from '@angular/core';
+import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, ViewChild, OnInit, AfterViewInit, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BillService } from '../../services/bill.service';
@@ -45,7 +45,7 @@ import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
   templateUrl: './bills.html',
   styleUrl: './bills.scss'
 })
-export class Bills implements OnInit {
+export class Bills implements OnInit, AfterViewInit {
   @ViewChild('billDialog') billDialog!: DialogComponent;
 
   private readonly billService = inject(BillService);
@@ -164,6 +164,22 @@ export class Bills implements OnInit {
       autoPayEnabled: [false],
       reminderDays: [3, Validators.min(0)]
     });
+  }
+
+  ngAfterViewInit(): void {
+    // Force teal gradient on AppBar buttons
+    setTimeout(() => {
+      const buttons = document.querySelectorAll('.e-appbar.custom-appbar button.e-btn.e-primary');
+      buttons.forEach((button: any) => {
+        if (button && button.style) {
+          button.style.background = 'linear-gradient(135deg, #108E91 0%, #20B6AA 100%)';
+          button.style.backgroundColor = '#108E91';
+          button.style.backgroundImage = 'linear-gradient(135deg, #108E91 0%, #20B6AA 100%)';
+          button.style.color = 'white';
+          button.style.border = 'none';
+        }
+      });
+    }, 100);
   }
 
   ngOnInit(): void {

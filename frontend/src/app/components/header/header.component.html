@@ -59,7 +59,7 @@
     <!-- Alerts Bell -->
     <div class="navbar-item">
       <a routerLink="/alerts" class="navbar-link icon alert-bell-link">
-        <span class="alert-bell-icon">Bell</span>
+        <i class="fa fa-bell alert-bell-icon"></i>
         @if (notificationCount() > 0) {
           <span class="badge">{{ notificationCount() }}</span>
         }
@@ -69,7 +69,7 @@
     <!-- Alerts Dropdown -->
     <div class="navbar-item dropdown">
       <a href="javascript:;" data-bs-toggle="dropdown" class="navbar-link dropdown-toggle icon">
-        <span class="alert-preview-icon">Clipboard</span>
+        <i class="fa fa-clipboard alert-preview-icon"></i>
       </a>
       <div class="dropdown-menu media-list dropdown-menu-end">
         <div class="dropdown-header">ALERTS ({{ notificationCount() }})</div>

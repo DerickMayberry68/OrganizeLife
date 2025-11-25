@@ -34,17 +34,8 @@
     gap: 8px;
   }
 
-  button.e-btn {
-    margin-left: 10px;
-    background: #d4af37;
-    border-color: #d4af37;
-    color: #1a1a2e;
-
-    &:hover {
-      background: #dfc159;
-      border-color: #dfc159;
-    }
-  }
+  // Button styling is now handled globally in styles.scss
+  // All AppBar buttons will use the teal gradient to match menu highlights
 }
 
 // Card styling

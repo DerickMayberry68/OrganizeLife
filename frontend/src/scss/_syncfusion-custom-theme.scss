@@ -5,6 +5,12 @@
 // Login/Register form styling throughout the entire application
 // ============================================================================
 
+// Override Syncfusion Tailwind primary color to use teal
+:root {
+  --e-primary: #108E91 !important;
+  --e-primary-rgb: 16, 142, 145 !important;
+}
+
 // Global Syncfusion Component Styling
 ::ng-deep {
   
@@ -337,11 +343,20 @@
           background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%);
           border: none;
           color: white;
-          box-shadow: 0 2px 8px rgba(27, 118, 255, 0.3);
+          box-shadow: 0 2px 8px rgba(16, 142, 145, 0.3);
 
           &:hover {
+            background: linear-gradient(135deg, #0d7a7d 0%, #1a9d91 100%);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(27, 118, 255, 0.4);
+            box-shadow: 0 4px 12px rgba(16, 142, 145, 0.4);
+            color: white;
+          }
+
+          &:active {
+            background: linear-gradient(135deg, #0a6568 0%, #15847a 100%);
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(16, 142, 145, 0.3);
+            color: white;
           }
         }
 
@@ -631,12 +646,15 @@
           }
 
           &.e-primary {
-            background: #108E91;
-            border-color: #108E91;
+            background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%);
+            border: none;
             color: white;
+            box-shadow: 0 2px 8px rgba(16, 142, 145, 0.3);
 
             &:hover {
-              background: #1565e0;
+              background: linear-gradient(135deg, #0d7a7d 0%, #1a9d91 100%);
+              box-shadow: 0 4px 12px rgba(16, 142, 145, 0.4);
+              transform: translateY(-2px);
               border-color: #1565e0;
             }
           }
@@ -900,6 +918,67 @@ div.e-grid *,
   p * {
     color: #2d3748 !important;
     background-color: transparent !important;
+  }
+}
+
+// ========================================
+// Global Syncfusion Button Override
+// ========================================
+// Ensure ALL Syncfusion primary buttons use the teal gradient
+// to match menu highlights throughout the application
+::ng-deep {
+  // Override ALL e-primary buttons to use teal gradient
+  .e-btn.e-primary,
+  button.e-btn.e-primary,
+  .e-appbar .e-btn.e-primary,
+  .e-appbar.custom-appbar .e-btn.e-primary {
+    background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%) !important;
+    background-color: #108E91 !important;
+    border: none !important;
+    border-color: transparent !important;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(16, 142, 145, 0.3) !important;
+    transition: all 0.3s ease !important;
+
+    // Override any Tailwind theme colors
+    &[class*="e-primary"],
+    &[style*="background"] {
+      background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%) !important;
+      background-color: #108E91 !important;
+    }
+
+    &:hover {
+      background: linear-gradient(135deg, #0d7a7d 0%, #1a9d91 100%) !important;
+      background-color: #0d7a7d !important;
+      box-shadow: 0 4px 12px rgba(16, 142, 145, 0.4) !important;
+      transform: translateY(-2px) !important;
+      color: white !important;
+    }
+
+    &:active,
+    &.e-active {
+      background: linear-gradient(135deg, #0a6568 0%, #15847a 100%) !important;
+      background-color: #0a6568 !important;
+      box-shadow: 0 2px 4px rgba(16, 142, 145, 0.3) !important;
+      transform: translateY(0) !important;
+      color: white !important;
+    }
+
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(16, 142, 145, 0.25) !important;
+      color: white !important;
+      background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%) !important;
+      background-color: #108E91 !important;
+    }
+
+    &:disabled {
+      background: linear-gradient(135deg, rgba(16, 142, 145, 0.5) 0%, rgba(32, 182, 170, 0.5) 100%) !important;
+      background-color: rgba(16, 142, 145, 0.5) !important;
+      opacity: 0.6 !important;
+      cursor: not-allowed !important;
+      transform: none !important;
+      color: white !important;
+    }
   }
 }
 

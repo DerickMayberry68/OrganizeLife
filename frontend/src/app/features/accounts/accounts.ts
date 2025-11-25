@@ -1,4 +1,4 @@
-import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, ViewChild, OnInit, computed, signal, effect } from '@angular/core';
+import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, ViewChild, OnInit, AfterViewInit, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FinancialService } from '../../services/financial.service';
@@ -44,7 +44,7 @@ import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
   templateUrl: './accounts.html',
   styleUrl: './accounts.scss'
 })
-export class Accounts implements OnInit {
+export class Accounts implements OnInit, AfterViewInit {
   @ViewChild('accountDialog') accountDialog!: DialogComponent;
   @ViewChild('subscriptionDialog') subscriptionDialog!: DialogComponent;
 
@@ -193,6 +193,22 @@ export class Accounts implements OnInit {
       billingCycle: ['monthly', Validators.required],
       nextBillingDate: [new Date(), Validators.required]
     });
+  }
+
+  ngAfterViewInit(): void {
+    // Force teal gradient on AppBar buttons
+    setTimeout(() => {
+      const buttons = document.querySelectorAll('.e-appbar.custom-appbar button.e-btn.e-primary');
+      buttons.forEach((button: any) => {
+        if (button && button.style) {
+          button.style.background = 'linear-gradient(135deg, #108E91 0%, #20B6AA 100%)';
+          button.style.backgroundColor = '#108E91';
+          button.style.backgroundImage = 'linear-gradient(135deg, #108E91 0%, #20B6AA 100%)';
+          button.style.color = 'white';
+          button.style.border = 'none';
+        }
+      });
+    }, 100);
   }
 
   ngOnInit(): void {

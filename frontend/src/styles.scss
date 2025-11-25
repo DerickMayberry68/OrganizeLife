@@ -57,3 +57,188 @@ body:has(.register-page) {
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) rgba(0, 0, 0, 0.05);
 }
+
+// FINAL OVERRIDE - Force teal on all Syncfusion primary buttons
+// This must be at the end to override Tailwind theme styles
+::ng-deep {
+  // Target every possible variation of Syncfusion primary buttons
+  button.e-btn.e-primary,
+  .e-btn.e-primary,
+  button[class*="e-btn"][class*="primary"],
+  .e-appbar button.e-primary,
+  .e-appbar.custom-appbar button.e-primary,
+  .custom-appbar button.e-primary,
+  button.e-primary.e-btn,
+  [class*="e-btn"][class*="e-primary"] {
+    background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%) !important;
+    background-color: #108E91 !important;
+    background-image: linear-gradient(135deg, #108E91 0%, #20B6AA 100%) !important;
+    border: none !important;
+    border-color: transparent !important;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(16, 142, 145, 0.3) !important;
+
+    // Override any inline styles or computed styles
+    &[style*="background"] {
+      background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%) !important;
+      background-color: #108E91 !important;
+    }
+
+    &:hover {
+      background: linear-gradient(135deg, #0d7a7d 0%, #1a9d91 100%) !important;
+      background-color: #0d7a7d !important;
+      background-image: linear-gradient(135deg, #0d7a7d 0%, #1a9d91 100%) !important;
+      box-shadow: 0 4px 12px rgba(16, 142, 145, 0.4) !important;
+      transform: translateY(-2px) !important;
+      color: white !important;
+    }
+
+    &:active,
+    &.e-active {
+      background: linear-gradient(135deg, #0a6568 0%, #15847a 100%) !important;
+      background-color: #0a6568 !important;
+      background-image: linear-gradient(135deg, #0a6568 0%, #15847a 100%) !important;
+      box-shadow: 0 2px 4px rgba(16, 142, 145, 0.3) !important;
+      transform: translateY(0) !important;
+      color: white !important;
+    }
+  }
+}
+
+// AppBar Button styling - Apply teal gradient to all AppBar buttons
+// Target ALL buttons in the AppBar to ensure we catch them
+::ng-deep {
+  .e-appbar.custom-appbar {
+    // Target ALL buttons in AppBar - be very specific and aggressive
+    button,
+    button.e-btn,
+    button[class*="e-btn"],
+    .e-btn,
+    .e-appbar button,
+    .e-appbar.custom-appbar button,
+    .custom-appbar button {
+      // Force teal gradient - override everything Syncfusion applies
+      background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%) !important;
+      background-color: #108E91 !important;
+      background-image: linear-gradient(135deg, #108E91 0%, #20B6AA 100%) !important;
+      color: white !important;
+      border: none !important;
+      border-color: transparent !important;
+      box-shadow: 0 2px 8px rgba(16, 142, 145, 0.3) !important;
+      transition: all 0.3s ease !important;
+      margin-left: 10px !important;
+      padding: 8px 16px !important;
+      border-radius: 6px !important;
+      font-weight: 500 !important;
+      opacity: 1 !important;
+      position: relative !important;
+      z-index: 10 !important;
+
+      // Override any inner elements or pseudo-elements
+      *,
+      &::before,
+      &::after {
+        color: white !important;
+        background: transparent !important;
+      }
+
+      &:hover {
+        background: linear-gradient(135deg, #0d7a7d 0%, #1a9d91 100%) !important;
+        background-color: #0d7a7d !important;
+        background-image: linear-gradient(135deg, #0d7a7d 0%, #1a9d91 100%) !important;
+        box-shadow: 0 4px 12px rgba(16, 142, 145, 0.4) !important;
+        transform: translateY(-2px) !important;
+        color: white !important;
+      }
+
+      &:active,
+      &.e-active {
+        background: linear-gradient(135deg, #0a6568 0%, #15847a 100%) !important;
+        background-color: #0a6568 !important;
+        background-image: linear-gradient(135deg, #0a6568 0%, #15847a 100%) !important;
+        box-shadow: 0 2px 4px rgba(16, 142, 145, 0.3) !important;
+        transform: translateY(0) !important;
+        color: white !important;
+      }
+
+      &:focus {
+        box-shadow: 0 0 0 3px rgba(16, 142, 145, 0.25) !important;
+        outline: none !important;
+        background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%) !important;
+        background-color: #108E91 !important;
+      }
+
+      &:disabled {
+        background: linear-gradient(135deg, rgba(16, 142, 145, 0.5) 0%, rgba(32, 182, 170, 0.5) 100%) !important;
+        background-color: rgba(16, 142, 145, 0.5) !important;
+        opacity: 0.6 !important;
+        cursor: not-allowed !important;
+        transform: none !important;
+        color: white !important;
+      }
+    }
+  }
+}
+
+// Button styling to match menu highlights
+// Make all primary buttons use the same teal gradient as menu active states
+.btn-primary {
+  background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%);
+  border: none;
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 142, 145, 0.3);
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: linear-gradient(135deg, #0d7a7d 0%, #1a9d91 100%);
+    box-shadow: 0 4px 12px rgba(16, 142, 145, 0.4);
+    transform: translateY(-2px);
+    color: white;
+  }
+
+  &:active,
+  &.active {
+    background: linear-gradient(135deg, #0a6568 0%, #15847a 100%);
+    box-shadow: 0 2px 4px rgba(16, 142, 145, 0.3);
+    transform: translateY(0);
+    color: white;
+  }
+
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(16, 142, 145, 0.25);
+    color: white;
+  }
+
+  &:disabled {
+    background: linear-gradient(135deg, rgba(16, 142, 145, 0.5) 0%, rgba(32, 182, 170, 0.5) 100%);
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    color: white;
+  }
+}
+
+// Outline primary buttons
+.btn-outline-primary {
+  color: #108E91;
+  border-color: #108E91;
+  background: transparent;
+
+  &:hover {
+    background: linear-gradient(135deg, #108E91 0%, #20B6AA 100%);
+    border-color: #108E91;
+    color: white;
+    box-shadow: 0 2px 8px rgba(16, 142, 145, 0.3);
+  }
+
+  &:active,
+  &.active {
+    background: linear-gradient(135deg, #0d7a7d 0%, #1a9d91 100%);
+    border-color: #0d7a7d;
+    color: white;
+  }
+
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(16, 142, 145, 0.25);
+  }
+}

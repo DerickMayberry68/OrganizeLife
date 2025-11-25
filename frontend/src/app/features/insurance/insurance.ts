@@ -1,4 +1,4 @@
-import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, ViewChild, OnInit, computed, signal, effect } from '@angular/core';
+import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, ViewChild, OnInit, AfterViewInit, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { InsuranceService } from '../../services/insurance.service';
@@ -43,7 +43,7 @@ import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
   templateUrl: './insurance.html',
   styleUrl: './insurance.scss'
 })
-export class Insurance implements OnInit {
+export class Insurance implements OnInit, AfterViewInit {
   @ViewChild('policyDialog') policyDialog!: DialogComponent;
 
   private readonly insuranceService = inject(InsuranceService);
@@ -152,6 +152,22 @@ export class Insurance implements OnInit {
       coverage: ['', Validators.required],
       deductible: [0, Validators.min(0)]
     });
+  }
+
+  ngAfterViewInit(): void {
+    // Force teal gradient on AppBar buttons
+    setTimeout(() => {
+      const buttons = document.querySelectorAll('.e-appbar.custom-appbar button.e-btn.e-primary');
+      buttons.forEach((button: any) => {
+        if (button && button.style) {
+          button.style.background = 'linear-gradient(135deg, #108E91 0%, #20B6AA 100%)';
+          button.style.backgroundColor = '#108E91';
+          button.style.backgroundImage = 'linear-gradient(135deg, #108E91 0%, #20B6AA 100%)';
+          button.style.color = 'white';
+          button.style.border = 'none';
+        }
+      });
+    }, 100);
   }
 
   ngOnInit(): void {
