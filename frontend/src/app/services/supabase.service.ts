@@ -2,9 +2,8 @@
 
 import { Injectable, signal, computed } from '@angular/core';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { Observable, from, throwError, of, filter, take, map } from 'rxjs';
+import { Observable, from, throwError, of, filter, take, map, BehaviorSubject } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { toObservable } from '@angular/core/rxjs-interop';
 import { environment } from '../config/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -17,6 +16,9 @@ export class SupabaseService {
   readonly isReady = computed(() => this.client() !== null);
   readonly isError = signal<boolean>(false);
   readonly error = signal<string | null>(null);
+
+  // 3. Use BehaviorSubject to avoid toObservable injection context issues
+  private readonly readySubject = new BehaviorSubject<SupabaseClient | null>(null);
 
   constructor() {
     // Start initialization immediately — fully reactive
@@ -51,6 +53,9 @@ export class SupabaseService {
     // Set client immediately - Supabase client is ready synchronously
     // The connection test is done via observable pattern
     this.client.set(supabaseClient);
+    
+    // Update ready subject when client is set
+    this.readySubject.next(supabaseClient);
 
     // Test connection — convert promise to observable pattern for error detection
     from(supabaseClient.auth.getSession())
@@ -86,11 +91,22 @@ export class SupabaseService {
   }
 
   // Observable-based readiness check (replaces whenReady Promise and getClient)
+  // Uses BehaviorSubject to avoid toObservable injection context issues
   whenReady$(): Observable<SupabaseClient> {
-    return toObservable(this.client$).pipe(
+    // If client is already ready, return it immediately
+    const currentClient = this.client();
+    if (currentClient) {
+      // Update subject if not already set
+      if (!this.readySubject.value) {
+        this.readySubject.next(currentClient);
+      }
+      return of(currentClient);
+    }
+    
+    // Otherwise, wait for the subject to emit
+    return this.readySubject.pipe(
       filter((client): client is SupabaseClient => client !== null),
-      take(1),
-      map(client => client!)
+      take(1)
     );
   }
 
