@@ -1,4 +1,4 @@
-import { Component, inject, computed, CUSTOM_ELEMENTS_SCHEMA, OnInit } from '@angular/core';
+import { Component, inject, computed, CUSTOM_ELEMENTS_SCHEMA, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DashboardService } from '../../services/dashboard.service';
@@ -8,6 +8,7 @@ import { BillService } from '../../services/bill.service';
 import { MaintenanceService } from '../../services/maintenance.service';
 import { InsuranceService } from '../../services/insurance.service';
 import { HealthcareService } from '../../services/healthcare.service';
+import { AuthService } from '../../services/auth.service';
 import { StatCard } from '../../shared/stat-card/stat-card';
 import { ChartModule, CategoryService, ColumnSeriesService, LegendService, TooltipService } from '@syncfusion/ej2-angular-charts';
 import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
@@ -61,35 +62,57 @@ export class Dashboard implements OnInit {
   private readonly maintenanceService = inject(MaintenanceService);
   private readonly insuranceService = inject(InsuranceService);
   private readonly healthcareService = inject(HealthcareService);
+  private readonly authService = inject(AuthService);
 
   protected readonly stats = this.dashboardService.dashboardStats;
   protected readonly alerts = this.alertService.alerts;
+  protected readonly hasHousehold = computed(() => !!this.authService.getDefaultHouseholdId());
+
+  constructor() {
+    // Watch for user/household changes and load data when available
+    effect(() => {
+      const householdId = this.authService.getDefaultHouseholdId();
+      const user = this.authService.getCurrentUser();
+      
+      // Only load data if user is loaded and has a household
+      if (user && householdId && !this.dataLoaded) {
+        this.loadDashboardData();
+        this.dataLoaded = true;
+      }
+    });
+  }
+
+  private dataLoaded = false;
 
   ngOnInit(): void {
     console.log('Dashboard component initialized');
-    // Load essential data for dashboard display
-    try {
+    
+    // Check if we can load data immediately
+    const householdId = this.authService.getDefaultHouseholdId();
+    const user = this.authService.getCurrentUser();
+    
+    if (user && householdId) {
       this.loadDashboardData();
-    } catch (error) {
-      console.error('Error in dashboard ngOnInit:', error);
-      // Continue anyway - dashboard should still render
+      this.dataLoaded = true;
+    } else {
+      console.log('Waiting for user profile and household to load...');
     }
   }
 
   private loadDashboardData(): void {
+    const householdId = this.authService.getDefaultHouseholdId();
+    if (!householdId) {
+      console.warn('Cannot load dashboard data: No household ID available');
+      return;
+    }
+
     // Load budgets first as they're needed for the chart
     this.financialService.loadBudgets().subscribe({
       next: (budgets) => {
         console.log('Budgets loaded:', budgets);
-        // If no budgets are returned from API, ensure we have some mock data for demonstration
-        if (!budgets || budgets.length === 0) {
-          this.loadMockBudgetData();
-        }
       },
       error: (error) => {
         console.error('Error loading budgets:', error);
-        // Fallback to mock data if API fails
-        this.loadMockBudgetData();
       }
     });
 
@@ -115,130 +138,11 @@ export class Dashboard implements OnInit {
     this.financialService.loadTransactions().subscribe({
       next: (transactions) => {
         console.log('Transactions loaded:', transactions);
-        // If no transactions are returned, add some mock data for demonstration
-        if (!transactions || transactions.length === 0) {
-          this.loadMockTransactionData();
-        }
       },
       error: (error) => {
         console.error('Error loading transactions:', error);
-        // Fallback to mock data if API fails
-        this.loadMockTransactionData();
       }
     });
-  }
-
-  private loadMockBudgetData(): void {
-    // Add some mock budget data for demonstration
-    const mockBudgets = [
-      {
-        id: '1',
-        householdId: 'household-1',
-        categoryId: '1',
-        categoryName: 'Groceries',
-        name: 'Groceries',
-        limitAmount: 500,
-        period: 'Monthly',
-        startDate: new Date().toISOString().split('T')[0], // DateOnly format
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '2', 
-        householdId: 'household-1',
-        categoryId: '2',
-        categoryName: 'Utilities',
-        name: 'Utilities',
-        limitAmount: 300,
-        period: 'Monthly',
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '3',
-        householdId: 'household-1',
-        categoryId: '3',
-        categoryName: 'Entertainment',
-        name: 'Entertainment',
-        limitAmount: 200,
-        period: 'Monthly',
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
-
-    // Mock data not supported in refactored services - would need to be set directly
-    // For now, we'll skip mock data as it's for demonstration only
-    console.log('Mock budget data loaded:', mockBudgets);
-  }
-
-  private loadMockTransactionData(): void {
-    // Add some mock transaction data for demonstration
-    const mockTransactions = [
-      {
-        id: '1',
-        householdId: 'household-1',
-        accountId: '1',
-        accountName: 'Primary Checking',
-        categoryId: '1',
-        categoryName: 'Groceries',
-        date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        description: 'Grocery shopping',
-        amount: 85.50,
-        type: 'expense',
-        merchantName: 'Grocery Store',
-        notes: 'Weekly grocery shopping',
-        isRecurring: false,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '2',
-        householdId: 'household-1',
-        accountId: '1',
-        accountName: 'Primary Checking',
-        categoryId: '2',
-        categoryName: 'Utilities',
-        date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-        description: 'Electric bill',
-        amount: 120.75,
-        type: 'expense',
-        merchantName: 'Electric Company',
-        notes: 'Monthly electric bill',
-        isRecurring: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '3',
-        householdId: 'household-1',
-        accountId: '1',
-        accountName: 'Primary Checking',
-        categoryId: '3',
-        categoryName: 'Entertainment',
-        date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-        description: 'Movie tickets',
-        amount: 45.00,
-        type: 'expense',
-        merchantName: 'Cinema',
-        notes: 'Weekend movie night',
-        isRecurring: false,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
-
-    // Mock data not supported in refactored services - would need to be set directly
-    // For now, we'll skip mock data as it's for demonstration only
-    console.log('Mock transaction data loaded:', mockTransactions);
   }
   
   // Aggregate all events for the calendar
