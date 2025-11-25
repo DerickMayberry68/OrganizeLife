@@ -78,7 +78,7 @@ export class HeaderComponent {
   }
 
   logout() {
-    this.auth.logout();
+    this.auth.logout().subscribe();
   }
 
   getSeverityIcon(severity: string): string {

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { TextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import { CheckBoxModule } from '@syncfusion/ej2-angular-buttons';
-import { AuthService } from '../../../services/auth.service';
+import { AuthService, RegisterResponse } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-register',
@@ -54,13 +54,13 @@ export class RegisterComponent {
       lastName: this.lastName,
       householdName: this.householdName
     }).subscribe({
-      next: (response) => {
+      next: (response: RegisterResponse) => {
         console.log('Registration successful', response);
         this.router.navigate(['/dashboard']);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Registration failed', error);
-        this.errorMessage = error.error?.message || error.error?.Message || 'Registration failed. Please try again.';
+        this.errorMessage = error.error?.message || error.error?.Message || error.message || 'Registration failed. Please try again.';
         this.isLoading = false;
       },
       complete: () => {

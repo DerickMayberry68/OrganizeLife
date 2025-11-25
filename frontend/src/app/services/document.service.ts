@@ -2,7 +2,6 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { Observable, tap, catchError, of, from, throwError } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { BaseApiService } from './base-api.service';
-import { AuthService } from './auth.service';
 import { StorageService } from './storage.service';
 import type { Document } from '../models/document.model';
 
@@ -14,7 +13,6 @@ import type { Document } from '../models/document.model';
   providedIn: 'root'
 })
 export class DocumentService extends BaseApiService {
-  private readonly authService = inject(AuthService);
   private readonly storageService = inject(StorageService);
 
   // Document signals
@@ -48,16 +46,18 @@ export class DocumentService extends BaseApiService {
       return of([]);
     }
 
-    return from(
-      this.supabase
-        .from('documents')
-        .select(`
-          *,
-          categories (id, name)
-        `)
-        .eq('household_id', householdId)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false })
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('documents')
+          .select(`
+            *,
+            categories (id, name)
+          `)
+          .eq('household_id', householdId)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false })
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {
@@ -92,7 +92,7 @@ export class DocumentService extends BaseApiService {
     }
 
     // Upload file to Supabase Storage first
-    return from(this.getCurrentUserId()).pipe(
+    return this.getCurrentUserId$().pipe(
       switchMap((userId) => {
         if (!userId) {
           return throwError(() => new Error('User not authenticated'));
@@ -118,15 +118,17 @@ export class DocumentService extends BaseApiService {
               updated_by: userId
             };
 
-            return from(
-              this.supabase
-                .from('documents')
-                .insert(documentData)
-                .select(`
-                  *,
-                  categories (id, name)
-                `)
-                .single()
+            return this.getSupabaseClient$().pipe(
+              switchMap(client => from(
+                client
+                  .from('documents')
+                  .insert(documentData)
+                  .select(`
+                    *,
+                    categories (id, name)
+                  `)
+                  .single()
+              ))
             );
           })
         );
@@ -158,7 +160,7 @@ export class DocumentService extends BaseApiService {
       return throwError(() => new Error('No household selected'));
     }
 
-    return from(this.getCurrentUserId()).pipe(
+    return this.getCurrentUserId$().pipe(
       switchMap((userId) => {
         if (!userId) {
           return throwError(() => new Error('User not authenticated'));
@@ -179,15 +181,17 @@ export class DocumentService extends BaseApiService {
           updated_by: userId
         };
 
-        return from(
-          this.supabase
-            .from('documents')
-            .insert(documentData)
-            .select(`
-              *,
-              categories (id, name)
-            `)
-            .single()
+        return this.getSupabaseClient$().pipe(
+          switchMap(client => from(
+            client
+              .from('documents')
+              .insert(documentData)
+              .select(`
+                *,
+                categories (id, name)
+              `)
+              .single()
+          ))
         );
       }),
       map((response) => {
@@ -208,7 +212,7 @@ export class DocumentService extends BaseApiService {
   }
 
   public updateDocument(id: string, updates: Partial<Document>): Observable<Document> {
-    return from(this.getCurrentUserId()).pipe(
+    return this.getCurrentUserId$().pipe(
       switchMap((userId) => {
         if (!userId) {
           return throwError(() => new Error('User not authenticated'));
@@ -229,16 +233,18 @@ export class DocumentService extends BaseApiService {
         
         updateData.updated_by = userId;
 
-        return from(
-          this.supabase
-            .from('documents')
-            .update(updateData)
-            .eq('id', id)
-            .select(`
-              *,
-              categories (id, name)
-            `)
-            .single()
+        return this.getSupabaseClient$().pipe(
+          switchMap(client => from(
+            client
+              .from('documents')
+              .update(updateData)
+              .eq('id', id)
+              .select(`
+                *,
+                categories (id, name)
+              `)
+              .single()
+          ))
         );
       }),
       map((response) => {
@@ -260,12 +266,14 @@ export class DocumentService extends BaseApiService {
 
   public deleteDocument(id: string): Observable<void> {
     // First get the document to delete the file from storage
-    return from(
-      this.supabase
-        .from('documents')
-        .select('file_path')
-        .eq('id', id)
-        .single()
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('documents')
+          .select('file_path')
+          .eq('id', id)
+          .single()
+      ))
     ).pipe(
       switchMap((response) => {
         if (response.error) {
@@ -283,11 +291,13 @@ export class DocumentService extends BaseApiService {
         }
         
         // Delete from database
-        return from(
-          this.supabase
-            .from('documents')
-            .delete()
-            .eq('id', id)
+        return this.getSupabaseClient$().pipe(
+          switchMap(client => from(
+            client
+              .from('documents')
+              .delete()
+              .eq('id', id)
+          ))
         );
       }),
       map((response) => {

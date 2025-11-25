@@ -1,9 +1,11 @@
 import { inject } from '@angular/core';
-import { Observable, tap, catchError, of, from, throwError, firstValueFrom } from 'rxjs';
+import { Observable, tap, catchError, of, from, throwError } from 'rxjs';
 import { signal, WritableSignal } from '@angular/core';
+import { map, switchMap } from 'rxjs/operators';
 import { ToastService } from './toast.service';
 import { SupabaseService } from './supabase.service';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { AuthService } from './auth.service';
 
 /**
  * Base Service
@@ -12,21 +14,23 @@ import { SupabaseClient } from '@supabase/supabase-js';
 export abstract class BaseApiService {
   protected readonly supabaseService = inject(SupabaseService);
   protected readonly toastService = inject(ToastService);
+  protected readonly authService = inject(AuthService);
+  
+  // Keep supabase getter for backwards compatibility but allow null
   
   /**
-   * Get the Supabase client instance (lazy initialization)
-   * Note: This will throw if Supabase is not initialized
-   * For async operations, ensure Supabase is initialized first
+   * Get the Supabase client instance (reactive signal-based)
+   * Returns null if not ready - use client$() signal instead
    */
-  protected get supabase(): SupabaseClient {
-    return this.supabaseService.client;
+  protected get supabase(): SupabaseClient | null {
+    return this.supabaseService.client$();
   }
 
   /**
-   * Ensure Supabase is initialized before use
+   * Get Supabase client as Observable (waits for ready)
    */
-  protected async ensureSupabaseInitialized(): Promise<SupabaseClient> {
-    return await this.supabaseService.ensureInitialized();
+  protected getSupabaseClient$(): Observable<SupabaseClient> {
+    return this.supabaseService.whenReady$();
   }
 
   /**
@@ -78,149 +82,155 @@ export abstract class BaseApiService {
   }
 
   /**
-   * Helper method to get current user ID from Supabase session
+   * Helper method to get current user ID (Observable-based)
    */
-  protected async getCurrentUserId(): Promise<string | null> {
-    try {
-      const user = await firstValueFrom(this.supabaseService.getCurrentUser());
-      return user?.id || null;
-    } catch (error) {
-      console.error('Error getting current user:', error);
-      return null;
-    }
+  protected getCurrentUserId$(): Observable<string | null> {
+    const user = this.authService.getCurrentUser();
+    return of(user?.userId || null);
   }
 
   /**
-   * Helper method to check if user has access to household
+   * Helper method to check if user has access to household (Observable-based)
    */
-  protected async checkHouseholdAccess(householdId: string, userId: string): Promise<boolean> {
-    const { data, error } = await this.supabase
-      .from('household_members')
-      .select('id')
-      .eq('household_id', householdId)
-      .eq('user_id', userId)
-      .eq('is_active', true)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error checking household access:', error);
-      return false;
-    }
-
-    return !!data;
-  }
-
-  /**
-   * Helper method for SELECT queries from Supabase
-   */
-  protected selectFrom<T>(table: string): any {
-    return this.supabase.from(table).select('*');
-  }
-
-  /**
-   * Helper method for INSERT operations
-   */
-  protected async insertInto<T>(table: string, data: Partial<T> | Partial<T>[]): Promise<T | T[]> {
-    const { data: result, error } = await this.supabase
-      .from(table)
-      .insert(data)
-      .select()
-      .single();
-
-    if (error) {
-      console.error(`Error inserting into ${table}:`, error);
-      this.toastService.error('Error', error.message || 'Failed to insert data');
-      throw error;
-    }
-
-    return result as T;
-  }
-
-  /**
-   * Helper method for INSERT operations (Observable)
-   */
-  protected insertIntoObservable<T>(table: string, data: Partial<T> | Partial<T>[]): Observable<T> {
-    return from(this.insertInto<T>(table, data) as Promise<T>).pipe(
-      catchError(error => {
-        return throwError(() => error);
+  protected checkHouseholdAccess$(householdId: string, userId: string): Observable<boolean> {
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => {
+        return from(
+          client
+            .from('household_members')
+            .select('id')
+            .eq('household_id', householdId)
+            .eq('user_id', userId)
+            .eq('is_active', true)
+            .maybeSingle()
+        ).pipe(
+          map(({ data, error }) => {
+            if (error) {
+              console.error('Error checking household access:', error);
+              return false;
+            }
+            return !!data;
+          }),
+          catchError(() => of(false))
+        );
       })
     );
   }
 
   /**
-   * Helper method for UPDATE operations
+   * Helper method for SELECT queries from Supabase (Observable-based)
    */
-  protected async updateIn<T>(table: string, id: string, updates: Partial<T>): Promise<T> {
-    const { data, error } = await this.supabase
-      .from(table)
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error(`Error updating ${table}:`, error);
-      this.toastService.error('Error', error.message || 'Failed to update data');
-      throw error;
-    }
-
-    return data as T;
-  }
-
-  /**
-   * Helper method for UPDATE operations (Observable)
-   */
-  protected updateInObservable<T>(table: string, id: string, updates: Partial<T>): Observable<T> {
-    return from(this.updateIn<T>(table, id, updates)).pipe(
-      catchError(error => {
-        return throwError(() => error);
+  protected selectFrom$<T>(table: string): Observable<T[]> {
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => {
+        return from(client.from(table).select('*')).pipe(
+          map(({ data, error }: any) => {
+            if (error) {
+              console.error(`Error selecting from ${table}:`, error);
+              this.toastService.error('Error', error.message || 'Failed to load data');
+              throw error;
+            }
+            return (data || []) as T[];
+          }),
+          catchError(error => {
+            return throwError(() => error);
+          })
+        );
       })
     );
   }
 
   /**
-   * Helper method for DELETE operations
+   * Helper method for INSERT operations (Observable-based)
    */
-  protected async deleteFrom(table: string, id: string): Promise<void> {
-    const { error } = await this.supabase
-      .from(table)
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error(`Error deleting from ${table}:`, error);
-      this.toastService.error('Error', error.message || 'Failed to delete data');
-      throw error;
-    }
-  }
-
-  /**
-   * Helper method for DELETE operations (Observable)
-   */
-  protected deleteFromObservable(table: string, id: string): Observable<void> {
-    return from(this.deleteFrom(table, id)).pipe(
-      catchError(error => {
-        return throwError(() => error);
+  protected insertInto$<T>(table: string, data: Partial<T> | Partial<T>[]): Observable<T> {
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => {
+        return from(
+          client
+            .from(table)
+            .insert(data)
+            .select()
+            .single()
+        ).pipe(
+          map(({ data: result, error }: any) => {
+            if (error) {
+              console.error(`Error inserting into ${table}:`, error);
+              this.toastService.error('Error', error.message || 'Failed to insert data');
+              throw error;
+            }
+            return result as T;
+          }),
+          catchError(error => {
+            return throwError(() => error);
+          })
+        );
       })
     );
   }
 
   /**
-   * Helper method for soft delete (updates deleted_at column)
+   * Helper method for UPDATE operations (Observable-based)
    */
-  protected async softDeleteFrom<T>(table: string, id: string): Promise<T> {
-    return this.updateIn<T>(table, id, { deleted_at: new Date().toISOString() } as unknown as Partial<T>);
+  protected updateIn$<T>(table: string, id: string, updates: Partial<T>): Observable<T> {
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => {
+        return from(
+          client
+            .from(table)
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single()
+        ).pipe(
+          map(({ data, error }: any) => {
+            if (error) {
+              console.error(`Error updating ${table}:`, error);
+              this.toastService.error('Error', error.message || 'Failed to update data');
+              throw error;
+            }
+            return data as T;
+          }),
+          catchError(error => {
+            return throwError(() => error);
+          })
+        );
+      })
+    );
   }
 
   /**
-   * Helper method for soft delete (Observable)
+   * Helper method for DELETE operations (Observable-based)
    */
-  protected softDeleteFromObservable<T>(table: string, id: string): Observable<T> {
-    return from(this.softDeleteFrom<T>(table, id)).pipe(
-      catchError(error => {
-        return throwError(() => error);
+  protected deleteFrom$(table: string, id: string): Observable<void> {
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => {
+        return from(
+          client
+            .from(table)
+            .delete()
+            .eq('id', id)
+        ).pipe(
+          map(({ error }: any) => {
+            if (error) {
+              console.error(`Error deleting from ${table}:`, error);
+              this.toastService.error('Error', error.message || 'Failed to delete data');
+              throw error;
+            }
+            return void 0;
+          }),
+          catchError(error => {
+            return throwError(() => error);
+          })
+        );
       })
     );
+  }
+
+  /**
+   * Helper method for soft delete (updates deleted_at column) (Observable-based)
+   */
+  protected softDeleteFrom$<T>(table: string, id: string): Observable<T> {
+    return this.updateIn$<T>(table, id, { deleted_at: new Date().toISOString() } as unknown as Partial<T>);
   }
 }
-

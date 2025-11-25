@@ -1,8 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { Observable, tap, catchError, of, from, throwError } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 import { BaseApiService } from './base-api.service';
-import { AuthService } from './auth.service';
 import type { Insurance } from '../models/insurance.model';
 
 /**
@@ -13,7 +12,6 @@ import type { Insurance } from '../models/insurance.model';
   providedIn: 'root'
 })
 export class InsuranceService extends BaseApiService {
-  private readonly authService = inject(AuthService);
 
   // Insurance signals
   private readonly insurancePoliciesSignal = signal<Insurance[]>([]);
@@ -54,13 +52,15 @@ export class InsuranceService extends BaseApiService {
       return of([]);
     }
 
-    return from(
-      this.supabase
-        .from('insurance_policies')
-        .select('*')
-        .eq('household_id', householdId)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false })
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('insurance_policies')
+          .select('*')
+          .eq('household_id', householdId)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false })
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {
@@ -99,12 +99,14 @@ export class InsuranceService extends BaseApiService {
       notes: policy.notes || null
     };
 
-    return from(
-      this.supabase
-        .from('insurance_policies')
-        .insert(policyData)
-        .select()
-        .single()
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('insurance_policies')
+          .insert(policyData)
+          .select()
+          .single()
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {
@@ -144,13 +146,15 @@ export class InsuranceService extends BaseApiService {
     if (updates.coverage !== undefined) updateData.coverage = updates.coverage;
     if (updates.deductible !== undefined) updateData.deductible = updates.deductible;
 
-    return from(
-      this.supabase
-        .from('insurance_policies')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single()
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('insurance_policies')
+          .update(updateData)
+          .eq('id', id)
+          .select()
+          .single()
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {
@@ -170,11 +174,13 @@ export class InsuranceService extends BaseApiService {
   }
 
   public deleteInsurancePolicy(id: string): Observable<void> {
-    return from(
-      this.supabase
-        .from('insurance_policies')
-        .delete()
-        .eq('id', id)
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('insurance_policies')
+          .delete()
+          .eq('id', id)
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {

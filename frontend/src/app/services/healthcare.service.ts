@@ -1,8 +1,9 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { Observable, tap, catchError, of, from, throwError } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 import { BaseApiService } from './base-api.service';
 import { AuthService } from './auth.service';
+import { SupabaseClient } from '@supabase/supabase-js';
 import type { Doctor, Appointment, Prescription, MedicalRecord } from '../models/healthcare.model';
 
 /**
@@ -13,7 +14,6 @@ import type { Doctor, Appointment, Prescription, MedicalRecord } from '../models
   providedIn: 'root'
 })
 export class HealthcareService extends BaseApiService {
-  private readonly authService = inject(AuthService);
 
   // Healthcare signals
   private readonly doctorsSignal = signal<Doctor[]>([]);
@@ -45,6 +45,16 @@ export class HealthcareService extends BaseApiService {
     return this.authService.getDefaultHouseholdId();
   }
 
+  /**
+   * Check if Supabase client is available
+   */
+  private ensureSupabaseClient(): SupabaseClient {
+    if (!this.supabase) {
+      throw new Error('Supabase client not initialized');
+    }
+    return this.supabase;
+  }
+
   // ===== DOCTORS =====
 
   public loadDoctors(): Observable<Doctor[]> {
@@ -54,8 +64,9 @@ export class HealthcareService extends BaseApiService {
       return of([]);
     }
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('doctors')
         .select('*')
         .eq('household_id', householdId)
@@ -100,8 +111,9 @@ export class HealthcareService extends BaseApiService {
       is_primary: doctor.isPrimary || false
     };
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('doctors')
         .insert(doctorData)
         .select()
@@ -139,8 +151,9 @@ export class HealthcareService extends BaseApiService {
     if (updates.notes !== undefined) updateData.notes = updates.notes;
     if (updates.isPrimary !== undefined) updateData.is_primary = updates.isPrimary;
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('doctors')
         .update(updateData)
         .eq('id', id)
@@ -165,8 +178,9 @@ export class HealthcareService extends BaseApiService {
   }
 
   public deleteDoctor(id: string): Observable<void> {
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('doctors')
         .delete()
         .eq('id', id)
@@ -196,8 +210,9 @@ export class HealthcareService extends BaseApiService {
       return of([]);
     }
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('appointments')
         .select(`
           *,
@@ -244,8 +259,9 @@ export class HealthcareService extends BaseApiService {
       reminder_sent: appointment.reminderSent || false
     };
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('appointments')
         .insert(appointmentData)
         .select(`
@@ -289,8 +305,9 @@ export class HealthcareService extends BaseApiService {
     if (updates.notes !== undefined) updateData.notes = updates.notes;
     if (updates.reminderSent !== undefined) updateData.reminder_sent = updates.reminderSent;
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('appointments')
         .update(updateData)
         .eq('id', id)
@@ -318,8 +335,9 @@ export class HealthcareService extends BaseApiService {
   }
 
   public deleteAppointment(id: string): Observable<void> {
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('appointments')
         .delete()
         .eq('id', id)
@@ -349,8 +367,9 @@ export class HealthcareService extends BaseApiService {
       return of([]);
     }
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('prescriptions')
         .select(`
           *,
@@ -402,8 +421,9 @@ export class HealthcareService extends BaseApiService {
       reminder_enabled: prescription.reminderEnabled || false
     };
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('prescriptions')
         .insert(prescriptionData)
         .select(`
@@ -459,8 +479,9 @@ export class HealthcareService extends BaseApiService {
         : null;
     }
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('prescriptions')
         .update(updateData)
         .eq('id', id)
@@ -488,8 +509,9 @@ export class HealthcareService extends BaseApiService {
   }
 
   public deletePrescription(id: string): Observable<void> {
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('prescriptions')
         .delete()
         .eq('id', id)
@@ -519,8 +541,9 @@ export class HealthcareService extends BaseApiService {
       return of([]);
     }
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('medical_records')
         .select('*')
         .eq('household_id', householdId)
@@ -562,8 +585,9 @@ export class HealthcareService extends BaseApiService {
       category: record.category || null
     };
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('medical_records')
         .insert(recordData)
         .select()
@@ -602,8 +626,9 @@ export class HealthcareService extends BaseApiService {
         : null;
     }
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('medical_records')
         .update(updateData)
         .eq('id', id)
@@ -628,8 +653,9 @@ export class HealthcareService extends BaseApiService {
   }
 
   public deleteMedicalRecord(id: string): Observable<void> {
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('medical_records')
         .delete()
         .eq('id', id)

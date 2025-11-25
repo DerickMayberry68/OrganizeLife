@@ -1,8 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { Observable, tap, catchError, of, from, throwError } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 import { BaseApiService } from './base-api.service';
-import { AuthService } from './auth.service';
 import type { Alert } from '../models/alert.model';
 
 /**
@@ -13,7 +12,6 @@ import type { Alert } from '../models/alert.model';
   providedIn: 'root'
 })
 export class AlertService extends BaseApiService {
-  private readonly authService = inject(AuthService);
 
   // Alert signals
   private readonly alertsSignal = signal<Alert[]>([]);
@@ -51,13 +49,15 @@ export class AlertService extends BaseApiService {
       return of([]);
     }
 
-    return from(
-      this.supabase
-        .from('alerts')
-        .select('*')
-        .eq('household_id', householdId)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false })
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('alerts')
+          .select('*')
+          .eq('household_id', householdId)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false })
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {
@@ -78,16 +78,18 @@ export class AlertService extends BaseApiService {
    * Mark an alert as read
    */
   public markAlertAsRead(id: string): Observable<Alert> {
-    return from(
-      this.supabase
-        .from('alerts')
-        .update({
-          is_read: true,
-          read_at: new Date().toISOString()
-        })
-        .eq('id', id)
-        .select()
-        .single()
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('alerts')
+          .update({
+            is_read: true,
+            read_at: new Date().toISOString()
+          })
+          .eq('id', id)
+          .select()
+          .single()
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {
@@ -109,17 +111,19 @@ export class AlertService extends BaseApiService {
    * Dismiss an alert
    */
   public dismissAlert(id: string): Observable<Alert> {
-    return from(
-      this.supabase
-        .from('alerts')
-        .update({
-          is_dismissed: true,
-          dismissed_at: new Date().toISOString(),
-          status: 'Dismissed'
-        })
-        .eq('id', id)
-        .select()
-        .single()
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('alerts')
+          .update({
+            is_dismissed: true,
+            dismissed_at: new Date().toISOString(),
+            status: 'Dismissed'
+          })
+          .eq('id', id)
+          .select()
+          .single()
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {
@@ -141,11 +145,13 @@ export class AlertService extends BaseApiService {
    * Delete an alert
    */
   public deleteAlert(id: string): Observable<void> {
-    return from(
-      this.supabase
-        .from('alerts')
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('alerts')
         .delete()
         .eq('id', id)
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {
@@ -171,16 +177,18 @@ export class AlertService extends BaseApiService {
       return of({ count: 0 });
     }
 
-    return from(
-      this.supabase
-        .from('alerts')
-        .update({
-          is_read: true,
-          read_at: new Date().toISOString()
-        })
-        .eq('household_id', householdId)
-        .is('deleted_at', null)
-        .eq('is_read', false)
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('alerts')
+          .update({
+            is_read: true,
+            read_at: new Date().toISOString()
+          })
+          .eq('household_id', householdId)
+          .is('deleted_at', null)
+          .eq('is_read', false)
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {
@@ -207,17 +215,19 @@ export class AlertService extends BaseApiService {
       return of({ count: 0 });
     }
 
-    return from(
-      this.supabase
-        .from('alerts')
-        .update({
-          is_dismissed: true,
-          dismissed_at: new Date().toISOString(),
-          status: 'Dismissed'
-        })
-        .eq('household_id', householdId)
-        .is('deleted_at', null)
-        .eq('is_dismissed', false)
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('alerts')
+          .update({
+            is_dismissed: true,
+            dismissed_at: new Date().toISOString(),
+            status: 'Dismissed'
+          })
+          .eq('household_id', householdId)
+          .is('deleted_at', null)
+          .eq('is_dismissed', false)
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {

@@ -2,7 +2,6 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { Observable, tap, catchError, of, from, throwError } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { BaseApiService } from './base-api.service';
-import { AuthService } from './auth.service';
 import type { InventoryItem } from '../models/inventory.model';
 
 /**
@@ -13,7 +12,6 @@ import type { InventoryItem } from '../models/inventory.model';
   providedIn: 'root'
 })
 export class InventoryService extends BaseApiService {
-  private readonly authService = inject(AuthService);
 
   // Inventory signals
   private readonly inventoryItemsSignal = signal<InventoryItem[]>([]);
@@ -46,13 +44,15 @@ export class InventoryService extends BaseApiService {
   // ===== CATEGORIES =====
 
   public loadCategories(): Observable<{ id: string; name: string }[]> {
-    return from(
-      this.supabase
-        .from('categories')
-        .select('id, name')
-        .eq('type', 'inventory')
-        .eq('is_active', true)
-        .order('name', { ascending: true })
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('categories')
+          .select('id, name')
+          .eq('type', 'inventory')
+          .eq('is_active', true)
+          .order('name', { ascending: true })
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {
@@ -81,16 +81,18 @@ export class InventoryService extends BaseApiService {
       return of([]);
     }
 
-    return from(
-      this.supabase
-        .from('inventory_items')
-        .select(`
-          *,
-          categories (id, name)
-        `)
-        .eq('household_id', householdId)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false })
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('inventory_items')
+          .select(`
+            *,
+            categories (id, name)
+          `)
+          .eq('household_id', householdId)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false })
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {
@@ -116,7 +118,7 @@ export class InventoryService extends BaseApiService {
     }
 
     // Get current user ID for created_by/updated_by
-    return from(this.getCurrentUserId()).pipe(
+    return this.getCurrentUserId$().pipe(
       switchMap((userId) => {
         if (!userId) {
           return throwError(() => new Error('User not authenticated'));
@@ -135,15 +137,17 @@ export class InventoryService extends BaseApiService {
           updated_by: userId
         };
 
-        return from(
-          this.supabase
-            .from('inventory_items')
-            .insert(itemData)
-            .select(`
-              *,
-              categories (id, name)
-            `)
-            .single()
+        return this.getSupabaseClient$().pipe(
+          switchMap(client => from(
+            client
+              .from('inventory_items')
+              .insert(itemData)
+              .select(`
+                *,
+                categories (id, name)
+              `)
+              .single()
+          ))
         );
       }),
       map((response) => {
@@ -165,7 +169,7 @@ export class InventoryService extends BaseApiService {
 
   public updateInventoryItem(id: string, updates: Partial<InventoryItem>): Observable<InventoryItem> {
     // Get current user ID for updated_by
-    return from(this.getCurrentUserId()).pipe(
+    return this.getCurrentUserId$().pipe(
       switchMap((userId) => {
         if (!userId) {
           return throwError(() => new Error('User not authenticated'));
@@ -199,16 +203,18 @@ export class InventoryService extends BaseApiService {
         // Always update updated_by
         updateData.updated_by = userId;
 
-        return from(
-          this.supabase
-            .from('inventory_items')
-            .update(updateData)
-            .eq('id', id)
-            .select(`
-              *,
-              categories (id, name)
-            `)
-            .single()
+        return this.getSupabaseClient$().pipe(
+          switchMap(client => from(
+            client
+              .from('inventory_items')
+              .update(updateData)
+              .eq('id', id)
+              .select(`
+                *,
+                categories (id, name)
+              `)
+              .single()
+          ))
         );
       }),
       map((response) => {
@@ -229,11 +235,13 @@ export class InventoryService extends BaseApiService {
   }
 
   public deleteInventoryItem(id: string): Observable<void> {
-    return from(
-      this.supabase
-        .from('inventory_items')
-        .delete()
-        .eq('id', id)
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('inventory_items')
+          .delete()
+          .eq('id', id)
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {

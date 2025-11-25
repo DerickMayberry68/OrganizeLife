@@ -33,13 +33,18 @@ export class StorageService {
       return throwError(() => new Error('No household selected'));
     }
 
+    const client = this.supabaseService.client$();
+    if (!client) {
+      return throwError(() => new Error('Supabase client not ready'));
+    }
+
     // Create path: household_id/filename or household_id/path/filename
     const filePath = path 
       ? `${householdId}/${path}/${file.name}`
       : `${householdId}/${file.name}`;
 
     return from(
-      this.supabaseService.client.storage
+      client.storage
         .from(this.BUCKET_NAME)
         .upload(filePath, file, {
           cacheControl: '3600',
@@ -52,7 +57,7 @@ export class StorageService {
         }
         
         // Get public URL
-        const { data: urlData } = this.supabaseService.client.storage
+        const { data: urlData } = client.storage
           .from(this.BUCKET_NAME)
           .getPublicUrl(data.path);
 
@@ -72,8 +77,13 @@ export class StorageService {
    * Download a file from Supabase Storage
    */
   downloadFile(path: string): Observable<Blob> {
+    const client = this.supabaseService.client$();
+    if (!client) {
+      return throwError(() => new Error('Supabase client not ready'));
+    }
+
     return from(
-      this.supabaseService.client.storage
+      client.storage
         .from(this.BUCKET_NAME)
         .download(path)
     ).pipe(
@@ -94,7 +104,11 @@ export class StorageService {
    * Get public URL for a file
    */
   getPublicUrl(path: string): string {
-    const { data } = this.supabaseService.client.storage
+    const client = this.supabaseService.client$();
+    if (!client) {
+      throw new Error('Supabase client not ready');
+    }
+    const { data } = client.storage
       .from(this.BUCKET_NAME)
       .getPublicUrl(path);
     return data.publicUrl;
@@ -109,12 +123,17 @@ export class StorageService {
       return throwError(() => new Error('No household selected'));
     }
 
+    const client = this.supabaseService.client$();
+    if (!client) {
+      return throwError(() => new Error('Supabase client not ready'));
+    }
+
     const path = folderPath 
       ? `${householdId}/${folderPath}`
       : `${householdId}`;
 
     return from(
-      this.supabaseService.client.storage
+      client.storage
         .from(this.BUCKET_NAME)
         .list(path, {
           limit: 100,
@@ -139,8 +158,13 @@ export class StorageService {
    * Delete a file from Supabase Storage
    */
   deleteFile(path: string): Observable<void> {
+    const client = this.supabaseService.client$();
+    if (!client) {
+      return throwError(() => new Error('Supabase client not ready'));
+    }
+
     return from(
-      this.supabaseService.client.storage
+      client.storage
         .from(this.BUCKET_NAME)
         .remove([path])
     ).pipe(
@@ -167,6 +191,11 @@ export class StorageService {
       return throwError(() => new Error('No household selected'));
     }
 
+    const client = this.supabaseService.client$();
+    if (!client) {
+      return throwError(() => new Error('Supabase client not ready'));
+    }
+
     const fullPath = `${householdId}/${folderPath}/.keep`;
     
     // Create a placeholder file to create the folder
@@ -174,7 +203,7 @@ export class StorageService {
     const file = new File([blob], '.keep');
 
     return from(
-      this.supabaseService.client.storage
+      client.storage
         .from(this.BUCKET_NAME)
         .upload(fullPath, file, {
           cacheControl: '3600',

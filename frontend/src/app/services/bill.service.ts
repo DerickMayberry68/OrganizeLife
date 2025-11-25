@@ -1,8 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { Observable, tap, catchError, of, from, throwError } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 import { BaseApiService } from './base-api.service';
-import { AuthService } from './auth.service';
 import type { Bill } from '../models/bill.model';
 
 // Frequency/Billing Cycle interface
@@ -21,7 +20,6 @@ export interface Frequency {
   providedIn: 'root'
 })
 export class BillService extends BaseApiService {
-  private readonly authService = inject(AuthService);
 
   // Bill signals
   private readonly billsSignal = signal<Bill[]>([]);
@@ -63,17 +61,19 @@ export class BillService extends BaseApiService {
       return of([]);
     }
 
-    return from(
-      this.supabase
-        .from('bills')
-        .select(`
-          *,
-          categories:category_id (name),
-          frequencies:frequency_id (name)
-        `)
-        .eq('household_id', householdId)
-        .is('deleted_at', null)
-        .order('due_date', { ascending: true })
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('bills')
+          .select(`
+            *,
+            categories:category_id (name),
+            frequencies:frequency_id (name)
+          `)
+          .eq('household_id', householdId)
+          .is('deleted_at', null)
+          .order('due_date', { ascending: true })
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {
@@ -110,16 +110,18 @@ export class BillService extends BaseApiService {
       frequency_id: bill.frequencyId || null
     };
 
-    return from(
-      this.supabase
-        .from('bills')
-        .insert(billData)
-        .select(`
-          *,
-          categories:category_id (name),
-          frequencies:frequency_id (name)
-        `)
-        .single()
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('bills')
+          .insert(billData)
+          .select(`
+            *,
+            categories:category_id (name),
+            frequencies:frequency_id (name)
+          `)
+          .single()
+      ))
     ).pipe(
       tap((response) => {
         if (response.error) {
@@ -156,17 +158,19 @@ export class BillService extends BaseApiService {
     if (updates.status !== undefined) updateData.status = updates.status;
     if (updates.isRecurring !== undefined) updateData.is_recurring = updates.isRecurring;
 
-    return from(
-      this.supabase
-        .from('bills')
-        .update(updateData)
-        .eq('id', id)
-        .select(`
-          *,
-          categories:category_id (name),
-          frequencies:frequency_id (name)
-        `)
-        .single()
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('bills')
+          .update(updateData)
+          .eq('id', id)
+          .select(`
+            *,
+            categories:category_id (name),
+            frequencies:frequency_id (name)
+          `)
+          .single()
+      ))
     ).pipe(
       tap((response) => {
         if (response.error) {
@@ -191,11 +195,13 @@ export class BillService extends BaseApiService {
   }
 
   public deleteBill(id: string): Observable<void> {
-    return from(
-      this.supabase
-        .from('bills')
-        .delete()
-        .eq('id', id)
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('bills')
+          .delete()
+          .eq('id', id)
+      ))
     ).pipe(
       tap((response) => {
         if (response.error) {
@@ -216,11 +222,13 @@ export class BillService extends BaseApiService {
   // ===== FREQUENCIES =====
 
   public loadFrequencies(): Observable<Frequency[]> {
-    return from(
-      this.supabase
-        .from('frequencies')
-        .select('*')
-        .order('interval_days', { ascending: true })
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('frequencies')
+          .select('*')
+          .order('interval_days', { ascending: true })
+      ))
     ).pipe(
       tap((response) => {
         if (response.error) {

@@ -2,7 +2,6 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { Observable, tap, catchError, of, from, throwError } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { BaseApiService } from './base-api.service';
-import { AuthService } from './auth.service';
 import type { MaintenanceTask, ServiceProvider } from '../models/maintenance.model';
 
 /**
@@ -13,7 +12,6 @@ import type { MaintenanceTask, ServiceProvider } from '../models/maintenance.mod
   providedIn: 'root'
 })
 export class MaintenanceService extends BaseApiService {
-  private readonly authService = inject(AuthService);
 
   // Maintenance signals
   private readonly maintenanceTasksSignal = signal<MaintenanceTask[]>([]);
@@ -58,16 +56,18 @@ export class MaintenanceService extends BaseApiService {
 
     console.log('[MaintenanceService] Loading maintenance tasks for household:', householdId);
 
-    return from(
-      this.supabase
-        .from('maintenance_tasks')
-        .select(`
-          *,
-          priorities (name)
-        `)
-        .eq('household_id', householdId)
-        .is('deleted_at', null)
-        .order('due_date', { ascending: true })
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('maintenance_tasks')
+          .select(`
+            *,
+            priorities (name)
+          `)
+          .eq('household_id', householdId)
+          .is('deleted_at', null)
+          .order('due_date', { ascending: true })
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {
@@ -96,7 +96,7 @@ export class MaintenanceService extends BaseApiService {
     }
 
     // Get current user ID for created_by/updated_by, then insert
-    return from(this.getCurrentUserId()).pipe(
+    return this.getCurrentUserId$().pipe(
       switchMap((userId) => {
         if (!userId) {
           return throwError(() => new Error('User not authenticated'));
@@ -116,15 +116,17 @@ export class MaintenanceService extends BaseApiService {
           updated_by: userId
         };
 
-        return from(
-          this.supabase
-            .from('maintenance_tasks')
-            .insert(taskData)
-            .select(`
-              *,
-              priorities (name)
-            `)
-            .single()
+        return this.getSupabaseClient$().pipe(
+          switchMap(client => from(
+            client
+              .from('maintenance_tasks')
+              .insert(taskData)
+              .select(`
+                *,
+                priorities (name)
+              `)
+              .single()
+          ))
         );
       }),
       map((response) => {
@@ -146,7 +148,7 @@ export class MaintenanceService extends BaseApiService {
 
   public updateMaintenanceTask(id: string, updates: Partial<MaintenanceTask>): Observable<MaintenanceTask> {
     // Get current user ID for updated_by, then update
-    return from(this.getCurrentUserId()).pipe(
+    return this.getCurrentUserId$().pipe(
       switchMap((userId) => {
         if (!userId) {
           return throwError(() => new Error('User not authenticated'));
@@ -171,16 +173,18 @@ export class MaintenanceService extends BaseApiService {
         // Always update updated_by
         updateData.updated_by = userId;
 
-        return from(
-          this.supabase
-            .from('maintenance_tasks')
-            .update(updateData)
-            .eq('id', id)
-            .select(`
-              *,
-              priorities (name)
-            `)
-            .single()
+        return this.getSupabaseClient$().pipe(
+          switchMap(client => from(
+            client
+              .from('maintenance_tasks')
+              .update(updateData)
+              .eq('id', id)
+              .select(`
+                *,
+                priorities (name)
+              `)
+              .single()
+          ))
         );
       }),
       map((response) => {
@@ -201,11 +205,13 @@ export class MaintenanceService extends BaseApiService {
   }
 
   public deleteMaintenanceTask(id: string): Observable<void> {
-    return from(
-      this.supabase
-        .from('maintenance_tasks')
-        .delete()
-        .eq('id', id)
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('maintenance_tasks')
+          .delete()
+          .eq('id', id)
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {
@@ -232,13 +238,15 @@ export class MaintenanceService extends BaseApiService {
       return of([]);
     }
 
-    return from(
-      this.supabase
-        .from('service_providers')
-        .select('*')
-        .eq('household_id', householdId)
-        .is('deleted_at', null)
-        .order('name', { ascending: true })
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('service_providers')
+          .select('*')
+          .eq('household_id', householdId)
+          .is('deleted_at', null)
+          .order('name', { ascending: true })
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {
@@ -274,12 +282,14 @@ export class MaintenanceService extends BaseApiService {
       notes: provider.notes || null
     };
 
-    return from(
-      this.supabase
-        .from('service_providers')
-        .insert(providerData)
-        .select()
-        .single()
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('service_providers')
+          .insert(providerData)
+          .select()
+          .single()
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {
@@ -309,13 +319,15 @@ export class MaintenanceService extends BaseApiService {
     if (updates.rating !== undefined) updateData.rating = updates.rating;
     if (updates.notes !== undefined) updateData.notes = updates.notes;
 
-    return from(
-      this.supabase
-        .from('service_providers')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single()
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('service_providers')
+          .update(updateData)
+          .eq('id', id)
+          .select()
+          .single()
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {
@@ -335,11 +347,13 @@ export class MaintenanceService extends BaseApiService {
   }
 
   public deleteServiceProvider(id: string): Observable<void> {
-    return from(
-      this.supabase
-        .from('service_providers')
-        .delete()
-        .eq('id', id)
+    return this.getSupabaseClient$().pipe(
+      switchMap(client => from(
+        client
+          .from('service_providers')
+          .delete()
+          .eq('id', id)
+      ))
     ).pipe(
       map((response) => {
         if (response.error) {

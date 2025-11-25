@@ -1,8 +1,9 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { Observable, tap, catchError, of, from, throwError } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 import { BaseApiService } from './base-api.service';
 import { AuthService } from './auth.service';
+import { SupabaseClient } from '@supabase/supabase-js';
 import type {
   Transaction,
   CreateTransactionDto,
@@ -22,7 +23,6 @@ import type {
   providedIn: 'root'
 })
 export class FinancialService extends BaseApiService {
-  private readonly authService = inject(AuthService);
 
   // Financial signals
   private readonly transactionsSignal = signal<Transaction[]>([]);
@@ -81,6 +81,16 @@ export class FinancialService extends BaseApiService {
     return date;
   }
 
+  /**
+   * Check if Supabase client is available
+   */
+  private ensureSupabaseClient(): SupabaseClient {
+    if (!this.supabase) {
+      throw new Error('Supabase client not initialized');
+    }
+    return this.supabase;
+  }
+
   // ===== TRANSACTIONS =====
 
   public loadTransactions(): Observable<Transaction[]> {
@@ -90,8 +100,9 @@ export class FinancialService extends BaseApiService {
       return of([]);
     }
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('transactions')
         .select(`
           *,
@@ -140,8 +151,9 @@ export class FinancialService extends BaseApiService {
     if (dto.notes) transactionData.notes = dto.notes;
     if (dto.parentTransactionId) transactionData.parent_transaction_id = dto.parentTransactionId;
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('transactions')
         .insert(transactionData)
         .select(`
@@ -183,8 +195,9 @@ export class FinancialService extends BaseApiService {
     if (updates.isRecurring !== undefined) updateData.is_recurring = updates.isRecurring;
     if (updates.parentTransactionId !== undefined) updateData.parent_transaction_id = updates.parentTransactionId;
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('transactions')
         .update(updateData)
         .eq('id', id)
@@ -213,8 +226,9 @@ export class FinancialService extends BaseApiService {
   }
 
   public deleteTransaction(id: string): Observable<void> {
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('transactions')
         .delete()
         .eq('id', id)
@@ -244,8 +258,9 @@ export class FinancialService extends BaseApiService {
       return of([]);
     }
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('budgets')
         .select(`
           *,
@@ -289,8 +304,9 @@ export class FinancialService extends BaseApiService {
       is_active: dto.isActive !== undefined ? dto.isActive : true
     };
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('budgets')
         .insert(budgetData)
         .select(`
@@ -327,8 +343,9 @@ export class FinancialService extends BaseApiService {
     if (updates.endDate !== undefined) updateData.end_date = updates.endDate ? this.formatDateOnly(updates.endDate) : null;
     if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('budgets')
         .update(updateData)
         .eq('id', id)
@@ -356,8 +373,9 @@ export class FinancialService extends BaseApiService {
   }
 
   public deleteBudget(id: string): Observable<void> {
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('budgets')
         .delete()
         .eq('id', id)
@@ -387,8 +405,9 @@ export class FinancialService extends BaseApiService {
       return of([]);
     }
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('financial_goals')
         .select('*')
         .eq('household_id', householdId)
@@ -429,8 +448,9 @@ export class FinancialService extends BaseApiService {
       is_achieved: goal.isAchieved || false
     };
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('financial_goals')
         .insert(goalData)
         .select()
@@ -467,8 +487,9 @@ export class FinancialService extends BaseApiService {
       // We'll need to map it appropriately
     }
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('financial_goals')
         .update(updateData)
         .eq('id', id)
@@ -493,8 +514,9 @@ export class FinancialService extends BaseApiService {
   }
 
   public deleteFinancialGoal(id: string): Observable<void> {
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('financial_goals')
         .delete()
         .eq('id', id)
@@ -524,8 +546,9 @@ export class FinancialService extends BaseApiService {
       return of([]);
     }
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('accounts')
         .select('*')
         .eq('household_id', householdId)
@@ -565,8 +588,9 @@ export class FinancialService extends BaseApiService {
       is_active: account.isActive !== undefined ? account.isActive : true
     };
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('accounts')
         .insert(accountData)
         .select()
@@ -598,8 +622,9 @@ export class FinancialService extends BaseApiService {
     if (updates.balance !== undefined) updateData.balance = updates.balance;
     if (updates.lastUpdated !== undefined) updateData.last_synced_at = updates.lastUpdated.toISOString();
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('accounts')
         .update(updateData)
         .eq('id', id)
@@ -624,8 +649,9 @@ export class FinancialService extends BaseApiService {
   }
 
   public deleteAccount(id: string): Observable<void> {
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('accounts')
         .delete()
         .eq('id', id)
@@ -655,8 +681,9 @@ export class FinancialService extends BaseApiService {
       return of([]);
     }
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('subscriptions')
         .select(`
           *,
@@ -703,8 +730,9 @@ export class FinancialService extends BaseApiService {
       notes: subscription.notes || null
     };
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('subscriptions')
         .insert(subscriptionData)
         .select(`
@@ -745,8 +773,9 @@ export class FinancialService extends BaseApiService {
       // Category is stored as category_id in DB
     }
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('subscriptions')
         .update(updateData)
         .eq('id', id)
@@ -774,8 +803,9 @@ export class FinancialService extends BaseApiService {
   }
 
   public deleteSubscription(id: string): Observable<void> {
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('subscriptions')
         .delete()
         .eq('id', id)
@@ -805,8 +835,9 @@ export class FinancialService extends BaseApiService {
       return of([]);
     }
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('categories')
         .select('*')
         .eq('is_active', true)
@@ -836,8 +867,9 @@ export class FinancialService extends BaseApiService {
       is_active: category.isActive !== undefined ? category.isActive : true
     };
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('categories')
         .insert(categoryData)
         .select()
@@ -868,8 +900,9 @@ export class FinancialService extends BaseApiService {
     if (updates.icon !== undefined) updateData.icon = updates.icon;
     if (updates.color !== undefined) updateData.color = updates.color;
 
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('categories')
         .update(updateData)
         .eq('id', id)
@@ -894,8 +927,9 @@ export class FinancialService extends BaseApiService {
   }
 
   public deleteCategory(id: string): Observable<void> {
+    const supabase = this.ensureSupabaseClient();
     return from(
-      this.supabase
+      supabase
         .from('categories')
         .delete()
         .eq('id', id)
