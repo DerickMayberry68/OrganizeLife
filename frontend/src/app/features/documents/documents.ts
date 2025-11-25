@@ -1,6 +1,7 @@
 import { Component, inject, CUSTOM_ELEMENTS_SCHEMA, ViewChild, OnInit, AfterViewInit, computed, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DocumentService } from '../../services/document.service';
 import { ToastService } from '../../services/toast.service';
 import { StorageService } from '../../services/storage.service';
@@ -61,6 +62,8 @@ export class Documents implements OnInit, AfterViewInit {
   private readonly fileManagerService = inject(FileManagerService);
   private readonly fb = inject(FormBuilder);
   private readonly toastService = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   protected readonly documents = this.documentService.documents;
   protected readonly isLoading = signal(false);
@@ -199,6 +202,22 @@ export class Documents implements OnInit, AfterViewInit {
         }
       });
     }, 100);
+
+    // Check for query parameter to open modal
+    this.route.queryParams.subscribe(params => {
+      if (params['openModal'] === 'document') {
+        // Use setTimeout to ensure dialog is ready
+        setTimeout(() => {
+          this.openDocumentDialog();
+          // Remove query parameter from URL
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: {},
+            replaceUrl: true
+          });
+        }, 200);
+      }
+    });
   }
 
   ngOnInit(): void {

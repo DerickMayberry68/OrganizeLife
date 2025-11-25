@@ -1,6 +1,7 @@
-import { Component, inject, signal, computed, ViewChild, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, ViewChild, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HealthcareService } from '../../services/healthcare.service';
 import { 
   GridModule, 
@@ -61,15 +62,35 @@ import type {
   styleUrl: './healthcare.scss',
   standalone: true
 })
-export class Healthcare implements OnInit {
+export class Healthcare implements OnInit, AfterViewInit {
   private readonly healthcareService = inject(HealthcareService);
   private readonly toastService = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   ngOnInit(): void {
     // Load all healthcare data when component initializes
     this.healthcareService.loadDoctors().subscribe();
     this.healthcareService.loadAppointments().subscribe();
     this.healthcareService.loadPrescriptions().subscribe();
+  }
+
+  ngAfterViewInit(): void {
+    // Check for query parameter to open modal
+    this.route.queryParams.subscribe(params => {
+      if (params['openModal'] === 'appointment') {
+        // Use setTimeout to ensure dialog is ready
+        setTimeout(() => {
+          this.openAppointmentDialog();
+          // Remove query parameter from URL
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: {},
+            replaceUrl: true
+          });
+        }, 200);
+      }
+    });
   }
 
   @ViewChild('doctorDialog') doctorDialog!: DialogComponent;

@@ -178,23 +178,23 @@
   </div>
   <div class="offcanvas-body">
     <div class="quick-actions-grid">
-      <a [routerLink]="['/bills']" class="quick-action-card" (click)="closeQuickActions()">
+      <a [routerLink]="['/bills']" [queryParams]="{openModal: 'bill'}" class="quick-action-card" (click)="closeQuickActions()">
         <div class="quick-action-icon">💳</div>
         <div class="quick-action-label">Pay Bill</div>
       </a>
-      <a [routerLink]="['/financial']" class="quick-action-card" (click)="closeQuickActions()">
+      <a [routerLink]="['/financial']" [queryParams]="{openModal: 'transaction'}" class="quick-action-card" (click)="closeQuickActions()">
         <div class="quick-action-icon">💰</div>
         <div class="quick-action-label">Add Transaction</div>
       </a>
-      <a [routerLink]="['/maintenance']" class="quick-action-card" (click)="closeQuickActions()">
+      <a [routerLink]="['/maintenance']" [queryParams]="{openModal: 'task'}" class="quick-action-card" (click)="closeQuickActions()">
         <div class="quick-action-icon">🔨</div>
         <div class="quick-action-label">Schedule Task</div>
       </a>
-      <a [routerLink]="['/documents']" class="quick-action-card" (click)="closeQuickActions()">
+      <a [routerLink]="['/documents']" [queryParams]="{openModal: 'document'}" class="quick-action-card" (click)="closeQuickActions()">
         <div class="quick-action-icon">📄</div>
         <div class="quick-action-label">Upload Document</div>
       </a>
-      <a [routerLink]="['/healthcare']" class="quick-action-card" (click)="closeQuickActions()">
+      <a [routerLink]="['/healthcare']" [queryParams]="{openModal: 'appointment'}" class="quick-action-card" (click)="closeQuickActions()">
         <div class="quick-action-icon">🏥</div>
         <div class="quick-action-label">Healthcare</div>
       </a>

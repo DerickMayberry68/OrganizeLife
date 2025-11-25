@@ -1,6 +1,7 @@
 import { Component, inject, computed, CUSTOM_ELEMENTS_SCHEMA, ViewChild, OnInit, AfterViewInit, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FinancialService } from '../../services/financial.service';
 import { ToastService } from '../../services/toast.service';
 import { StatCard } from '../../shared/stat-card/stat-card';
@@ -52,6 +53,8 @@ export class Financial implements OnInit, AfterViewInit {
   private readonly financialService = inject(FinancialService);
   private readonly fb = inject(FormBuilder);
   private readonly toastService = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   protected readonly budgets = this.financialService.budgets;
   protected readonly transactions = this.financialService.transactions;
@@ -211,6 +214,22 @@ export class Financial implements OnInit, AfterViewInit {
         }
       });
     }, 100);
+
+    // Check for query parameter to open modal
+    this.route.queryParams.subscribe(params => {
+      if (params['openModal'] === 'transaction') {
+        // Use setTimeout to ensure dialog is ready
+        setTimeout(() => {
+          this.openTransactionDialog();
+          // Remove query parameter from URL
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: {},
+            replaceUrl: true
+          });
+        }, 200);
+      }
+    });
   }
 
   private loadFinancialData(): void {
