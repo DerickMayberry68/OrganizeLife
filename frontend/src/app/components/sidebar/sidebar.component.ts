@@ -60,7 +60,14 @@ export class SidebarComponent implements AfterViewChecked {
 	}
 	
 	logout(): void {
-	  this.authService.logout();
+	  this.authService.logout().subscribe({
+	    next: () => {
+	      console.log('Logout successful');
+	    },
+	    error: (error) => {
+	      console.error('Logout error:', error);
+	    }
+	  });
 	}
 	
   @ViewChild('sidebarScrollbar', { static: false }) private sidebarScrollbar?: ElementRef;

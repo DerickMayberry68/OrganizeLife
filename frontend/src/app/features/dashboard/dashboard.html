@@ -65,6 +65,7 @@
             [views]="views"
             [currentView]="'Month'"
             (eventRendered)="onEventRendered($event)"
+            (actionComplete)="onActionComplete($event)"
             cssClass="custom-schedule"
             height="600px"
           >

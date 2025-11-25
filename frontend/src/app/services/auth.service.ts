@@ -307,16 +307,28 @@ export class AuthService {
 
   logout(): Observable<void> {
     return this.supabase.whenReady$().pipe(
-      switchMap(client => from(client.auth.signOut())),
-      tap(() => {
-        this.currentUser.set(null);
-        this.router.navigate(['/login']);
+      switchMap(client => {
+        // Sign out from Supabase - this clears the session and localStorage
+        return from(client.auth.signOut());
       }),
-      map(() => void 0),
-      catchError(() => {
-        // Even if signOut fails, clear local state
+      map((response) => {
+        // Supabase signOut returns { error } or void
+        if (response && (response as any).error) {
+          console.warn('Supabase signOut error:', (response as any).error);
+        }
+        return void 0;
+      }),
+      tap(() => {
+        // Clear local state regardless of signOut result
         this.currentUser.set(null);
-        this.router.navigate(['/login']);
+        // Navigate to login - Supabase will have cleared the session
+        this.router.navigate(['/login'], { replaceUrl: true });
+      }),
+      catchError((error) => {
+        console.error('Error during logout:', error);
+        // Even if signOut fails, clear local state and navigate
+        this.currentUser.set(null);
+        this.router.navigate(['/login'], { replaceUrl: true });
         return of<void>(undefined);
       })
     );

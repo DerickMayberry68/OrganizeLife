@@ -182,8 +182,14 @@ export class Profile implements OnInit {
   }
 
   protected logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
+    this.authService.logout().subscribe({
+      next: () => {
+        console.log('Logout successful');
+      },
+      error: (error) => {
+        console.error('Logout error:', error);
+      }
+    });
   }
 
   // Utility methods

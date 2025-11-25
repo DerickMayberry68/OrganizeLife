@@ -9,6 +9,7 @@ import { MaintenanceService } from '../../services/maintenance.service';
 import { InsuranceService } from '../../services/insurance.service';
 import { HealthcareService } from '../../services/healthcare.service';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../services/toast.service';
 import { StatCard } from '../../shared/stat-card/stat-card';
 import { ChartModule, CategoryService, ColumnSeriesService, LegendService, TooltipService } from '@syncfusion/ej2-angular-charts';
 import { AppBarModule } from '@syncfusion/ej2-angular-navigations';
@@ -63,6 +64,7 @@ export class Dashboard implements OnInit {
   private readonly insuranceService = inject(InsuranceService);
   private readonly healthcareService = inject(HealthcareService);
   private readonly authService = inject(AuthService);
+  private readonly toastService = inject(ToastService);
 
   protected readonly stats = this.dashboardService.dashboardStats;
   protected readonly alerts = this.alertService.alerts;
@@ -348,5 +350,63 @@ export class Dashboard implements OnInit {
     if (data && data.CategoryColor) {
       args.element.style.backgroundColor = data.CategoryColor;
     }
+  }
+
+  // Handle calendar event actions (add, edit, delete)
+  protected onActionComplete(args: any): void {
+    if (args.requestType === 'eventCreated' || args.requestType === 'eventChanged') {
+      const eventData = args.data[0] || args.data;
+      
+      // Check if this is a new event (not from existing entities)
+      // Events from bills/maintenance/etc. have a Type field
+      if (!eventData.Type || eventData.Type === 'appointment') {
+        // This is a new calendar event - save it
+        this.saveCalendarEvent(eventData);
+      } else {
+        // This is an existing event from another entity - don't save as new
+        console.log('Event is from existing entity, skipping save:', eventData.Type);
+      }
+    } else if (args.requestType === 'eventRemoved') {
+      // Handle event deletion if needed
+      console.log('Event removed:', args.data);
+    }
+  }
+
+  private saveCalendarEvent(eventData: any): void {
+    const householdId = this.authService.getDefaultHouseholdId();
+    if (!householdId) {
+      this.toastService.error('Error', 'No household selected. Cannot save event.');
+      return;
+    }
+
+    // Extract event details
+    const title = eventData.Subject || 'Untitled Event';
+    const description = eventData.Description || '';
+    const startTime = eventData.StartTime ? new Date(eventData.StartTime) : new Date();
+    const endTime = eventData.EndTime ? new Date(eventData.EndTime) : new Date();
+    const dueDate = startTime.toISOString().split('T')[0]; // DateOnly format
+
+    // Create maintenance task from calendar event
+    // This is a reasonable default since maintenance tasks are the most generic event type
+    const taskData = {
+      title: title,
+      description: description,
+      dueDate: dueDate,
+      status: 'scheduled',
+      notes: `Created from calendar event${description ? `: ${description}` : ''}`
+    };
+
+    this.maintenanceService.addMaintenanceTask(taskData).subscribe({
+      next: (task) => {
+        console.log('Calendar event saved as maintenance task:', task);
+        this.toastService.success('Success', 'Event saved successfully');
+        // Reload maintenance tasks to update the calendar
+        this.maintenanceService.loadMaintenanceTasks().subscribe();
+      },
+      error: (error) => {
+        console.error('Error saving calendar event:', error);
+        this.toastService.error('Error', 'Failed to save event. Please try again.');
+      }
+    });
   }
 }
