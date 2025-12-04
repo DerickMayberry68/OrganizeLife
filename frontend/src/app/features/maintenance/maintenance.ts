@@ -174,14 +174,7 @@ export class Maintenance implements OnInit, AfterViewInit {
   protected readonly frequencies = ['weekly', 'monthly', 'quarterly', 'yearly'];
 
   constructor() {
-    // Debug: Log chart data changes (wrapped to avoid change detection issues)
-    effect(() => {
-      const chartData = this.tasksByCategoryChart();
-      // Use setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
-      setTimeout(() => {
-        console.log('Maintenance Chart Data:', chartData);
-      }, 0);
-    });
+    // Removed debug effect - it was causing unnecessary re-renders and performance issues
 
     this.taskForm = this.fb.group({
       title: ['', Validators.required],
@@ -228,18 +221,25 @@ export class Maintenance implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
-    // Load maintenance tasks when component initializes
+    // Load maintenance tasks when component initializes (non-blocking)
+    // Don't block UI rendering - let the component render first
     this.isLoading.set(true);
-    this.maintenanceService.loadMaintenanceTasks().subscribe({
-      next: (tasks) => {
-        console.log('Loaded maintenance tasks:', tasks.length);
-        this.isLoading.set(false);
-      },
-      error: (error) => {
-        console.error('Error loading maintenance tasks:', error);
-        this.isLoading.set(false);
-      }
-    });
+    
+    // Use setTimeout to allow the component to render first
+    setTimeout(() => {
+      this.maintenanceService.loadMaintenanceTasks().subscribe({
+        next: (tasks) => {
+          console.log('Loaded maintenance tasks:', tasks.length);
+          this.isLoading.set(false);
+        },
+        error: (error) => {
+          console.error('Error loading maintenance tasks:', error);
+          this.isLoading.set(false);
+          // Show user-friendly error message
+          this.toastService.error('Error', 'Failed to load maintenance tasks. Please try refreshing the page.');
+        }
+      });
+    }, 0);
   }
 
   protected openTaskDialog(): void {

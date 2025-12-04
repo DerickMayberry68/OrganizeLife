@@ -51,14 +51,25 @@ export class MaintenanceService extends BaseApiService {
 
   /**
    * Get household ID as Observable (waits for user profile to load)
+   * Optimized to return immediately if available, with shorter timeout
    */
   private getHouseholdId$(): Observable<string> {
+    // First, try synchronous check
     const currentHouseholdId = this.getHouseholdId();
     if (currentHouseholdId) {
       return of(currentHouseholdId);
     }
 
-    // Use the pre-created observable (created in constructor with injection context)
+    // Also check the signal directly (faster than waiting for observable)
+    const currentUser = this.authService.currentUser$();
+    if (currentUser?.households && currentUser.households.length > 0) {
+      const householdId = currentUser.households[0].householdId;
+      if (householdId) {
+        return of(householdId);
+      }
+    }
+
+    // If not available synchronously, wait for observable (but with shorter timeout)
     return this.currentUserObservable$.pipe(
       filter((user: CurrentUser | null): user is CurrentUser => {
         // Wait until user is loaded and has at least one household
@@ -73,7 +84,7 @@ export class MaintenanceService extends BaseApiService {
       }),
       take(1), // Take the first valid value
       timeout({
-        each: 10000, // 10 second timeout (increased from 5)
+        each: 2000, // Reduced to 2 seconds for faster failure
         with: () => throwError(() => new Error('Timeout waiting for household to load. Please refresh the page.'))
       }),
       catchError(error => {
@@ -90,12 +101,9 @@ export class MaintenanceService extends BaseApiService {
   // ===== MAINTENANCE TASKS =====
 
   public loadMaintenanceTasks(): Observable<MaintenanceTask[]> {
-    console.log('[MaintenanceService] Loading maintenance tasks');
-
+    // Combine household ID and Supabase client in parallel for better performance
     return this.getHouseholdId$().pipe(
       switchMap((householdId) => {
-        console.log('[MaintenanceService] Loading maintenance tasks for household:', householdId);
-
         return this.getSupabaseClient$().pipe(
           switchMap(client => from(
             client
@@ -115,9 +123,7 @@ export class MaintenanceService extends BaseApiService {
           console.error('[MaintenanceService] Error from Supabase:', response.error);
           throw response.error;
         }
-        console.log('[MaintenanceService] Raw data from Supabase:', response.data);
         const tasks = this.mapMaintenanceTasksFromSupabase(response.data || []);
-        console.log('[MaintenanceService] Mapped tasks:', tasks);
         this.maintenanceTasksSignal.set(tasks);
         return tasks;
       }),

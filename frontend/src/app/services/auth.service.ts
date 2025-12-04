@@ -401,53 +401,73 @@ export class AuthService {
             const sessionUserId = session.session.user.id;
             console.log('[AuthService] Session user ID:', sessionUserId, 'Requested user ID:', userId);
             
-            // Insert household using session user ID
-            console.log('[AuthService] Inserting household');
+            // Try using the database function first (more reliable with RLS)
             return from(
-              client
-                .from('households')
-                .insert({ 
-                  name, 
-                  created_by: sessionUserId, 
-                  updated_by: sessionUserId 
-                })
-                .select()
-                .single()
+              client.rpc('create_household', {
+                p_name: name,
+                p_user_id: sessionUserId
+              })
             ).pipe(
-              switchMap(({ data: household, error }: any) => {
-                console.log('[AuthService] Household insert result:', { hasHousehold: !!household, error });
-                if (error) {
-                  console.error('[AuthService] Household insert error:', error);
-                  return throwError(() => new Error(`Failed to create household: ${error.message || error}`));
+              switchMap(({ data: householdData, error: rpcError }: any) => {
+                if (!rpcError && householdData) {
+                  // Function succeeded and returned household data as JSONB
+                  console.log('[AuthService] Household created via function');
+                  // Parse the JSONB response
+                  const household = typeof householdData === 'string' 
+                    ? JSON.parse(householdData) 
+                    : householdData;
+                  return of({ id: household.id, name: household.name });
                 }
-                if (!household) {
-                  console.error('[AuthService] No household data returned');
-                  return throwError(() => new Error('Failed to create household: No data returned'));
-                }
-
-                // Add user as admin member
-                console.log('[AuthService] Adding user to household_members');
+                
+                // Fallback to direct insert if function doesn't exist or fails
+                console.log('[AuthService] Function not available, using direct insert');
                 return from(
                   client
-                    .from('household_members')
-                    .insert({
-                      household_id: household.id,
-                      user_id: sessionUserId,
-                      role: 'Admin',
-                      is_active: true,
-                      joined_at: new Date().toISOString(),
-                      created_by: sessionUserId,
-                      updated_by: sessionUserId
+                    .from('households')
+                    .insert({ 
+                      name, 
+                      created_by: sessionUserId, 
+                      updated_by: sessionUserId 
                     })
+                    .select()
+                    .single()
                 ).pipe(
-                  map(() => {
-                    console.log('[AuthService] Household member added successfully');
-                    return { id: household.id, name: household.name };
-                  }),
-                  catchError(memberError => {
-                    console.error('[AuthService] Error adding household member:', memberError);
-                    // Return household even if member insert fails (household was created)
-                    return of({ id: household.id, name: household.name });
+                  switchMap(({ data: household, error }: any) => {
+                    console.log('[AuthService] Household insert result:', { hasHousehold: !!household, error });
+                    if (error) {
+                      console.error('[AuthService] Household insert error:', error);
+                      return throwError(() => new Error(`Failed to create household: ${error.message || error}`));
+                    }
+                    if (!household) {
+                      console.error('[AuthService] No household data returned');
+                      return throwError(() => new Error('Failed to create household: No data returned'));
+                    }
+
+                    // Add user as admin member
+                    console.log('[AuthService] Adding user to household_members');
+                    return from(
+                      client
+                        .from('household_members')
+                        .insert({
+                          household_id: household.id,
+                          user_id: sessionUserId,
+                          role: 'Admin',
+                          is_active: true,
+                          joined_at: new Date().toISOString(),
+                          created_by: sessionUserId,
+                          updated_by: sessionUserId
+                        })
+                    ).pipe(
+                      map(() => {
+                        console.log('[AuthService] Household member added successfully');
+                        return { id: household.id, name: household.name };
+                      }),
+                      catchError(memberError => {
+                        console.error('[AuthService] Error adding household member:', memberError);
+                        // Return household even if member insert fails (household was created)
+                        return of({ id: household.id, name: household.name });
+                      })
+                    );
                   })
                 );
               })
