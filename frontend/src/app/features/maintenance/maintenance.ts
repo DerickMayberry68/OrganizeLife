@@ -174,10 +174,13 @@ export class Maintenance implements OnInit, AfterViewInit {
   protected readonly frequencies = ['weekly', 'monthly', 'quarterly', 'yearly'];
 
   constructor() {
-    // Debug: Log chart data changes
+    // Debug: Log chart data changes (wrapped to avoid change detection issues)
     effect(() => {
       const chartData = this.tasksByCategoryChart();
-      console.log('Maintenance Chart Data:', chartData);
+      // Use setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
+      setTimeout(() => {
+        console.log('Maintenance Chart Data:', chartData);
+      }, 0);
     });
 
     this.taskForm = this.fb.group({

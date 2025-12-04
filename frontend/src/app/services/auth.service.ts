@@ -56,6 +56,7 @@ export interface RegisterResponse {
   refreshToken: string;
   defaultHouseholdId: string;
   defaultHouseholdName: string;
+  requiresEmailConfirmation?: boolean;
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -149,14 +150,59 @@ export class AuthService {
           }
 
           const metadata = user.user_metadata || {};
+          
+          // Check if user has a pending household name (from registration with email confirmation)
+          const pendingHouseholdName = metadata['pending_household_name'];
+          
+          // If user has no households but has a pending household name, create it
           return this.loadHouseholds$(user.id).pipe(
-            map(households => ({
-              userId: user.id,
-              email: user.email || '',
-              firstName: metadata['first_name'],
-              lastName: metadata['last_name'],
-              households
-            }))
+            switchMap(households => {
+              if (households.length === 0 && pendingHouseholdName) {
+                console.log('[AuthService] Found pending household name, creating household:', pendingHouseholdName);
+                // Create household and clear the pending name
+                return this.createHousehold$(pendingHouseholdName, user.id).pipe(
+                  switchMap(household => {
+                    console.log('[AuthService] Household created on first login:', household);
+                    // Clear pending household name from metadata
+                    return from(
+                      client.auth.updateUser({
+                        data: { pending_household_name: null }
+                      })
+                    ).pipe(
+                      // Reload households after creation
+                      switchMap(() => this.loadHouseholds$(user.id)),
+                      map(updatedHouseholds => ({
+                        userId: user.id,
+                        email: user.email || '',
+                        firstName: metadata['first_name'],
+                        lastName: metadata['last_name'],
+                        households: updatedHouseholds
+                      }))
+                    );
+                  }),
+                  catchError(err => {
+                    console.error('[AuthService] Error creating household on first login:', err);
+                    // Continue even if household creation fails
+                    return of({
+                      userId: user.id,
+                      email: user.email || '',
+                      firstName: metadata['first_name'],
+                      lastName: metadata['last_name'],
+                      households: []
+                    });
+                  })
+                );
+              }
+              
+              // Normal case - user has households or no pending household
+              return of({
+                userId: user.id,
+                email: user.email || '',
+                firstName: metadata['first_name'],
+                lastName: metadata['last_name'],
+                households
+              });
+            })
           );
         }),
         tap(user => {
@@ -235,73 +281,184 @@ export class AuthService {
   }
 
   register(request: RegisterRequest): Observable<RegisterResponse> {
+    console.log('[AuthService] Starting registration for:', request.email);
     return this.supabase.whenReady$().pipe(
-      switchMap(client => from(
-        client.auth.signUp({
-          email: request.email,
-          password: request.password,
-          options: { data: { first_name: request.firstName, last_name: request.lastName } }
-        })
-      )),
-      switchMap(({ data, error }: any) => {
-        if (error) {
-          return throwError(() => error);
-        }
-        if (!data.user || !data.session) {
-          return throwError(() => new Error('Registration failed'));
-        }
-
-        // Create household
-        return this.createHousehold$(request.householdName, data.user.id).pipe(
-          map(household => ({
-            userId: data.user.id,
-            email: data.user.email!,
-            accessToken: data.session.access_token,
-            tokenType: 'Bearer',
-            expiresIn: data.session.expires_in ?? 3600,
-            refreshToken: data.session.refresh_token,
-            defaultHouseholdId: household.id,
-            defaultHouseholdName: household.name
-          }))
+      switchMap(client => {
+        console.log('[AuthService] Supabase client ready, calling signUp');
+        return from(
+          client.auth.signUp({
+            email: request.email,
+            password: request.password,
+            options: { 
+              data: { 
+                first_name: request.firstName, 
+                last_name: request.lastName,
+                pending_household_name: request.householdName // Store for creation after email confirmation
+              } 
+            }
+          })
         );
       }),
-      catchError(err => throwError(() => err))
+      switchMap(({ data, error }: any) => {
+        console.log('[AuthService] signUp response:', { hasData: !!data, hasError: !!error, hasUser: !!data?.user, hasSession: !!data?.session });
+        
+        if (error) {
+          console.error('[AuthService] signUp error:', error);
+          // Create a detailed error object with all available information
+          const errorObj: any = {
+            message: error.message || error.msg || 'Registration failed',
+            code: error.code || error.status || null,
+            error_description: error.error_description || null
+          };
+          
+          // Preserve the original error structure for better parsing in component
+          return throwError(() => ({
+            ...errorObj,
+            error: error,
+            originalError: error
+          }));
+        }
+        if (!data.user) {
+          console.error('[AuthService] No user created');
+          return throwError(() => new Error('Registration failed: User not created'));
+        }
+
+        // If no session, email confirmation is required
+        const requiresEmailConfirmation = !data.session;
+        console.log('[AuthService] Email confirmation required:', requiresEmailConfirmation);
+
+        if (requiresEmailConfirmation) {
+          // If email confirmation is required, we can't create household yet (no session = RLS blocks it)
+          // Household name is already stored in user_metadata during signUp
+          console.log('[AuthService] Returning response without household (will be created after email confirmation)');
+          return of({
+            userId: data.user.id,
+            email: data.user.email!,
+            accessToken: '', // No session yet
+            tokenType: 'Bearer',
+            expiresIn: 0,
+            refreshToken: '', // No session yet
+            defaultHouseholdId: '', // Will be created after email confirmation
+            defaultHouseholdName: request.householdName, // Store name for later
+            requiresEmailConfirmation: true
+          } as RegisterResponse);
+        }
+
+        // Normal registration with session - create household now
+        console.log('[AuthService] Creating household for user with session');
+        return this.createHousehold$(request.householdName, data.user.id).pipe(
+          map(household => {
+            console.log('[AuthService] Household created:', household);
+            return {
+              userId: data.user.id,
+              email: data.user.email!,
+              accessToken: data.session.access_token,
+              tokenType: 'Bearer',
+              expiresIn: data.session.expires_in ?? 3600,
+              refreshToken: data.session.refresh_token,
+              defaultHouseholdId: household.id,
+              defaultHouseholdName: household.name,
+              requiresEmailConfirmation: false
+            } as RegisterResponse;
+          }),
+          catchError(householdError => {
+            console.error('[AuthService] Error creating household:', householdError);
+            // Even if household creation fails, return success for user creation
+            return of({
+              userId: data.user.id,
+              email: data.user.email!,
+              accessToken: data.session.access_token,
+              tokenType: 'Bearer',
+              expiresIn: data.session.expires_in ?? 3600,
+              refreshToken: data.session.refresh_token,
+              defaultHouseholdId: '', // Household creation failed
+              defaultHouseholdName: request.householdName,
+              requiresEmailConfirmation: false
+            } as RegisterResponse);
+          })
+        );
+      }),
+      catchError(err => {
+        console.error('[AuthService] Registration error:', err);
+        return throwError(() => err);
+      })
     );
   }
 
   private createHousehold$(name: string, userId: string): Observable<{ id: string; name: string }> {
+    console.log('[AuthService] createHousehold$ called:', { name, userId });
     return this.supabase.whenReady$().pipe(
       switchMap(client => {
-        return from(
-          client
-            .from('households')
-            .insert({ name, created_by: userId })
-            .select()
-            .single()
-        ).pipe(
-          switchMap(({ data: household, error }: any) => {
-            if (error || !household) {
-              return throwError(() => new Error('Failed to create household'));
+        // Verify we have a session and get the actual session user ID (matches auth.uid())
+        return from(client.auth.getSession()).pipe(
+          switchMap(({ data: session }) => {
+            if (!session?.session) {
+              console.error('[AuthService] No active session for household creation');
+              return throwError(() => new Error('No active session. Please sign in again.'));
             }
-
-            // Add user as admin member
+            
+            // Use session user ID to ensure it matches auth.uid() in RLS policy
+            const sessionUserId = session.session.user.id;
+            console.log('[AuthService] Session user ID:', sessionUserId, 'Requested user ID:', userId);
+            
+            // Insert household using session user ID
+            console.log('[AuthService] Inserting household');
             return from(
               client
-                .from('household_members')
-                .insert({
-                  household_id: household.id,
-                  user_id: userId,
-                  role: 'Admin',
-                  is_active: true,
-                  joined_at: new Date().toISOString()
+                .from('households')
+                .insert({ 
+                  name, 
+                  created_by: sessionUserId, 
+                  updated_by: sessionUserId 
                 })
+                .select()
+                .single()
             ).pipe(
-              map(() => ({ id: household.id, name: household.name }))
+              switchMap(({ data: household, error }: any) => {
+                console.log('[AuthService] Household insert result:', { hasHousehold: !!household, error });
+                if (error) {
+                  console.error('[AuthService] Household insert error:', error);
+                  return throwError(() => new Error(`Failed to create household: ${error.message || error}`));
+                }
+                if (!household) {
+                  console.error('[AuthService] No household data returned');
+                  return throwError(() => new Error('Failed to create household: No data returned'));
+                }
+
+                // Add user as admin member
+                console.log('[AuthService] Adding user to household_members');
+                return from(
+                  client
+                    .from('household_members')
+                    .insert({
+                      household_id: household.id,
+                      user_id: sessionUserId,
+                      role: 'Admin',
+                      is_active: true,
+                      joined_at: new Date().toISOString(),
+                      created_by: sessionUserId,
+                      updated_by: sessionUserId
+                    })
+                ).pipe(
+                  map(() => {
+                    console.log('[AuthService] Household member added successfully');
+                    return { id: household.id, name: household.name };
+                  }),
+                  catchError(memberError => {
+                    console.error('[AuthService] Error adding household member:', memberError);
+                    // Return household even if member insert fails (household was created)
+                    return of({ id: household.id, name: household.name });
+                  })
+                );
+              })
             );
           })
         );
       }),
-      catchError(err => throwError(() => err))
+      catchError(error => {
+        console.error('[AuthService] createHousehold$ error:', error);
+        return throwError(() => error);
+      })
     );
   }
 
@@ -355,7 +512,4 @@ export class AuthService {
   updateCurrentUser(user: CurrentUser): void {
     this.currentUser.set(user);
   }
-
-  // Optional backdoor login for dev
-  backdoorLogin?(request: LoginRequest): Observable<LoginResponse>;
 }

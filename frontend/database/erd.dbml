@@ -1,0 +1,783 @@
+// TheButler Database ERD
+// Generated: 2025-01-09
+// Format: DBML (dbdiagram.io)
+// 
+// To view: Import this file into https://dbdiagram.io
+// To update: Modify this file when schema changes occur
+
+// =====================================================
+// AUTHENTICATION (Supabase Auth)
+// =====================================================
+// Note: auth.users is managed by Supabase
+// Referenced via user_id UUID fields
+
+// =====================================================
+// CORE: HOUSEHOLDS
+// =====================================================
+
+Table households {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  name varchar(200) [not null]
+  address_line1 varchar(255)
+  address_line2 varchar(255)
+  city varchar(100)
+  state varchar(50)
+  postal_code varchar(20)
+  country varchar(100) [default: 'USA']
+  is_active boolean [default: true]
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+  deleted_at timestamptz
+
+  Note: 'Main organizational unit. All data is scoped to households.'
+}
+
+Table household_members {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [not null, ref: > households.id]
+  user_id uuid [not null] // References auth.users.id
+  role varchar(50) [not null, default: 'Member'] // 'Admin', 'Member'
+  joined_at timestamptz [not null, default: `now()`]
+  is_active boolean [default: true]
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+
+  indexes {
+    (household_id, user_id) [unique]
+  }
+
+  Note: 'Links Supabase Auth users to households. Unique constraint prevents duplicate memberships.'
+}
+
+Table household_settings {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [not null, ref: > households.id]
+  setting_key varchar(100) [not null]
+  setting_value text
+  data_type varchar(50) [not null, default: 'string'] // 'string', 'number', 'boolean', 'json'
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+
+  indexes {
+    (household_id, setting_key) [unique]
+  }
+}
+
+// =====================================================
+// FINANCIAL: ACCOUNTS & TRANSACTIONS
+// =====================================================
+
+Table accounts {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [not null, ref: > households.id]
+  name varchar [not null]
+  type varchar [not null] // 'checking', 'savings', 'credit', 'investment', etc.
+  institution varchar [not null]
+  account_number_last4 varchar
+  balance numeric [not null, default: 0.00]
+  currency varchar [default: 'USD']
+  is_active boolean [default: true]
+  last_synced_at timestamptz
+  plaid_account_id varchar
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+  deleted_at timestamptz
+}
+
+Table transactions {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [not null, ref: > households.id]
+  account_id uuid [not null, ref: > accounts.id]
+  category_id uuid [ref: > categories.id]
+  date date [not null]
+  description varchar [not null]
+  amount numeric [not null]
+  type varchar [not null] // 'income', 'expense'
+  merchant_name varchar
+  notes text
+  plaid_transaction_id varchar
+  is_recurring boolean [default: false]
+  parent_transaction_id uuid [ref: > transactions.id]
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+  deleted_at timestamptz
+}
+
+// =====================================================
+// FINANCIAL: BUDGETS
+// =====================================================
+
+Table budgets {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [not null, ref: > households.id]
+  category_id uuid [not null, ref: > categories.id]
+  name varchar [not null]
+  limit_amount numeric [not null]
+  period varchar [not null] // 'Monthly', 'Quarterly', 'Yearly'
+  start_date date [not null]
+  end_date date
+  is_active boolean [default: true]
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+  deleted_at timestamptz
+}
+
+Table budget_periods {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  budget_id uuid [not null, ref: > budgets.id]
+  period_start date [not null]
+  period_end date [not null]
+  limit_amount numeric [not null]
+  spent_amount numeric [not null, default: 0.00]
+  transaction_count integer [default: 0]
+  percentage_used numeric [default: `CASE WHEN limit_amount > 0 THEN (spent_amount / limit_amount) * 100 ELSE 0 END`]
+  status varchar [default: `CASE WHEN spent_amount >= limit_amount THEN 'critical' WHEN spent_amount >= (limit_amount * 0.8) THEN 'warning' ELSE 'good' END`]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (budget_id, period_start) [unique]
+  }
+}
+
+Table financial_goals {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [not null, ref: > households.id]
+  name varchar [not null]
+  description text
+  target_amount numeric [not null]
+  current_amount numeric [not null, default: 0.00]
+  deadline date
+  priority_id uuid [ref: > priorities.id]
+  is_achieved boolean [default: false]
+  achieved_date date
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+  deleted_at timestamptz
+}
+
+Table subscriptions {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [not null, ref: > households.id]
+  account_id uuid [ref: > accounts.id]
+  category_id uuid [ref: > categories.id]
+  name varchar [not null]
+  amount numeric [not null]
+  billing_cycle_id uuid [not null, ref: > frequencies.id]
+  next_billing_date date [not null]
+  is_active boolean [default: true]
+  auto_renew boolean [default: true]
+  merchant_website varchar
+  notes text
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+  deleted_at timestamptz
+}
+
+// =====================================================
+// BILLS & PAYMENTS
+// =====================================================
+
+Table bills {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [not null, ref: > households.id]
+  account_id uuid [ref: > accounts.id]
+  category_id uuid [ref: > categories.id]
+  name varchar [not null]
+  amount numeric [not null]
+  due_date date [not null]
+  status varchar [not null, default: 'pending'] // 'pending', 'paid', 'overdue'
+  is_recurring boolean [default: false]
+  frequency_id uuid [ref: > frequencies.id]
+  payment_method varchar
+  auto_pay_enabled boolean [default: false]
+  reminder_days integer [default: 3]
+  payee_name varchar
+  payee_account_number varchar
+  notes text
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+  deleted_at timestamptz
+}
+
+Table payment_history {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  bill_id uuid [not null, ref: > bills.id]
+  transaction_id uuid [ref: > transactions.id]
+  paid_date date [not null]
+  amount numeric [not null]
+  confirmation_number varchar
+  payment_method varchar
+  notes text
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+}
+
+// =====================================================
+// MAINTENANCE
+// =====================================================
+
+Table service_providers {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  name varchar [not null]
+  category_id uuid [ref: > categories.id]
+  phone varchar
+  email varchar
+  website varchar
+  address_line1 varchar
+  city varchar
+  state varchar
+  postal_code varchar
+  rating numeric [note: '0 to 5']
+  notes text
+  is_active boolean [default: true]
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+}
+
+Table maintenance_tasks {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [not null, ref: > households.id]
+  service_provider_id uuid [ref: > service_providers.id]
+  category_id uuid [ref: > categories.id]
+  priority_id uuid [ref: > priorities.id]
+  title varchar [not null]
+  description text
+  status varchar [not null, default: 'pending'] // 'pending', 'scheduled', 'in_progress', 'completed'
+  due_date date [not null]
+  completed_date date
+  estimated_cost numeric
+  actual_cost numeric
+  is_recurring boolean [default: false]
+  frequency_id uuid [ref: > frequencies.id]
+  location varchar
+  notes text
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+  deleted_at timestamptz
+}
+
+// =====================================================
+// INVENTORY
+// =====================================================
+
+Table inventory_items {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [not null, ref: > households.id]
+  category_id uuid [ref: > categories.id]
+  name varchar [not null]
+  description text
+  purchase_date date [not null]
+  purchase_price numeric [not null]
+  current_value numeric
+  location varchar [not null]
+  serial_number varchar
+  model_number varchar
+  manufacturer varchar
+  notes text
+  photo_urls array
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+  deleted_at timestamptz
+}
+
+Table warranties {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  inventory_item_id uuid [not null, ref: > inventory_items.id]
+  provider varchar [not null]
+  start_date date [not null]
+  end_date date [not null]
+  coverage_details text
+  document_url varchar
+  is_active boolean [default: true]
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+}
+
+Table item_maintenance_schedules {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  inventory_item_id uuid [not null, ref: > inventory_items.id]
+  task varchar [not null]
+  description text
+  frequency_id uuid [not null, ref: > frequencies.id]
+  last_completed date
+  next_due date [not null]
+  is_active boolean [default: true]
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+}
+
+// =====================================================
+// DOCUMENTS
+// =====================================================
+
+Table documents {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [not null, ref: > households.id]
+  category_id uuid [ref: > categories.id]
+  title varchar [not null]
+  description text
+  file_name varchar [not null]
+  file_path varchar [not null]
+  file_type varchar [not null]
+  file_size_bytes bigint [not null]
+  upload_date date [not null, default: `CURRENT_DATE`]
+  expiry_date date
+  is_important boolean [default: false]
+  is_archived boolean [default: false]
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+  deleted_at timestamptz
+}
+
+Table document_tags {
+  document_id uuid [not null, ref: > documents.id]
+  tag varchar [not null]
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (document_id, tag) [primary key]
+  }
+}
+
+// =====================================================
+// INSURANCE
+// =====================================================
+
+Table insurance_types {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  name varchar [not null, unique]
+  description text
+  created_at timestamptz [not null, default: `now()`]
+}
+
+Table insurance_policies {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [not null, ref: > households.id]
+  insurance_type_id uuid [not null, ref: > insurance_types.id]
+  provider varchar [not null]
+  policy_number varchar [not null]
+  premium numeric [not null]
+  billing_frequency_id uuid [not null, ref: > frequencies.id]
+  start_date date [not null]
+  renewal_date date [not null]
+  coverage_amount numeric
+  deductible numeric
+  coverage_details text
+  is_active boolean [default: true]
+  document_url varchar
+  notes text
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+  deleted_at timestamptz
+}
+
+Table insurance_beneficiaries {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  insurance_policy_id uuid [not null, ref: > insurance_policies.id]
+  name varchar [not null]
+  relationship varchar
+  percentage numeric [note: '0 to 100']
+  contact_info text
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+}
+
+// =====================================================
+// HEALTHCARE
+// =====================================================
+
+Table healthcare_providers {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [not null, ref: > households.id]
+  name varchar [not null]
+  provider_type varchar
+  specialty varchar
+  phone_number varchar
+  email varchar
+  website varchar
+  address_line1 varchar
+  address_line2 varchar
+  city varchar
+  state varchar
+  postal_code varchar
+  country varchar
+  notes text
+  is_active boolean [default: true]
+  created_at timestamp [default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamp [default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+  deleted_at timestamp
+}
+
+Table appointments {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [not null, ref: > households.id]
+  household_member_id uuid [not null, ref: > household_members.id]
+  provider_id uuid [ref: > healthcare_providers.id]
+  appointment_date date [not null]
+  appointment_time time
+  appointment_type varchar
+  reason varchar
+  status varchar [default: 'scheduled'] // 'scheduled', 'completed', 'cancelled', 'no_show'
+  location varchar
+  provider_name varchar
+  reminder_days integer [default: 1]
+  reminder_enabled boolean [default: true]
+  prep_instructions text
+  follow_up_notes text
+  notes text
+  created_at timestamp [default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamp [default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+  deleted_at timestamp
+}
+
+Table medications {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [not null, ref: > households.id]
+  household_member_id uuid [not null, ref: > household_members.id]
+  provider_id uuid [ref: > healthcare_providers.id]
+  name varchar [not null]
+  generic_name varchar
+  dosage varchar
+  frequency varchar
+  route varchar
+  reason varchar
+  start_date date
+  end_date date
+  is_active boolean [default: true]
+  is_prescription boolean [default: false]
+  prescription_number varchar
+  refills_remaining integer
+  pharmacy varchar
+  pharmacy_phone varchar
+  side_effects text
+  instructions text
+  notes text
+  created_at timestamp [default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamp [default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+  deleted_at timestamp
+}
+
+Table medication_schedules {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  medication_id uuid [not null, ref: > medications.id]
+  scheduled_time time [not null]
+  day_of_week varchar
+  is_active boolean [default: true]
+  reminder_enabled boolean [default: true]
+  reminder_minutes_before integer [default: 30]
+  notes text
+  created_at timestamp [default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamp [default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+  deleted_at timestamp
+}
+
+Table medical_records {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [not null, ref: > households.id]
+  household_member_id uuid [not null, ref: > household_members.id]
+  provider_id uuid [ref: > healthcare_providers.id]
+  record_date date [not null]
+  record_type varchar [not null]
+  diagnosis text
+  treatment text
+  medications text
+  test_results text
+  follow_up_instructions text
+  follow_up_date date
+  document_url varchar
+  notes text
+  created_at timestamp [default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamp [default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+  deleted_at timestamp
+}
+
+Table health_metrics {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [not null, ref: > households.id]
+  household_member_id uuid [not null, ref: > household_members.id]
+  record_date date [not null]
+  record_time time
+  metric_type varchar [not null]
+  value numeric
+  unit varchar
+  weight numeric
+  height numeric
+  bmi numeric
+  blood_pressure_systolic integer
+  blood_pressure_diastolic integer
+  heart_rate integer
+  temperature numeric
+  blood_glucose integer
+  oxygen_saturation integer
+  notes text
+  created_at timestamp [default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamp [default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+  deleted_at timestamp
+}
+
+Table allergies {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [not null, ref: > households.id]
+  household_member_id uuid [not null, ref: > household_members.id]
+  allergy_type varchar [not null]
+  allergen varchar [not null]
+  severity varchar
+  reaction text
+  diagnosed_date date
+  treatment varchar
+  is_active boolean [default: true]
+  notes text
+  created_at timestamp [default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamp [default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+  deleted_at timestamp
+}
+
+Table vaccinations {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [not null, ref: > households.id]
+  household_member_id uuid [not null, ref: > household_members.id]
+  provider_id uuid [ref: > healthcare_providers.id]
+  vaccine_name varchar [not null]
+  date_administered date [not null]
+  dose_number varchar
+  lot_number varchar
+  site varchar
+  route varchar
+  next_dose_date date
+  is_up_to_date boolean [default: true]
+  administered_by varchar
+  location varchar
+  reactions text
+  document_url varchar
+  notes text
+  created_at timestamp [default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamp [default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+  deleted_at timestamp
+}
+
+// =====================================================
+// SYSTEM TABLES
+// =====================================================
+
+Table notifications {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  user_id uuid [not null] // References auth.users.id
+  household_id uuid [ref: > households.id]
+  type varchar [not null]
+  title varchar [not null]
+  message text [not null]
+  severity varchar [default: 'info'] // 'info', 'warning', 'error', 'success'
+  is_read boolean [default: false]
+  read_at timestamptz
+  action_url varchar
+  related_entity_type varchar
+  related_entity_id uuid
+  created_at timestamptz [not null, default: `now()`]
+}
+
+Table alerts {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  household_id uuid [not null, ref: > households.id]
+  type varchar [not null]
+  category varchar [not null]
+  severity varchar [not null] // 'info', 'warning', 'error', 'critical'
+  priority integer [not null, note: '1 to 4']
+  title varchar [not null]
+  message varchar [not null]
+  description varchar
+  related_entity_type varchar
+  related_entity_id uuid
+  related_entity_name varchar
+  status varchar [not null, default: 'Active'] // 'Active', 'Resolved', 'Dismissed'
+  is_read boolean [not null, default: false]
+  is_dismissed boolean [not null, default: false]
+  created_at timestamptz [not null, default: `now()`]
+  read_at timestamptz
+  dismissed_at timestamptz
+  expires_at timestamptz
+  action_url varchar
+  action_label varchar
+  is_recurring boolean [not null, default: false]
+  recurrence_rule varchar
+  next_occurrence timestamptz
+  updated_at timestamptz
+  deleted_at timestamptz
+}
+
+Table reminders {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [not null, ref: > households.id]
+  user_id uuid // References auth.users.id (optional - NULL = all household members)
+  related_entity_type varchar [not null]
+  related_entity_id uuid [not null]
+  reminder_type varchar [not null]
+  remind_at timestamptz [not null]
+  is_sent boolean [default: false]
+  sent_at timestamptz
+  recurrence_pattern varchar
+  is_active boolean [default: true]
+  created_at timestamptz [not null, default: `now()`]
+  created_by uuid [not null] // References auth.users.id
+  updated_at timestamptz [not null, default: `now()`]
+  updated_by uuid [not null] // References auth.users.id
+}
+
+Table activity_logs {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  household_id uuid [ref: > households.id]
+  user_id uuid [not null] // References auth.users.id
+  action varchar [not null]
+  entity_type varchar [not null]
+  entity_id uuid [not null]
+  entity_name varchar
+  description text
+  ip_address inet
+  user_agent text
+  metadata jsonb
+  created_at timestamptz [not null, default: `now()`]
+}
+
+// =====================================================
+// LOOKUP/REFERENCE TABLES
+// =====================================================
+
+Table categories {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  name varchar [not null]
+  type varchar [not null] // 'transaction', 'bill', 'maintenance', 'document', 'subscription'
+  description text
+  is_active boolean [default: true]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    name [unique]
+  }
+}
+
+Table frequencies {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  name varchar [not null, unique]
+  interval_days integer [not null]
+  created_at timestamptz [not null, default: `now()`]
+}
+
+Table priorities {
+  id uuid [primary key, default: `uuid_generate_v4()`]
+  name varchar [not null, unique]
+  sort_order integer [not null]
+  created_at timestamptz [not null, default: `now()`]
+}
+
+// =====================================================
+// RELATIONSHIPS SUMMARY
+// =====================================================
+// 
+// Core:
+//   households 1──N household_members
+//   households 1──N household_settings
+//
+// Financial:
+//   households 1──N accounts
+//   accounts 1──N transactions
+//   households 1──N budgets
+//   budgets 1──N budget_periods
+//   households 1──N financial_goals
+//   households 1──N subscriptions
+//   households 1──N bills
+//   bills 1──N payment_history
+//   payment_history N──1 transactions
+//
+// Maintenance:
+//   households 1──N maintenance_tasks
+//   maintenance_tasks N──1 service_providers
+//
+// Inventory:
+//   households 1──N inventory_items
+//   inventory_items 1──N warranties
+//   inventory_items 1──N item_maintenance_schedules
+//
+// Documents:
+//   households 1──N documents
+//   documents 1──N document_tags
+//
+// Insurance:
+//   households 1──N insurance_policies
+//   insurance_policies 1──N insurance_beneficiaries
+//   insurance_policies N──1 insurance_types
+//
+// Healthcare:
+//   households 1──N healthcare_providers
+//   households 1──N appointments (via household_members)
+//   households 1──N medications (via household_members)
+//   medications 1──N medication_schedules
+//   households 1──N medical_records (via household_members)
+//   households 1──N health_metrics (via household_members)
+//   households 1──N allergies (via household_members)
+//   households 1──N vaccinations (via household_members)
+//
+// System:
+//   auth.users 1──N notifications
+//   households 1──N alerts
+//   households 1──N reminders
+//   auth.users 1──N activity_logs
+//
+// Lookups (shared):
+//   categories N──1 (many tables)
+//   frequencies N──1 (bills, subscriptions, maintenance_tasks, etc.)
+//   priorities N──1 (maintenance_tasks, financial_goals)
+
+
+
+

@@ -1,6 +1,8 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { Observable, tap, catchError, of, from, throwError } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { map, switchMap, filter, take, timeout } from 'rxjs/operators';
+import type { CurrentUser } from './auth.service';
 import { BaseApiService } from './base-api.service';
 import type { MaintenanceTask, ServiceProvider } from '../models/maintenance.model';
 
@@ -12,6 +14,8 @@ import type { MaintenanceTask, ServiceProvider } from '../models/maintenance.mod
   providedIn: 'root'
 })
 export class MaintenanceService extends BaseApiService {
+  // Create observable as field initializer (always in injection context)
+  private readonly currentUserObservable$: Observable<CurrentUser | null> = toObservable(this.authService.currentUser$);
 
   // Maintenance signals
   private readonly maintenanceTasksSignal = signal<MaintenanceTask[]>([]);
@@ -39,36 +43,73 @@ export class MaintenanceService extends BaseApiService {
   );
 
   /**
-   * Get household ID from auth service
+   * Get household ID from auth service (synchronous)
    */
   private getHouseholdId(): string | null {
     return this.authService.getDefaultHouseholdId();
   }
 
+  /**
+   * Get household ID as Observable (waits for user profile to load)
+   */
+  private getHouseholdId$(): Observable<string> {
+    const currentHouseholdId = this.getHouseholdId();
+    if (currentHouseholdId) {
+      return of(currentHouseholdId);
+    }
+
+    // Use the pre-created observable (created in constructor with injection context)
+    return this.currentUserObservable$.pipe(
+      filter((user: CurrentUser | null): user is CurrentUser => {
+        // Wait until user is loaded and has at least one household
+        return !!user && !!user.households && user.households.length > 0;
+      }),
+      map((user: CurrentUser) => {
+        const householdId = user.households[0].householdId;
+        if (!householdId) {
+          throw new Error('No household available. Please ensure you are a member of a household.');
+        }
+        return householdId;
+      }),
+      take(1), // Take the first valid value
+      timeout({
+        each: 10000, // 10 second timeout (increased from 5)
+        with: () => throwError(() => new Error('Timeout waiting for household to load. Please refresh the page.'))
+      }),
+      catchError(error => {
+        console.error('[MaintenanceService] Error getting household ID:', error);
+        const errorMessage = error?.message || String(error);
+        if (errorMessage.includes('Timeout') || errorMessage.includes('timeout')) {
+          return throwError(() => new Error('Your household information is still loading. Please wait a moment and try again.'));
+        }
+        return throwError(() => new Error('No household available. Please ensure you are a member of a household.'));
+      })
+    );
+  }
+
   // ===== MAINTENANCE TASKS =====
 
   public loadMaintenanceTasks(): Observable<MaintenanceTask[]> {
-    const householdId = this.getHouseholdId();
-    if (!householdId) {
-      console.error('No household ID available');
-      return of([]);
-    }
+    console.log('[MaintenanceService] Loading maintenance tasks');
 
-    console.log('[MaintenanceService] Loading maintenance tasks for household:', householdId);
+    return this.getHouseholdId$().pipe(
+      switchMap((householdId) => {
+        console.log('[MaintenanceService] Loading maintenance tasks for household:', householdId);
 
-    return this.getSupabaseClient$().pipe(
-      switchMap(client => from(
-        client
-          .from('maintenance_tasks')
-          .select(`
-            *,
-            priorities (name)
-          `)
-          .eq('household_id', householdId)
-          .is('deleted_at', null)
-          .order('due_date', { ascending: true })
-      ))
-    ).pipe(
+        return this.getSupabaseClient$().pipe(
+          switchMap(client => from(
+            client
+              .from('maintenance_tasks')
+              .select(`
+                *,
+                priorities (name)
+              `)
+              .eq('household_id', householdId)
+              .is('deleted_at', null)
+              .order('due_date', { ascending: true })
+          ))
+        );
+      }),
       map((response) => {
         if (response.error) {
           console.error('[MaintenanceService] Error from Supabase:', response.error);
@@ -89,21 +130,18 @@ export class MaintenanceService extends BaseApiService {
   }
 
   public addMaintenanceTask(task: any): Observable<MaintenanceTask> {
-    const householdId = this.getHouseholdId();
-    if (!householdId) {
-      this.toastService.error('Error', 'No household selected');
-      return throwError(() => new Error('No household selected'));
-    }
+    // Get household ID (waiting for user profile if needed)
+    return this.getHouseholdId$().pipe(
+      switchMap((householdId) => {
+        // Get current user ID for created_by/updated_by, then insert
+        return this.getCurrentUserId$().pipe(
+          switchMap((userId) => {
+            if (!userId) {
+              return throwError(() => new Error('User not authenticated'));
+            }
 
-    // Get current user ID for created_by/updated_by, then insert
-    return this.getCurrentUserId$().pipe(
-      switchMap((userId) => {
-        if (!userId) {
-          return throwError(() => new Error('User not authenticated'));
-        }
-
-        const taskData: any = {
-          household_id: householdId,
+            const taskData: any = {
+              household_id: householdId,
           title: task.title,
           description: task.description || null,
           // priority_id: null, // TODO: Look up priority_id from priorities table based on task.priority
@@ -111,22 +149,24 @@ export class MaintenanceService extends BaseApiService {
           due_date: task.dueDate ? (typeof task.dueDate === 'string' ? task.dueDate : task.dueDate.toISOString().split('T')[0]) : null,
           service_provider_id: task.serviceProviderId || null,
           estimated_cost: task.estimatedCost || task.cost || null, // Use estimated_cost to match database schema
-          notes: task.notes || null,
-          created_by: userId,
-          updated_by: userId
-        };
+              notes: task.notes || null,
+              created_by: userId,
+              updated_by: userId
+            };
 
-        return this.getSupabaseClient$().pipe(
-          switchMap(client => from(
-            client
-              .from('maintenance_tasks')
-              .insert(taskData)
-              .select(`
-                *,
-                priorities (name)
-              `)
-              .single()
-          ))
+            return this.getSupabaseClient$().pipe(
+              switchMap(client => from(
+                client
+                  .from('maintenance_tasks')
+                  .insert(taskData)
+                  .select(`
+                    *,
+                    priorities (name)
+                  `)
+                  .single()
+              ))
+            );
+          })
         );
       }),
       map((response) => {
@@ -232,22 +272,19 @@ export class MaintenanceService extends BaseApiService {
   // ===== SERVICE PROVIDERS =====
 
   public loadServiceProviders(): Observable<ServiceProvider[]> {
-    const householdId = this.getHouseholdId();
-    if (!householdId) {
-      console.error('No household ID available');
-      return of([]);
-    }
-
-    return this.getSupabaseClient$().pipe(
-      switchMap(client => from(
-        client
-          .from('service_providers')
-          .select('*')
-          .eq('household_id', householdId)
-          .is('deleted_at', null)
-          .order('name', { ascending: true })
-      ))
-    ).pipe(
+    return this.getHouseholdId$().pipe(
+      switchMap((householdId) => {
+        return this.getSupabaseClient$().pipe(
+          switchMap(client => from(
+            client
+              .from('service_providers')
+              .select('*')
+              .eq('household_id', householdId)
+              .is('deleted_at', null)
+              .order('name', { ascending: true })
+          ))
+        );
+      }),
       map((response) => {
         if (response.error) {
           throw response.error;
@@ -265,32 +302,29 @@ export class MaintenanceService extends BaseApiService {
   }
 
   public addServiceProvider(provider: any): Observable<ServiceProvider> {
-    const householdId = this.getHouseholdId();
-    if (!householdId) {
-      this.toastService.error('Error', 'No household selected');
-      return throwError(() => new Error('No household selected'));
-    }
+    return this.getHouseholdId$().pipe(
+      switchMap((householdId) => {
+        const providerData = {
+          household_id: householdId,
+          name: provider.name,
+          service_type: provider.serviceType || null,
+          contact_name: provider.contactName || null,
+          phone: provider.phone || null,
+          email: provider.email || null,
+          address: provider.address || null,
+          notes: provider.notes || null
+        };
 
-    const providerData = {
-      household_id: householdId,
-      name: provider.name,
-      service_type: provider.serviceType || null,
-      contact_name: provider.contactName || null,
-      phone: provider.phone || null,
-      email: provider.email || null,
-      address: provider.address || null,
-      notes: provider.notes || null
-    };
-
-    return this.getSupabaseClient$().pipe(
-      switchMap(client => from(
-        client
-          .from('service_providers')
-          .insert(providerData)
-          .select()
-          .single()
-      ))
-    ).pipe(
+        return this.getSupabaseClient$().pipe(
+          switchMap(client => from(
+            client
+              .from('service_providers')
+              .insert(providerData)
+              .select()
+              .single()
+          ))
+        );
+      }),
       map((response) => {
         if (response.error) {
           throw response.error;

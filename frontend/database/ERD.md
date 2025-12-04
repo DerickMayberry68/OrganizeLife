@@ -1,5 +1,14 @@
 # TheButler - Entity Relationship Diagram
 
+> **Last Updated:** 2025-01-09  
+> **ERD Files:**
+> - `erd.dbml` - DBML format for dbdiagram.io
+> - `erd.mermaid.md` - Mermaid format for GitHub/docs
+> 
+> **To View:**
+> - Import `erd.dbml` into https://dbdiagram.io
+> - Or view `erd.mermaid.md` in any Mermaid-compatible viewer
+
 ## High-Level Architecture
 
 ```
