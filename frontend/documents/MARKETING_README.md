@@ -1,12 +1,12 @@
-# 📢 Marketing Materials - HomeSynchronicity
+# Marketing Materials - OrganizeLife
 
-Complete marketing package for HomeSynchronicity household management application.
+Complete marketing package for OrganizeLife household management application.
 
 ---
 
 ## 📁 What's Included
 
-This marketing package contains everything you need to promote HomeSynchronicity:
+This marketing package contains everything you need to promote OrganizeLife:
 
 ### 1. **MARKETING.md** - Main Marketing Page
 Comprehensive marketing document featuring:
@@ -113,7 +113,7 @@ Before your marketing materials are complete, capture these screenshots:
 Before publishing, update these items:
 
 ### Contact Information
-- [ ] Email addresses (currently placeholder@thebutler.app)
+- [ ] Email addresses (currently placeholder@organizelife.app)
 - [ ] Website URLs (currently #)
 - [ ] Phone numbers
 - [ ] Social media handles
@@ -225,8 +225,8 @@ Red:            #ff5757
 - **Body**: Normal (400 weight)
 
 ### Logo
-- Location: `./public/HomeSynchronicityLogo.png`
-- Favicon: `./public/the_butler_favicon_transparent.ico`
+- Location: `./public/OrganizeLifeLogo.png`
+- Favicon: `./public/organizelife_favicon.ico`
 
 ### Tone & Voice
 - Professional yet approachable
@@ -257,20 +257,20 @@ Red:            #ff5757
 ### Messaging by Audience
 
 **For Families**:
-> "Keep your family organized with shared calendars, budgets, and documents. HomeSynchronicity brings everyone together."
+> "Keep your family organized with shared calendars, budgets, and documents. OrganizeLife brings everyone together."
 
 **For Homeowners**:
-> "Track maintenance, warranties, and home expenses all in one place. Your home deserves HomeSynchronicity."
+> "Track maintenance, warranties, and home expenses all in one place. Your home deserves OrganizeLife."
 
 **For Young Professionals**:
-> "Master household management from day one. HomeSynchronicity makes adulting easier."
+> "Master household management from day one. OrganizeLife makes adulting easier."
 
 ---
 
 ## 💡 Content Ideas
 
 ### Blog Post Topics
-1. "10 Ways HomeSynchronicity Saves You Time Every Week"
+1. "10 Ways OrganizeLife Saves You Time Every Week"
 2. "Never Miss a Bill Again: A Complete Guide"
 3. "The Ultimate Household Organization Checklist"
 4. "How to Create a Budget That Actually Works"
@@ -453,7 +453,7 @@ Consider partnering with:
 
 ## 🔄 Updating Marketing Materials
 
-As HomeSynchronicity evolves:
+As OrganizeLife evolves:
 
 ### When to Update
 - New features launched
@@ -495,13 +495,13 @@ As HomeSynchronicity evolves:
 
 ## 🌟 Final Thoughts
 
-Marketing HomeSynchronicity is about communicating value:
+Marketing OrganizeLife is about communicating value:
 - **For busy families**: Peace of mind and organization
 - **For homeowners**: Control over their property
 - **For professionals**: Efficiency and automation
 - **For everyone**: A better way to manage household life
 
-Focus on benefits, show real results, and let HomeSynchronicity's quality speak for itself.
+Focus on benefits, show real results, and let OrganizeLife's quality speak for itself.
 
 ---
 

@@ -1,4 +1,4 @@
-# Display Name Update ✅
+# Display Name Update
 
 ## What Changed
 
@@ -69,10 +69,10 @@ The JWT token contains:
 If you were logged in before this update:
 
 **Option 1: Clear Storage**
-1. Open DevTools → Application → Local Storage
-2. Clear `butler_user`, `butler_access_token`, `butler_refresh_token`
-3. Refresh page → you'll be redirected to login
-4. Login again → names will be extracted from token
+1. Open DevTools -> Application -> Local Storage
+2. Clear `organizelife_user`, `organizelife_access_token`, `organizelife_refresh_token`
+3. Refresh page -> you'll be redirected to login
+4. Login again -> names will be extracted from token
 
 **Option 2: Just Logout**
 1. Click "Log Out" from header or sidebar
@@ -82,14 +82,14 @@ If you were logged in before this update:
 ### Verify It's Working
 ```typescript
 // Open browser console and run:
-const user = JSON.parse(localStorage.getItem('butler_user'));
+const user = JSON.parse(localStorage.getItem('organizelife_user'));
 console.log(user);
 // Should show:
 // {
 //   userId: "...",
 //   email: "...",
-//   firstName: "...",    // ← Should be present
-//   lastName: "...",     // ← Should be present
+//   firstName: "...",    // <- Should be present
+//   lastName: "...",     // <- Should be present
 //   households: [...]
 // }
 ```
@@ -116,9 +116,9 @@ console.log(user);
 
 ## Future Enhancement
 
-When you add the ability to edit profile, the firstName and lastName should be stored in the Butler database (not just Supabase metadata), and you can update them independently.
+When you add the ability to edit profile, the firstName and lastName should be stored in the OrganizeLife database (not just Supabase metadata), and you can update them independently.
 
 ---
 
-**All set!** 🎉 User names now come from the Supabase database!
+**All set!** User names now come from the Supabase database!
 

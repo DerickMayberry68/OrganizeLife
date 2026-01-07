@@ -1,4 +1,4 @@
-# Color Theme Update - Butler Application
+# Color Theme Update - OrganizeLife Application
 
 ## Overview
 Updated the application's color scheme from teal (#00acac) to a vibrant blue (#1b76ff) with a complementary color wheel palette.

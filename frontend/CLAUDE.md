@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**The Butler** is a household management system built with Angular 20, Supabase backend, and Syncfusion UI components. It manages finances, documents, healthcare, inventory, maintenance, insurance, and more.
+**OrganizeLife** is a household management system built with Angular 20, Supabase backend, and Syncfusion UI components. It manages finances, documents, healthcare, inventory, maintenance, insurance, and more.
 
 ## Common Commands
 

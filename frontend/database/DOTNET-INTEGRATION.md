@@ -2,7 +2,7 @@
 
 ## Getting Started
 
-This guide provides examples for integrating the TheButler PostgreSQL database with ASP.NET Core 8+ Web API.
+This guide provides examples for integrating the OrganizeLife PostgreSQL database with ASP.NET Core 8+ Web API.
 
 ## 📦 Required NuGet Packages
 
@@ -21,7 +21,7 @@ This guide provides examples for integrating the TheButler PostgreSQL database w
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Database=thebutler;Username=postgres;Password=yourpassword;Include Error Detail=true"
+    "DefaultConnection": "Host=localhost;Database=organizelife;Username=postgres;Password=yourpassword;Include Error Detail=true"
   },
   "Logging": {
     "LogLevel": {
@@ -41,7 +41,7 @@ using Microsoft.AspNetCore.Identity;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add PostgreSQL with EF Core
-builder.Services.AddDbContext<ButlerDbContext>(options =>
+builder.Services.AddDbContext<OrganizeLifeDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         npgsqlOptions => npgsqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
@@ -56,7 +56,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
     options.Password.RequireNonAlphanumeric = true;
     options.Password.RequiredLength = 8;
 })
-.AddEntityFrameworkStores<ButlerDbContext>()
+.AddEntityFrameworkStores<OrganizeLifeDbContext>()
 .AddDefaultTokenProviders();
 
 // Add Authorization Policies
@@ -221,9 +221,9 @@ public class Budget : SoftDeletableEntity
 ## 🗄️ DbContext
 
 ```csharp
-public class ButlerDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
+public class OrganizeLifeDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
 {
-    public ButlerDbContext(DbContextOptions<ButlerDbContext> options) : base(options) { }
+    public OrganizeLifeDbContext(DbContextOptions<OrganizeLifeDbContext> options) : base(options) { }
     
     // Core
     public DbSet<Household> Households { get; set; }
@@ -359,10 +359,10 @@ public interface IRepository<T> where T : BaseEntity
 
 public class Repository<T> : IRepository<T> where T : BaseEntity
 {
-    protected readonly ButlerDbContext _context;
+    protected readonly OrganizeLifeDbContext _context;
     protected readonly DbSet<T> _dbSet;
-    
-    public Repository(ButlerDbContext context)
+
+    public Repository(OrganizeLifeDbContext context)
     {
         _context = context;
         _dbSet = context.Set<T>();
@@ -421,7 +421,7 @@ public interface ITransactionRepository : IRepository<Transaction>
 
 public class TransactionRepository : Repository<Transaction>, ITransactionRepository
 {
-    public TransactionRepository(ButlerDbContext context) : base(context) { }
+    public TransactionRepository(OrganizeLifeDbContext context) : base(context) { }
     
     public async Task<IEnumerable<Transaction>> GetByHouseholdAsync(Guid householdId)
     {
@@ -469,11 +469,11 @@ public class HouseholdRequirement : IAuthorizationRequirement
 
 public class HouseholdAuthorizationHandler : AuthorizationHandler<HouseholdRequirement, Guid>
 {
-    private readonly ButlerDbContext _context;
+    private readonly OrganizeLifeDbContext _context;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    
+
     public HouseholdAuthorizationHandler(
-        ButlerDbContext context, 
+        OrganizeLifeDbContext context,
         IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
@@ -585,10 +585,10 @@ public interface IActivityLogger
 
 public class ActivityLogger : IActivityLogger
 {
-    private readonly ButlerDbContext _context;
+    private readonly OrganizeLifeDbContext _context;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    
-    public ActivityLogger(ButlerDbContext context, IHttpContextAccessor httpContextAccessor)
+
+    public ActivityLogger(OrganizeLifeDbContext context, IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
         _httpContextAccessor = httpContextAccessor;

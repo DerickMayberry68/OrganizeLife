@@ -1,6 +1,6 @@
 # Cloud PostgreSQL Deployment Guide
 
-This guide covers deploying TheButler database to popular cloud PostgreSQL services and replicating your local setup.
+This guide covers deploying OrganizeLife database to popular cloud PostgreSQL services and replicating your local setup.
 
 ---
 
@@ -37,7 +37,7 @@ cd database
 set PGPASSWORD=your_cloud_password
 
 # Run installation
-install.bat --db-host your-server.postgres.database.azure.com --db-user your_username@your_server --db-name thebutler --db-port 5432
+install.bat --db-host your-server.postgres.database.azure.com --db-user your_username@your_server --db-name organizelife --db-port 5432
 ```
 
 ### Command Options
@@ -46,7 +46,7 @@ install.bat --db-host your-server.postgres.database.azure.com --db-user your_use
 install.bat [options]
 
 Options:
-  --db-name NAME    Database name (default: thebutler)
+  --db-name NAME    Database name (default: organizelife)
   --db-user USER    Database user (default: postgres)
   --db-host HOST    Database host (default: localhost)
   --db-port PORT    Database port (default: 5432)
@@ -61,8 +61,8 @@ Options:
 
 **Connection Details from Azure Portal:**
 
-- Server name: `thebutler-server.postgres.database.azure.com`
-- Admin username: `butleradmin@thebutler-server`
+- Server name: `organizelife-server.postgres.database.azure.com`
+- Admin username: `organizelifeadmin@organizelife-server`
 - Port: `5432`
 - SSL: Required
 
@@ -75,7 +75,7 @@ cd database
 set PGPASSWORD=YourAzurePassword123!
 
 # Install (database must exist or use postgres database initially)
-install.bat --db-host thebutler-server.postgres.database.azure.com --db-user butleradmin@thebutler-server --db-name thebutler --db-port 5432
+install.bat --db-host organizelife-server.postgres.database.azure.com --db-user organizelifeadmin@organizelife-server --db-name organizelife --db-port 5432
 
 # Note: Azure requires username@servername format
 ```
@@ -83,7 +83,7 @@ install.bat --db-host thebutler-server.postgres.database.azure.com --db-user but
 **Connection String for .NET:**
 
 ```text
-Host=thebutler-server.postgres.database.azure.com;Database=thebutler;Username=butleradmin@thebutler-server;Password=YourAzurePassword123!;SSL Mode=Require;Trust Server Certificate=true
+Host=organizelife-server.postgres.database.azure.com;Database=organizelife;Username=organizelifeadmin@organizelife-server;Password=YourAzurePassword123!;SSL Mode=Require;Trust Server Certificate=true
 ```
 
 **Azure Tips:**
@@ -99,7 +99,7 @@ Host=thebutler-server.postgres.database.azure.com;Database=thebutler;Username=bu
 
 **Connection Details from AWS Console:**
 
-- Endpoint: `thebutler-db.c9akl90b3jya.us-east-1.rds.amazonaws.com`
+- Endpoint: `organizelife-db.c9akl90b3jya.us-east-1.rds.amazonaws.com`
 - Port: `5432`
 - Master username: `postgres`
 
@@ -112,13 +112,13 @@ cd database
 set PGPASSWORD=YourRDSPassword123!
 
 # Install
-install.bat --db-host thebutler-db.c9akl90b3jya.us-east-1.rds.amazonaws.com --db-user postgres --db-name thebutler --db-port 5432
+install.bat --db-host organizelife-db.c9akl90b3jya.us-east-1.rds.amazonaws.com --db-user postgres --db-name organizelife --db-port 5432
 ```
 
 **Connection String for .NET:**
 
 ```text
-Host=thebutler-db.c9akl90b3jya.us-east-1.rds.amazonaws.com;Database=thebutler;Username=postgres;Password=YourRDSPassword123!;SSL Mode=Require
+Host=organizelife-db.c9akl90b3jya.us-east-1.rds.amazonaws.com;Database=organizelife;Username=postgres;Password=YourRDSPassword123!;SSL Mode=Require
 ```
 
 **AWS Tips:**
@@ -135,7 +135,7 @@ Host=thebutler-db.c9akl90b3jya.us-east-1.rds.amazonaws.com;Database=thebutler;Us
 **Connection Details from GCP Console:**
 
 - Public IP: `34.123.45.67`
-- Instance connection name: `your-project:us-central1:thebutler-db`
+- Instance connection name: `your-project:us-central1:organizelife-db`
 - Username: `postgres`
 - Port: `5432`
 
@@ -148,13 +148,13 @@ cd database
 set PGPASSWORD=YourGCPPassword123!
 
 # Install (using public IP)
-install.bat --db-host 34.123.45.67 --db-user postgres --db-name thebutler --db-port 5432
+install.bat --db-host 34.123.45.67 --db-user postgres --db-name organizelife --db-port 5432
 ```
 
 **Connection String for .NET:**
 
 ```text
-Host=34.123.45.67;Database=thebutler;Username=postgres;Password=YourGCPPassword123!;SSL Mode=Require
+Host=34.123.45.67;Database=organizelife;Username=postgres;Password=YourGCPPassword123!;SSL Mode=Require
 ```
 
 **GCP Tips:**
@@ -184,13 +184,13 @@ cd database
 set PGPASSWORD=your-neon-password
 
 # Install
-install.bat --db-host ep-cool-darkness-123456.us-east-2.aws.neon.tech --db-user neondb_owner --db-name thebutler --db-port 5432
+install.bat --db-host ep-cool-darkness-123456.us-east-2.aws.neon.tech --db-user neondb_owner --db-name organizelife --db-port 5432
 ```
 
 **Connection String for .NET:**
 
 ```text
-Host=ep-cool-darkness-123456.us-east-2.aws.neon.tech;Database=thebutler;Username=neondb_owner;Password=your-neon-password;SSL Mode=Require
+Host=ep-cool-darkness-123456.us-east-2.aws.neon.tech;Database=organizelife;Username=neondb_owner;Password=your-neon-password;SSL Mode=Require
 ```
 
 **Neon Tips:**
@@ -242,7 +242,7 @@ Host=db.yourproject.supabase.co;Database=postgres;Username=postgres;Password=you
 
 **Connection Details from DO Control Panel:**
 
-- Host: `thebutler-db-do-user-12345-0.b.db.ondigitalocean.com`
+- Host: `organizelife-db-do-user-12345-0.b.db.ondigitalocean.com`
 - Port: `25060` (note: custom port!)
 - User: `doadmin`
 - Database: `defaultdb`
@@ -256,13 +256,13 @@ cd database
 set PGPASSWORD=your-do-password
 
 # Install (note custom port 25060)
-install.bat --db-host thebutler-db-do-user-12345-0.b.db.ondigitalocean.com --db-user doadmin --db-name thebutler --db-port 25060
+install.bat --db-host organizelife-db-do-user-12345-0.b.db.ondigitalocean.com --db-user doadmin --db-name organizelife --db-port 25060
 ```
 
 **Connection String for .NET:**
 
 ```
-Host=thebutler-db-do-user-12345-0.b.db.ondigitalocean.com;Database=thebutler;Port=25060;Username=doadmin;Password=your-do-password;SSL Mode=Require
+Host=organizelife-db-do-user-12345-0.b.db.ondigitalocean.com;Database=organizelife;Port=25060;Username=doadmin;Password=your-do-password;SSL Mode=Require
 ```
 
 **DigitalOcean Tips:**
@@ -288,13 +288,13 @@ install.bat
 
 ```bash
 # Export just schema
-pg_dump -h localhost -U postgres -d thebutler --schema-only -f thebutler-schema-backup.sql
+pg_dump -h localhost -U postgres -d organizelife --schema-only -f organizelife-schema-backup.sql
 
 # Export data only
-pg_dump -h localhost -U postgres -d thebutler --data-only -f thebutler-data-backup.sql
+pg_dump -h localhost -U postgres -d organizelife --data-only -f organizelife-data-backup.sql
 
 # Export everything
-pg_dump -h localhost -U postgres -d thebutler -f thebutler-full-backup.sql
+pg_dump -h localhost -U postgres -d organizelife -f organizelife-full-backup.sql
 ```
 
 ### Step 3: Deploy to Cloud
@@ -304,14 +304,14 @@ pg_dump -h localhost -U postgres -d thebutler -f thebutler-full-backup.sql
 set PGPASSWORD=YourCloudPassword
 
 # Run install script with cloud parameters
-install.bat --db-host your-cloud-host.com --db-user your_user --db-name thebutler --db-port 5432
+install.bat --db-host your-cloud-host.com --db-user your_user --db-name organizelife --db-port 5432
 ```
 
 ### Step 4: Import Additional Data (if needed)
 
 ```bash
 # If you exported data from local
-psql -h your-cloud-host.com -U your_user -d thebutler -f thebutler-data-backup.sql
+psql -h your-cloud-host.com -U your_user -d organizelife -f organizelife-data-backup.sql
 ```
 
 ---
@@ -340,7 +340,7 @@ Create `%APPDATA%\postgresql\pgpass.conf`:
 
 ```
 # Format: hostname:port:database:username:password
-cloud-host.com:5432:thebutler:admin:YourPassword
+cloud-host.com:5432:organizelife:admin:YourPassword
 localhost:5432:*:postgres:LocalPassword
 ```
 
@@ -379,7 +379,7 @@ SSL Mode=Require;SSL Certificate=path/to/server-ca.pem
 set PGHOST=your-cloud-host.com
 set PGPORT=5432
 set PGUSER=your_user
-set PGDATABASE=thebutler
+set PGDATABASE=organizelife
 set PGPASSWORD=your_password
 
 # Check tables
@@ -415,16 +415,16 @@ install.bat
 
 # 2. Deploy to Testing/Staging
 set PGPASSWORD=TestingPassword
-install.bat --db-host test-db.cloud.com --db-user test_admin --db-name thebutler_test
+install.bat --db-host test-db.cloud.com --db-user test_admin --db-name organizelife_test
 
 # 3. Run tests, verify...
 
 # 4. Deploy to Production
 set PGPASSWORD=ProductionPassword
-install.bat --db-host prod-db.cloud.com --db-user prod_admin --db-name thebutler
+install.bat --db-host prod-db.cloud.com --db-user prod_admin --db-name organizelife
 
 # 5. Verify production
-psql -h prod-db.cloud.com -U prod_admin -d thebutler -c "SELECT COUNT(*) FROM pg_tables WHERE schemaname='public';"
+psql -h prod-db.cloud.com -U prod_admin -d organizelife -c "SELECT COUNT(*) FROM pg_tables WHERE schemaname='public';"
 ```
 
 ---
@@ -462,10 +462,10 @@ psql -h prod-db.cloud.com -U prod_admin -d thebutler -c "SELECT COUNT(*) FROM pg
 
 ```bash
 # Add sslmode parameter
-psql "host=your-host.com port=5432 dbname=thebutler user=admin sslmode=require"
+psql "host=your-host.com port=5432 dbname=organizelife user=admin sslmode=require"
 
 # Or download SSL certificate
-psql "host=your-host.com port=5432 dbname=thebutler user=admin sslmode=verify-full sslrootcert=server-ca.pem"
+psql "host=your-host.com port=5432 dbname=organizelife user=admin sslmode=verify-full sslrootcert=server-ca.pem"
 ```
 
 ### Issue: Database Already Exists Error
@@ -475,7 +475,7 @@ psql "host=your-host.com port=5432 dbname=thebutler user=admin sslmode=verify-fu
 **Solutions:**
 
 1. Script will prompt you to drop and recreate
-2. Or manually drop: `DROP DATABASE thebutler;`
+2. Or manually drop: `DROP DATABASE organizelife;`
 3. Or use a different database name
 
 ### Issue: Permission Denied
@@ -489,7 +489,7 @@ psql "host=your-host.com port=5432 dbname=thebutler user=admin sslmode=verify-fu
 3. Grant privileges:
 
 ```sql
-GRANT ALL PRIVILEGES ON DATABASE thebutler TO your_user;
+GRANT ALL PRIVILEGES ON DATABASE organizelife TO your_user;
 ALTER USER your_user CREATEDB;
 ```
 
@@ -517,15 +517,15 @@ ALTER USER your_user CREATEDB;
 ```bash
 # Automated daily backup script
 @echo off
-set BACKUP_DIR=C:\Backups\TheButler
+set BACKUP_DIR=C:\Backups\OrganizeLife
 set TIMESTAMP=%DATE:~-4%%DATE:~-7,2%%DATE:~-10,2%_%TIME:~0,2%%TIME:~3,2%%TIME:~6,2%
 set TIMESTAMP=%TIMESTAMP: =0%
 
 set PGPASSWORD=YourCloudPassword
 
-pg_dump -h your-cloud-host.com -U admin -d thebutler -F c -f "%BACKUP_DIR%\thebutler_%TIMESTAMP%.backup"
+pg_dump -h your-cloud-host.com -U admin -d organizelife -F c -f "%BACKUP_DIR%\organizelife_%TIMESTAMP%.backup"
 
-echo Backup completed: thebutler_%TIMESTAMP%.backup
+echo Backup completed: organizelife_%TIMESTAMP%.backup
 ```
 
 ---
@@ -540,7 +540,7 @@ echo Backup completed: thebutler_%TIMESTAMP%.backup
 - [Neon Docs](https://neon.tech/docs)
 - [Supabase Docs](https://supabase.com/docs)
 
-### Related TheButler Guides
+### Related OrganizeLife Guides
 
 - [install.bat Reference](../database/) - Installation script
 - [IDENTITY-SETUP.md](IDENTITY-SETUP.md) - ASP.NET Core Identity setup
@@ -565,10 +565,10 @@ echo Backup completed: thebutler_%TIMESTAMP%.backup
 
 ---
 
-**Ready to deploy?** Run the installation script with your cloud parameters and you'll have TheButler database running in minutes! 🎩☁️
+**Ready to deploy?** Run the installation script with your cloud parameters and you'll have OrganizeLife database running in minutes!
 
 ```bash
 cd database
 set PGPASSWORD=YourCloudPassword
-install.bat --db-host your-cloud-host.com --db-user your_user --db-name thebutler
+install.bat --db-host your-cloud-host.com --db-user your_user --db-name organizelife
 ```

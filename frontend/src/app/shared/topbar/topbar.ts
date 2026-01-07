@@ -20,7 +20,7 @@ export class Topbar implements OnInit {
     name: 'Estate Manager',
     role: 'Administrator',
     avatar: '👤',
-    email: 'manager@thebutler.com'
+    email: 'manager@organizelife.com'
   };
 
   // Get alerts from DataService

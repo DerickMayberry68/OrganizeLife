@@ -1,4 +1,4 @@
-# 🛠️ Development Commands - HomeSynchronicity
+# Development Commands - OrganizeLife
 
 Quick reference for common development tasks and commands.
 
@@ -110,7 +110,7 @@ ng serve --port 4300
 ```json
 {
   "projects": {
-    "the-butler": {
+    "organizelife": {
       "architect": {
         "serve": {
           "options": {
@@ -265,7 +265,7 @@ ng build --stats-json
 npm install -g webpack-bundle-analyzer
 
 # Analyze
-webpack-bundle-analyzer dist/HomeSynchronicity/stats.json
+webpack-bundle-analyzer dist/OrganizeLife/stats.json
 ```
 
 ### Production Build Stats
@@ -288,7 +288,7 @@ net start postgresql-x64-14
 net stop postgresql-x64-14
 
 # Connect to database
-psql -U postgres -d thebutler
+psql -U postgres -d organizelife
 ```
 
 **Mac:**
@@ -300,7 +300,7 @@ brew services start postgresql
 brew services stop postgresql
 
 # Connect to database
-psql -U postgres -d thebutler
+psql -U postgres -d organizelife
 ```
 
 ---
@@ -332,7 +332,7 @@ ng serve --configuration production
 # Create optimized production build
 ng build --configuration production
 
-# Output location: dist/HomeSynchronicity/
+# Output location: dist/OrganizeLife/
 ```
 
 ### Preview Production Build Locally
@@ -341,7 +341,7 @@ ng build --configuration production
 npm install -g http-server
 
 # Serve production build
-cd dist/HomeSynchronicity/browser
+cd dist/OrganizeLife/browser
 http-server -p 8080
 
 # Open: http://localhost:8080
@@ -528,11 +528,11 @@ If you encounter issues:
 
 <div align="center">
 
-**HomeSynchronicity - Development Commands**
+**OrganizeLife - Development Commands**
 
 *Last updated: October 17, 2025*
 
-**Happy Coding! 💻**
+**Happy Coding!**
 
 </div>
 

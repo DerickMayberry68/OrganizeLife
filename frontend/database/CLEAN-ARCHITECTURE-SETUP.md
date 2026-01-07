@@ -1,4 +1,4 @@
-# TheButler - Clean Architecture Setup Guide
+# OrganizeLife - Clean Architecture Setup Guide
 
 ## 🏗️ Overview
 
@@ -6,8 +6,8 @@ This guide shows you how to scaffold your Supabase database into a Clean Archite
 
 **Project Structure:**
 ```
-TheButler.sln
-├── TheButler.Core/              (Domain layer - no dependencies)
+OrganizeLife.sln
+├── OrganizeLife.Core/              (Domain layer - no dependencies)
 │   └── Domain/
 │       └── Model/               ← 32 Entity classes
 │           ├── Household.cs
@@ -15,16 +15,16 @@ TheButler.sln
 │           ├── Account.cs
 │           └── ... (29 more)
 │
-├── TheButler.Infrastructure/    (Data access layer - depends on Core)
+├── OrganizeLife.Infrastructure/    (Data access layer - depends on Core)
 │   ├── Data/
-│   │   └── TheButlerDbContext.cs  ← DbContext
+│   │   └── OrganizeLifeDbContext.cs  ← DbContext
 │   └── DataAccess/
 │       └── Config/              ← IEntityTypeConfiguration files
 │           ├── HouseholdConfiguration.cs
 │           ├── BillConfiguration.cs
 │           └── ... (30 more)
 │
-└── TheButler.API/               (Presentation layer - depends on Infrastructure)
+└── OrganizeLife.API/               (Presentation layer - depends on Infrastructure)
     ├── Controllers/
     ├── Program.cs
     └── appsettings.json
@@ -64,17 +64,17 @@ cd database
 
 ```bash
 # Infrastructure depends on Core
-cd ../TheButlerApi/TheButler.Infrastructure
-dotnet add reference ../TheButler.Core/TheButler.Core.csproj
+cd ../OrganizeLifeApi/OrganizeLife.Infrastructure
+dotnet add reference ../OrganizeLife.Core/OrganizeLife.Core.csproj
 
 # API depends on Infrastructure (which transitively includes Core)
-cd ../TheButler.API
-dotnet add reference ../TheButler.Infrastructure/TheButler.Infrastructure.csproj
+cd ../OrganizeLife.API
+dotnet add reference ../OrganizeLife.Infrastructure/OrganizeLife.Infrastructure.csproj
 ```
 
 ### Step 4: Configure API
 
-Update `TheButler.API/appsettings.json`:
+Update `OrganizeLife.API/appsettings.json`:
 ```json
 {
   "ConnectionStrings": {
@@ -88,18 +88,18 @@ Update `TheButler.API/appsettings.json`:
 }
 ```
 
-Update `TheButler.API/Program.cs`:
+Update `OrganizeLife.API/Program.cs`:
 ```csharp
 using Microsoft.EntityFrameworkCore;
-using TheButler.Infrastructure.Data;
+using OrganizeLife.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add DbContext
-builder.Services.AddDbContext<TheButlerDbContext>(options =>
+builder.Services.AddDbContext<OrganizeLifeDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        npgsqlOptions => npgsqlOptions.MigrationsAssembly("TheButler.Infrastructure")
+        npgsqlOptions => npgsqlOptions.MigrationsAssembly("OrganizeLife.Infrastructure")
     ));
 
 // Add services
@@ -124,7 +124,7 @@ app.Run();
 ### Step 5: Test
 
 ```bash
-cd TheButler.API
+cd OrganizeLife.API
 dotnet build
 dotnet run
 ```
@@ -142,7 +142,7 @@ Navigate to `https://localhost:5001/swagger` and test!
 dotnet tool install --global dotnet-ef --version 9.0.4
 
 # Install packages in Infrastructure project
-cd TheButler.Infrastructure
+cd OrganizeLife.Infrastructure
 dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL --version 9.0.4
 dotnet add package Microsoft.EntityFrameworkCore.Design --version 9.0.4
 ```
@@ -150,10 +150,10 @@ dotnet add package Microsoft.EntityFrameworkCore.Design --version 9.0.4
 ### Manual Scaffolding
 
 ```bash
-cd TheButler.Infrastructure
+cd OrganizeLife.Infrastructure
 
 # Scaffold to Temp folder
-dotnet ef dbcontext scaffold "Host=db.cwvkrkiejntyexfxzxpx.supabase.co;Database=postgres;Username=postgres;Password=YOUR_PASSWORD;SSL Mode=Require;Trust Server Certificate=true" Npgsql.EntityFrameworkCore.PostgreSQL --startup-project ../TheButler.API --output-dir Temp --context-dir Data --context TheButlerDbContext --schema public --no-onconfiguring --force --no-pluralize
+dotnet ef dbcontext scaffold "Host=db.cwvkrkiejntyexfxzxpx.supabase.co;Database=postgres;Username=postgres;Password=YOUR_PASSWORD;SSL Mode=Require;Trust Server Certificate=true" Npgsql.EntityFrameworkCore.PostgreSQL --startup-project ../OrganizeLife.API --output-dir Temp --context-dir Data --context OrganizeLifeDbContext --schema public --no-onconfiguring --force --no-pluralize
 ```
 
 ### Move Files Manually
@@ -163,12 +163,12 @@ dotnet ef dbcontext scaffold "Host=db.cwvkrkiejntyexfxzxpx.supabase.co;Database=
 - Paste into `Core/Domain/Model/`
 - Update namespace in each file:
   ```csharp
-  namespace TheButler.Core.Domain.Model;
+  namespace OrganizeLife.Core.Domain.Model;
   ```
 
 **2. Update DbContext:**
-- File: `Infrastructure/Data/TheButlerDbContext.cs`
-- Add using: `using TheButler.Core.Domain.Model;`
+- File: `Infrastructure/Data/OrganizeLifeDbContext.cs`
+- Add using: `using OrganizeLife.Core.Domain.Model;`
 - Update DbSet references to use correct namespace
 
 **3. Create Configuration Files:**
@@ -178,9 +178,9 @@ dotnet ef dbcontext scaffold "Host=db.cwvkrkiejntyexfxzxpx.supabase.co;Database=
 ```csharp
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TheButler.Core.Domain.Model;
+using OrganizeLife.Core.Domain.Model;
 
-namespace TheButler.Infrastructure.DataAccess.Config;
+namespace OrganizeLife.Infrastructure.DataAccess.Config;
 
 public class HouseholdConfiguration : IEntityTypeConfiguration<Household>
 {
@@ -205,8 +205,8 @@ public class HouseholdConfiguration : IEntityTypeConfiguration<Household>
 protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
     // Apply all IEntityTypeConfiguration implementations
-    modelBuilder.ApplyConfigurationsFromAssembly(typeof(TheButlerDbContext).Assembly);
-    
+    modelBuilder.ApplyConfigurationsFromAssembly(typeof(OrganizeLifeDbContext).Assembly);
+
     OnModelCreatingPartial(modelBuilder);
 }
 
@@ -220,7 +220,7 @@ partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 ### Core/Domain/Model/Household.cs
 
 ```csharp
-namespace TheButler.Core.Domain.Model;
+namespace OrganizeLife.Core.Domain.Model;
 
 public partial class Household
 {
@@ -252,9 +252,9 @@ public partial class Household
 ```csharp
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TheButler.Core.Domain.Model;
+using OrganizeLife.Core.Domain.Model;
 
-namespace TheButler.Infrastructure.DataAccess.Config;
+namespace OrganizeLife.Infrastructure.DataAccess.Config;
 
 public class HouseholdConfiguration : IEntityTypeConfiguration<Household>
 {
@@ -323,17 +323,17 @@ public class HouseholdConfiguration : IEntityTypeConfiguration<Household>
 }
 ```
 
-### Infrastructure/Data/TheButlerDbContext.cs
+### Infrastructure/Data/OrganizeLifeDbContext.cs
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
-using TheButler.Core.Domain.Model;
+using OrganizeLife.Core.Domain.Model;
 
-namespace TheButler.Infrastructure.Data;
+namespace OrganizeLife.Infrastructure.Data;
 
-public partial class TheButlerDbContext : DbContext
+public partial class OrganizeLifeDbContext : DbContext
 {
-    public TheButlerDbContext(DbContextOptions<TheButlerDbContext> options)
+    public OrganizeLifeDbContext(DbContextOptions<OrganizeLifeDbContext> options)
         : base(options)
     {
     }
@@ -370,8 +370,8 @@ public partial class TheButlerDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Apply all IEntityTypeConfiguration implementations from this assembly
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(TheButlerDbContext).Assembly);
-        
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(OrganizeLifeDbContext).Assembly);
+
         OnModelCreatingPartial(modelBuilder);
     }
 
@@ -386,20 +386,20 @@ public partial class TheButlerDbContext : DbContext
 ### Create Test Controller
 
 ```csharp
-// TheButler.API/Controllers/TestController.cs
+// OrganizeLife.API/Controllers/TestController.cs
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using TheButler.Infrastructure.Data;
+using OrganizeLife.Infrastructure.Data;
 
-namespace TheButler.API.Controllers;
+namespace OrganizeLife.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 public class TestController : ControllerBase
 {
-    private readonly TheButlerDbContext _context;
+    private readonly OrganizeLifeDbContext _context;
 
-    public TestController(TheButlerDbContext context)
+    public TestController(OrganizeLifeDbContext context)
     {
         _context = context;
     }
@@ -509,8 +509,8 @@ cd database
 
 **Solution:** Add project reference:
 ```bash
-cd TheButler.Infrastructure
-dotnet add reference ../TheButler.Core/TheButler.Core.csproj
+cd OrganizeLife.Infrastructure
+dotnet add reference ../OrganizeLife.Core/OrganizeLife.Core.csproj
 ```
 
 ### Issue: "Cannot find ApplyConfigurationsFromAssembly"

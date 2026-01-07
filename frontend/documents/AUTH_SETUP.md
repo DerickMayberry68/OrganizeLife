@@ -1,6 +1,6 @@
 # Authentication Setup Complete! 🎉
 
-Your Angular app now has a complete authentication system integrated with your Butler API.
+Your Angular app now has a complete authentication system integrated with your OrganizeLife API.
 
 ## What Was Created
 
@@ -73,7 +73,7 @@ Open your browser to: `http://localhost:4200/login`
 
 ## API Integration
 
-The auth service connects to your Butler API at `http://localhost:5000/api`:
+The auth service connects to your OrganizeLife API at `http://localhost:5000/api`:
 
 - **POST** `/setup/register` - Create new user
 - **POST** `/setup/login` - Authenticate user
@@ -83,9 +83,9 @@ Make sure your API is running on port 5000!
 ## Token Storage
 
 Tokens are stored in browser `localStorage`:
-- `butler_access_token` - JWT access token
-- `butler_refresh_token` - Refresh token
-- `butler_user` - User info (email, userId, households)
+- `organizelife_access_token` - JWT access token
+- `organizelife_refresh_token` - Refresh token
+- `organizelife_user` - User info (email, userId, households)
 
 ## Auth Service Methods
 
@@ -237,5 +237,5 @@ You can customize colors in:
 
 ---
 
-**You're all set!** 🎉 Your Angular app now has a complete authentication system connected to your Butler API.
+**You're all set!** 🎉 Your Angular app now has a complete authentication system connected to your OrganizeLife API.
 

@@ -48,7 +48,7 @@ In Vercel Dashboard:
 vercel --prod
 ```
 
-**Your frontend will be live at:** `https://the-butler-xxx.vercel.app`
+**Your frontend will be live at:** `https://organizelife-xxx.vercel.app`
 
 ---
 
@@ -136,7 +136,7 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(
             "http://localhost:4200", 
             "https://localhost:4200",
-            "https://the-butler-xxx.vercel.app"  // Add your Vercel URL
+            "https://organizelife-xxx.vercel.app"  // Add your Vercel URL
         )
         .AllowAnyHeader()
         .AllowAnyMethod()
